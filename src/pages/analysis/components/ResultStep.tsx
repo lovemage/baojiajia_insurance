@@ -198,88 +198,104 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
       };
 
-      // 組合 HTML 內容
-      // IMPORTANT: html2pdf 渲染時需要完整的 CSS 來控制分頁
-      // 我們加入特定的 CSS 來強制分頁，並確保字體正確顯示
-      const pageBreakCss = `
-        .page-break { page-break-before: always; }
-        .pdf-container {
-          font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
-          color: #333;
-          line-height: 1.5;
-        }
-        ${templateData.styles || ''}
-      `;
-
-      let htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <style>${pageBreakCss}</style>
-        </head>
-        <body>
-          <div class="pdf-container">
-            ${templateData.header_html || ''}
-            ${templateData.basic_info_html || ''}
-            ${templateData.medical_html || ''}
-            ${templateData.critical_html || ''}
-            ${templateData.longterm_html || ''}
-            ${templateData.life_html || ''}
-            ${templateData.accident_html || ''}
-            ${templateData.footer_html || ''}
-          </div>
-        </body>
-        </html>
-      `;
-
       // 替換變數
+      let processedStyles = templateData.styles || '';
       Object.entries(pdfVariables).forEach(([key, value]) => {
-        htmlContent = htmlContent.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+        processedStyles = processedStyles.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
       });
 
-      // 創建臨時容器 - 必須可見才能正確渲染，且需要足夠的寬度避免文字換行錯誤
+      let header = templateData.header_html || '';
+      let basicInfo = templateData.basic_info_html || '';
+      let medical = templateData.medical_html || '';
+      let critical = templateData.critical_html || '';
+      let longterm = templateData.longterm_html || '';
+      let life = templateData.life_html || '';
+      let accident = templateData.accident_html || '';
+      let footer = templateData.footer_html || '';
+
+      [header, basicInfo, medical, critical, longterm, life, accident, footer].forEach((html, index) => {
+        let processedHtml = html;
+        Object.entries(pdfVariables).forEach(([key, value]) => {
+          processedHtml = processedHtml.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+        });
+        
+        switch(index) {
+          case 0: header = processedHtml; break;
+          case 1: basicInfo = processedHtml; break;
+          case 2: medical = processedHtml; break;
+          case 3: critical = processedHtml; break;
+          case 4: longterm = processedHtml; break;
+          case 5: life = processedHtml; break;
+          case 6: accident = processedHtml; break;
+          case 7: footer = processedHtml; break;
+        }
+      });
+
+      // 創建臨時容器
       const container = document.createElement('div');
-      container.innerHTML = htmlContent;
-      container.style.position = 'fixed';
-      container.style.top = '-9999px'; // 移出可視區域而不是設 opacity 為 0
+      container.style.position = 'absolute';
       container.style.left = '-9999px';
-      container.style.width = '210mm'; // A4 寬度
-      // 移除 minHeight，讓內容自然撐開
-      // container.style.minHeight = '297mm'; 
-      container.style.backgroundColor = 'white';
-      container.style.zIndex = '-9999';
-      // container.style.opacity = '0'; // html2canvas 有時會忽略透明元素
-      // container.style.pointerEvents = 'none';
+      container.style.top = '0';
+      container.style.width = '210mm'; // A4 width
+      
+      // 使用更簡單的結構，避免 html2pdf 解析問題
+      container.innerHTML = `
+        <style>
+          ${processedStyles}
+          .pdf-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            background: white;
+            box-sizing: border-box;
+            position: relative;
+            page-break-after: always;
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+          }
+          .pdf-page:last-child {
+            page-break-after: avoid;
+          }
+          * {
+            box-sizing: border-box;
+          }
+        </style>
+        <div class="pdf-wrapper">
+          ${header}
+          ${basicInfo}
+          ${medical}
+          ${critical}
+          ${longterm}
+          ${life}
+          ${accident}
+          ${footer}
+        </div>
+      `;
+
       document.body.appendChild(container);
 
-      // 等待 DOM 渲染完成，增加等待時間確保圖片和字體載入
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 給予充分時間讓瀏覽器渲染
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // 使用 html2pdf 生成 PDF
       const opt = {
-        margin: [10, 10, 10, 10] as [number, number, number, number],
+        margin: 0,
         filename: `保障需求分析報告_${downloadData.name}.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: {
-          scale: 2,
+        html2canvas: { 
+          scale: 2, 
           useCORS: true,
           letterRendering: true,
-          logging: true, // 開啟 log 以便除錯
-          // 移除固定的 windowWidth/windowHeight，讓 html2canvas 自動計算
-          // windowWidth: 794, 
-          // windowHeight: 1123
+          scrollY: 0
         },
-        jsPDF: {
-          unit: 'mm' as const,
+        jsPDF: { 
+          unit: 'mm' as const, 
           format: 'a4' as const,
           orientation: 'portrait' as const
         }
       };
 
-      await html2pdf().set(opt).from(container).save();
+      const element = container.querySelector('.pdf-wrapper') as HTMLElement;
+      await html2pdf().set(opt).from(element).save();
 
-      // 清理臨時容器
       document.body.removeChild(container);
 
       // 完成進度條

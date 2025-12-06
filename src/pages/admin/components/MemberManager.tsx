@@ -17,6 +17,8 @@ export default function MemberManager() {
   const [members, setMembers] = useState<MemberSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<MemberSubmission | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMembers();
@@ -35,6 +37,32 @@ export default function MemberManager() {
       console.error('Error fetching members:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeleting(id);
+    try {
+      const { error } = await supabase
+        .from('member_submissions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // 更新本地狀態
+      setMembers(members.filter(m => m.id !== id));
+      setShowDeleteConfirm(null);
+
+      // 如果正在查看被刪除的會員，關閉彈窗
+      if (selectedMember?.id === id) {
+        setSelectedMember(null);
+      }
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      alert('刪除失敗，請稍後再試');
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -84,13 +112,44 @@ export default function MemberManager() {
                     <td className="px-6 py-4 text-sm text-gray-600">{member.phone}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{member.line_id}</td>
                     <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => setSelectedMember(member)}
-                        className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer whitespace-nowrap"
-                      >
-                        <i className="ri-file-list-3-line mr-1"></i>
-                        查看詳情
-                      </button>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => setSelectedMember(member)}
+                          className="px-3 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer whitespace-nowrap text-sm"
+                        >
+                          <i className="ri-file-list-3-line mr-1"></i>
+                          詳情
+                        </button>
+                        {showDeleteConfirm === member.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleDelete(member.id)}
+                              disabled={deleting === member.id}
+                              className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer whitespace-nowrap text-sm disabled:opacity-50"
+                            >
+                              {deleting === member.id ? (
+                                <i className="ri-loader-4-line animate-spin"></i>
+                              ) : (
+                                '確認'
+                              )}
+                            </button>
+                            <button
+                              onClick={() => setShowDeleteConfirm(null)}
+                              className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors cursor-pointer whitespace-nowrap text-sm"
+                            >
+                              取消
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setShowDeleteConfirm(member.id)}
+                            className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors cursor-pointer whitespace-nowrap text-sm"
+                          >
+                            <i className="ri-delete-bin-line mr-1"></i>
+                            刪除
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -205,7 +264,28 @@ export default function MemberManager() {
               </div>
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 flex justify-end">
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 flex justify-between">
+              <button
+                onClick={() => {
+                  if (confirm(`確定要刪除 ${selectedMember.name} 的資料嗎？此操作無法復原。`)) {
+                    handleDelete(selectedMember.id);
+                  }
+                }}
+                disabled={deleting === selectedMember.id}
+                className="px-6 py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {deleting === selectedMember.id ? (
+                  <>
+                    <i className="ri-loader-4-line animate-spin mr-2"></i>
+                    刪除中...
+                  </>
+                ) : (
+                  <>
+                    <i className="ri-delete-bin-line mr-2"></i>
+                    刪除此會員
+                  </>
+                )}
+              </button>
               <button
                 onClick={() => setSelectedMember(null)}
                 className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
