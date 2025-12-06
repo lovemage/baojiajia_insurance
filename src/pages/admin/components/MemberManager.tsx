@@ -23,14 +23,21 @@ interface MemberGroup {
   last_submission_at: string;
 }
 
-// 安全讀取數據的輔助函數
+// 安全讀取數據的輔助函數 - 加強版
 const safeGet = (obj: any, path: string, defaultValue: any = '-') => {
   try {
     const value = path.split('.').reduce((o, k) => (o || {})[k], obj);
-    return value !== undefined && value !== null ? value : defaultValue;
+    if (value === undefined || value === null || value === '') return defaultValue;
+    return value;
   } catch {
     return defaultValue;
   }
+};
+
+// 格式化數字為千分位
+const formatNumber = (num: any) => {
+  if (!num && num !== 0) return '0';
+  return Number(num).toLocaleString('zh-TW');
 };
 
 export default function MemberManager() {
@@ -486,7 +493,7 @@ export default function MemberManager() {
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">期望住院日額</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {safeGet(selectedMember.questionnaire_data, 'hospitalDaily', 0)?.toLocaleString() || 0} 元/日
+                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'hospitalDaily', 0))} 元/日
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
@@ -500,43 +507,43 @@ export default function MemberManager() {
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">薪資損失補償</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {safeGet(selectedMember.questionnaire_data, 'salaryLoss', 0)?.toLocaleString() || 0} 元/月
+                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'salaryLoss', 0))} 元/月
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">每月生活開銷</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {safeGet(selectedMember.questionnaire_data, 'livingExpense', 0)?.toLocaleString() || 0} 元/月
+                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'livingExpense', 0))} 元/月
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">治療費用補償</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {safeGet(selectedMember.questionnaire_data, 'treatmentCost', 0)?.toLocaleString() || 0} 元
+                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'treatmentCost', 0))} 元
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">長照費用需求</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {safeGet(selectedMember.questionnaire_data, 'longTermCare', 0)?.toLocaleString() || 0} 元/月
+                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'longTermCare', 0))} 元/月
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">家人照顧金</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {safeGet(selectedMember.questionnaire_data, 'familyCare', 0)?.toLocaleString() || 0} 元
+                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'familyCare', 0))} 元
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">個人負債</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {safeGet(selectedMember.questionnaire_data, 'personalDebt', 0)?.toLocaleString() || 0} 元
+                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'personalDebt', 0))} 元
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">月收入</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {safeGet(selectedMember.questionnaire_data, 'monthlyIncome', 0)?.toLocaleString() || 0} 元/月
+                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'monthlyIncome', 0))} 元/月
                     </div>
                   </div>
                 </div>
