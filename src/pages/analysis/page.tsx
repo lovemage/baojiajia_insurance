@@ -32,6 +32,13 @@ export default function AnalysisPage() {
     localStorage.setItem('analysis_data', JSON.stringify(formData));
   }, [formData]);
 
+  const resetAnalysis = () => {
+    localStorage.removeItem('analysis_step');
+    localStorage.removeItem('analysis_data');
+    setCurrentStep(0);
+    setFormData({});
+  };
+
   const updateFormData = (data: any) => {
     setFormData({ ...formData, ...data });
   };
@@ -87,7 +94,7 @@ export default function AnalysisPage() {
       
       // 結果頁面
       case 11:
-        return <ResultStep data={formData} onBack={prevStep} />;
+        return <ResultStep data={formData} onBack={resetAnalysis} />;
       
       default:
         return <PlanTypeStep onSelect={(type) => { updateFormData({ planType: type }); nextStep(); }} />;
