@@ -141,35 +141,44 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
     };
 
-    // 預覽時使用與前端 PDF 生成一致的容器結構
+    // 預覽時使用與前端 PDF 生成一致的結構和樣式
+    // 使用 reset CSS 確保預覽效果不受外部影響
     let html = `
       <style>
-        .page-break { page-break-before: always; }
-        .pdf-container {
-          font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
-          color: #333;
-          line-height: 1.5;
-          width: 210mm; /* A4 width */
-          margin: 0 auto;
-          background: white;
+        .pdf-preview-wrapper {
+          all: initial;
+          font-family: sans-serif;
+          background: #f0f0f0;
+          padding: 20px;
+          display: flex;
+          justify-content: center;
+        }
+        .pdf-page {
+          width: 210mm;
+          min-height: 297mm;
           padding: 20mm;
+          background: white;
+          box-sizing: border-box;
+          position: relative;
+          font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
           box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          margin-bottom: 20px;
         }
         ${template.styles}
       </style>
-      <div class="pdf-container">
+      <div class="pdf-preview-wrapper">
+        <div class="pdf-page">
+          ${template.header_html}
+          ${template.basic_info_html}
+          ${template.medical_html}
+          ${template.critical_html}
+          ${template.longterm_html}
+          ${template.life_html}
+          ${template.accident_html}
+          ${template.footer_html}
+        </div>
+      </div>
     `;
-    
-    html += template.header_html;
-    html += template.basic_info_html;
-    html += template.medical_html;
-    html += template.critical_html;
-    html += template.longterm_html;
-    html += template.life_html;
-    html += template.accident_html;
-    html += template.footer_html;
-    
-    html += '</div>';
 
     // 替換變數
     Object.entries(mockData).forEach(([key, value]) => {
