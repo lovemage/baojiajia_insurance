@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navigation from '../../components/feature/Navigation';
 import PlanTypeStep from './components/PlanTypeStep';
 import BasicInfoStep from './components/BasicInfoStep';
@@ -14,8 +14,23 @@ import OtherNeedsStep from './components/OtherNeedsStep';
 import ResultStep from './components/ResultStep';
 
 export default function AnalysisPage() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<any>({});
+  const [currentStep, setCurrentStep] = useState(() => {
+    const saved = localStorage.getItem('analysis_step');
+    return saved ? parseInt(saved, 10) : 0;
+  });
+  
+  const [formData, setFormData] = useState<any>(() => {
+    const saved = localStorage.getItem('analysis_data');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem('analysis_step', currentStep.toString());
+  }, [currentStep]);
+
+  useEffect(() => {
+    localStorage.setItem('analysis_data', JSON.stringify(formData));
+  }, [formData]);
 
   const updateFormData = (data: any) => {
     setFormData({ ...formData, ...data });

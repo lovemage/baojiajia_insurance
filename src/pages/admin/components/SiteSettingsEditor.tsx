@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import ImageUpload from './ImageUpload';
 
 interface SiteSetting {
   id: string;
@@ -95,37 +96,25 @@ export default function SiteSettingsEditor({ onBack }: Props) {
           <div className="space-y-6">
             {settings.map((setting) => (
               <div key={setting.id}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {setting.setting_label}
-                </label>
                 {setting.setting_key === 'logo_url' ? (
-                  <div className="space-y-3">
+                  <ImageUpload
+                    value={setting.setting_value}
+                    onChange={(url) => handleChange(setting.id, url)}
+                    label={setting.setting_label}
+                  />
+                ) : (
+                  <>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {setting.setting_label}
+                    </label>
                     <input
-                      type="text"
+                      type="url"
                       value={setting.setting_value}
                       onChange={(e) => handleChange(setting.id, e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="輸入 Logo 圖片網址"
+                      placeholder={`輸入 ${setting.setting_label}`}
                     />
-                    {setting.setting_value && (
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-600 mb-2">預覽：</p>
-                        <img 
-                          src={setting.setting_value} 
-                          alt="Logo 預覽" 
-                          className="h-16 object-contain"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <input
-                    type="url"
-                    value={setting.setting_value}
-                    onChange={(e) => handleChange(setting.id, e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder={`輸入 ${setting.setting_label}`}
-                  />
+                  </>
                 )}
               </div>
             ))}

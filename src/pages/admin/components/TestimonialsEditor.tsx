@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import ImageUpload from './ImageUpload';
 
 interface Testimonial {
   id: string;
@@ -162,18 +163,11 @@ export default function TestimonialsEditor({ onBack }: Props) {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  頭像圖片網址
-                </label>
-                <input
-                  type="text"
-                  value={editingTestimonial.avatar_url}
-                  onChange={(e) => setEditingTestimonial({ ...editingTestimonial, avatar_url: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="https://..."
-                />
-              </div>
+              <ImageUpload
+                value={editingTestimonial.avatar_url}
+                onChange={(url) => setEditingTestimonial({ ...editingTestimonial, avatar_url: url })}
+                label="頭像圖片網址"
+              />
 
               <div className="flex items-center">
                 <input

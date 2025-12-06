@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import ImageUpload from './ImageUpload';
 
 interface HomepageContent {
   id: string;
@@ -244,18 +245,11 @@ export default function HomepageEditor({ onBack }: Props) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                背景圖片網址
-              </label>
-              <input
-                type="text"
-                value={content.hero_image_url}
-                onChange={(e) => handleChange('hero_image_url', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                placeholder="https://..."
-              />
-            </div>
+            <ImageUpload
+              value={content.hero_image_url}
+              onChange={(url) => handleChange('hero_image_url', url)}
+              label="背景圖片網址"
+            />
           </div>
         </div>
 

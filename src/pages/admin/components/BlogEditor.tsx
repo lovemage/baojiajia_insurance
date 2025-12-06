@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
+import ImageUpload from './ImageUpload';
+import { uploadToCloudinary } from '../../../lib/cloudinary';
 
 interface BlogPost {
   id: string;
@@ -183,11 +185,29 @@ export default function BlogEditor({ onBack }: Props) {
     contentEditableRef.current?.focus();
   };
 
-  const insertImage = () => {
-    const url = prompt('請輸入圖片網址：');
-    if (url) {
-      execCommand('insertImage', url);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const url = await uploadToCloudinary(file);
+        if (file.type.startsWith('video/')) {
+          const videoHtml = `<video src="${url}" controls style="max-width: 100%; display: block; margin: 10px 0;"></video><br/>`;
+          execCommand('insertHTML', videoHtml);
+        } else {
+          execCommand('insertImage', url);
+        }
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('上傳失敗');
+      }
     }
+    e.target.value = '';
+  };
+
+  const insertImage = () => {
+    fileInputRef.current?.click();
   };
 
   const changeFontSize = (size: string) => {
@@ -316,34 +336,22 @@ export default function BlogEditor({ onBack }: Props) {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    封面圖片網址
-                  </label>
-                  <input
-                    type="url"
-                    value={editingPost.image_url}
-                    onChange={(e) => setEditingPost({ ...editingPost, image_url: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="https://example.com/image.jpg"
-                  />
-                  {editingPost.image_url && (
-                    <div className="mt-3 rounded-lg overflow-hidden border border-gray-200">
-                      <img
-                        src={editingPost.image_url}
-                        alt="封面預覽"
-                        className="w-full h-32 object-cover object-top"
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://via.placeholder.com/400x300?text=圖片載入失敗';
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
+                <ImageUpload
+                  value={editingPost.image_url}
+                  onChange={(url) => setEditingPost({ ...editingPost, image_url: url })}
+                  label="封面圖片網址"
+                />
               </div>
 
               {/* Rich Text Editor */}
               <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  hidden
+                  onChange={handleImageUpload}
+                  accept="image/*,video/*"
+                />
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   文章內容
                 </label>
@@ -485,7 +493,7 @@ export default function BlogEditor({ onBack }: Props) {
                     type="button"
                     onClick={insertImage}
                     className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-                    title="插入圖片"
+                    title="插入圖片/影片"
                   >
                     <i className="ri-image-add-line"></i>
                   </button>
@@ -519,7 +527,7 @@ export default function BlogEditor({ onBack }: Props) {
                 />
                 <p className="text-xs text-gray-500 mt-2">
                   <i className="ri-information-line mr-1"></i>
-                  提示：點擊「插入圖片」按鈕可以輸入圖片網址
+                  提示：點擊「插入圖片」按鈕可以上傳圖片或影片
                 </p>
               </div>
 

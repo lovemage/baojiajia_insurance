@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { uploadToCloudinary } from '../../../lib/cloudinary';
 
 interface ServiceDetail {
   id: string;
@@ -101,11 +102,29 @@ export default function ServiceDetailEditor({ service, onBack }: Props) {
     contentEditableRef.current?.focus();
   };
 
-  const insertImage = () => {
-    const url = prompt('請輸入圖片網址：');
-    if (url) {
-      execCommand('insertImage', url);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const url = await uploadToCloudinary(file);
+        if (file.type.startsWith('video/')) {
+          const videoHtml = `<video src="${url}" controls style="max-width: 100%; display: block; margin: 10px 0;"></video><br/>`;
+          execCommand('insertHTML', videoHtml);
+        } else {
+          execCommand('insertImage', url);
+        }
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('上傳失敗');
+      }
     }
+    e.target.value = '';
+  };
+
+  const insertImage = () => {
+    fileInputRef.current?.click();
   };
 
   const changeFontSize = (size: string) => {
@@ -285,11 +304,18 @@ export default function ServiceDetailEditor({ service, onBack }: Props) {
             <div className="w-px h-8 bg-gray-300"></div>
 
             {/* Image */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              hidden
+              onChange={handleImageUpload}
+              accept="image/*,video/*"
+            />
             <button
               type="button"
               onClick={insertImage}
               className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="插入圖片"
+              title="插入圖片/影片"
             >
               <i className="ri-image-add-line"></i>
             </button>
@@ -323,7 +349,7 @@ export default function ServiceDetailEditor({ service, onBack }: Props) {
           />
           <p className="text-xs text-gray-500 mt-2">
             <i className="ri-information-line mr-1"></i>
-            提示：點擊「插入圖片」按鈕可以輸入圖片網址
+            提示：點擊「插入圖片」按鈕可以上傳圖片或影片
           </p>
 
           <div className="flex justify-end gap-4 mt-6">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import ImageUpload from './ImageUpload';
 
 interface AboutContent {
   id: string;
@@ -194,15 +195,11 @@ export default function AboutEditor({ onBack }: Props) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">照片網址</label>
-                <input
-                  type="text"
-                  value={editingTeam.image_url}
-                  onChange={(e) => setEditingTeam({ ...editingTeam, image_url: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
-              </div>
+              <ImageUpload
+                value={editingTeam.image_url}
+                onChange={(url) => setEditingTeam({ ...editingTeam, image_url: url })}
+                label="照片網址"
+              />
               <div className="flex items-center">
                 <input
                   type="checkbox"

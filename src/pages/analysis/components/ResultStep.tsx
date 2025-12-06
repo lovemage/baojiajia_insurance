@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import type { User } from '@supabase/supabase-js';
 
 interface ResultStepProps {
   data: any;
@@ -16,6 +17,26 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
     lineId: ''
   });
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+  };
 
   // 計算年齡
   const calculateAge = (birthDate: string) => {
@@ -83,6 +104,10 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
   const annualPremium = estimatePremium();
 
   const handleDownloadReport = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
     setShowDownloadForm(true);
   };
 
@@ -510,6 +535,43 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
                 <i className="ri-line-fill mr-3 text-2xl"></i>
                 加入 LINE 諮詢
               </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 登入提示彈窗 */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-900">請先登入會員</h3>
+              <button
+                onClick={() => setShowLoginModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                <i className="ri-close-line text-3xl"></i>
+              </button>
+            </div>
+
+            <div className="text-center py-8">
+              <div className="mb-6">
+                <i className="ri-user-lock-line text-7xl text-teal-500"></i>
+              </div>
+              <h4 className="text-2xl font-bold text-gray-900 mb-4">
+                登入後即可下載完整報告
+              </h4>
+              <p className="text-gray-600 mb-8">
+                為了保護您的個人隱私資料，<br />
+                請先登入會員後再下載分析報告。
+              </p>
+              <button
+                onClick={handleLogin}
+                className="inline-flex items-center justify-center px-8 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all shadow-md cursor-pointer gap-3 w-full"
+              >
+                <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+                使用 Google 帳號登入
+              </button>
             </div>
           </div>
         </div>

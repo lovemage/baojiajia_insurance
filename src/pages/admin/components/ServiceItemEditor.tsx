@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../../lib/supabase';
+import ImageUpload from './ImageUpload';
 
 interface ServiceItem {
   id: string;
@@ -165,31 +166,12 @@ export default function ServiceItemEditor({ service, onBack }: Props) {
           </div>
 
           {/* Image URL */}
-          <div className="mb-8">
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              服務圖片網址 <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="url"
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-              placeholder="https://example.com/image.jpg"
-              required
-            />
-            {formData.image_url && (
-              <div className="mt-4 rounded-lg overflow-hidden border border-gray-200">
-                <img
-                  src={formData.image_url}
-                  alt="預覽"
-                  className="w-full h-48 object-cover object-top"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://via.placeholder.com/400x300?text=圖片載入失敗';
-                  }}
-                />
-              </div>
-            )}
-          </div>
+          <ImageUpload
+            value={formData.image_url}
+            onChange={(url) => setFormData({ ...formData, image_url: url })}
+            label="服務圖片網址"
+            className="mb-8"
+          />
 
           {/* Buttons */}
           <div className="flex gap-4">
