@@ -30,6 +30,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
     lineId: ''
   });
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState(0);
   const [user, setUser] = useState<User | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -130,6 +131,17 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
   const handleDownloadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGeneratingPDF(true);
+    setPdfProgress(0);
+
+    // 啟動進度條動畫（6秒完成）
+    const progressInterval = setInterval(() => {
+      setPdfProgress(prev => {
+        if (prev >= 95) {
+          return prev;
+        }
+        return prev + (95 - prev) * 0.08; // 緩動效果
+      });
+    }, 100);
 
     try {
       // 保存會員問卷資料
@@ -187,22 +199,36 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       };
 
       // 組合 HTML 內容
+      // IMPORTANT: html2pdf 渲染時需要完整的 CSS 來控制分頁
+      // 我們加入特定的 CSS 來強制分頁，並確保字體正確顯示
+      const pageBreakCss = `
+        .page-break { page-break-before: always; }
+        .pdf-container {
+          font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+          color: #333;
+          line-height: 1.5;
+        }
+        ${templateData.styles || ''}
+      `;
+
       let htmlContent = `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="UTF-8">
-          <style>${templateData.styles || ''}</style>
+          <style>${pageBreakCss}</style>
         </head>
         <body>
-          ${templateData.header_html || ''}
-          ${templateData.basic_info_html || ''}
-          ${templateData.medical_html || ''}
-          ${templateData.critical_html || ''}
-          ${templateData.longterm_html || ''}
-          ${templateData.life_html || ''}
-          ${templateData.accident_html || ''}
-          ${templateData.footer_html || ''}
+          <div class="pdf-container">
+            ${templateData.header_html || ''}
+            ${templateData.basic_info_html || ''}
+            ${templateData.medical_html || ''}
+            ${templateData.critical_html || ''}
+            ${templateData.longterm_html || ''}
+            ${templateData.life_html || ''}
+            ${templateData.accident_html || ''}
+            ${templateData.footer_html || ''}
+          </div>
         </body>
         </html>
       `;
@@ -212,24 +238,23 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         htmlContent = htmlContent.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
       });
 
-      // 創建臨時容器 - 必須可見才能正確渲染
+      // 創建臨時容器 - 必須可見才能正確渲染，且需要足夠的寬度避免文字換行錯誤
       const container = document.createElement('div');
       container.innerHTML = htmlContent;
       container.style.position = 'fixed';
-      container.style.top = '0';
-      container.style.left = '0';
+      container.style.top = '-9999px'; // 移出可視區域而不是設 opacity 為 0
+      container.style.left = '-9999px';
       container.style.width = '210mm'; // A4 寬度
-      container.style.minHeight = '297mm'; // A4 高度
-      container.style.padding = '20mm';
+      // 移除 minHeight，讓內容自然撐開
+      // container.style.minHeight = '297mm'; 
       container.style.backgroundColor = 'white';
       container.style.zIndex = '-9999';
-      container.style.opacity = '0';
-      container.style.pointerEvents = 'none';
-      container.style.fontFamily = '"Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif';
+      // container.style.opacity = '0'; // html2canvas 有時會忽略透明元素
+      // container.style.pointerEvents = 'none';
       document.body.appendChild(container);
 
-      // 等待 DOM 渲染完成
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // 等待 DOM 渲染完成，增加等待時間確保圖片和字體載入
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // 使用 html2pdf 生成 PDF
       const opt = {
@@ -240,9 +265,10 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
           scale: 2,
           useCORS: true,
           letterRendering: true,
-          logging: false,
-          windowWidth: 794, // A4 at 96 DPI
-          windowHeight: 1123
+          logging: true, // 開啟 log 以便除錯
+          // 移除固定的 windowWidth/windowHeight，讓 html2canvas 自動計算
+          // windowWidth: 794, 
+          // windowHeight: 1123
         },
         jsPDF: {
           unit: 'mm' as const,
@@ -256,10 +282,19 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       // 清理臨時容器
       document.body.removeChild(container);
 
+      // 完成進度條
+      clearInterval(progressInterval);
+      setPdfProgress(100);
+
+      // 等待進度條顯示完成
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       setShowDownloadForm(false);
-      alert('PDF 報告已生成並下載！');
+      setPdfProgress(0);
     } catch (error) {
       console.error('生成 PDF 失敗：', error);
+      clearInterval(progressInterval);
+      setPdfProgress(0);
       alert('生成 PDF 時發生錯誤，請稍後再試。');
     } finally {
       setIsGeneratingPDF(false);
@@ -532,6 +567,28 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
                 />
               </div>
 
+              {/* 進度條 */}
+              {isGeneratingPDF && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-teal-600">正在生成報告...</span>
+                    <span className="text-sm font-medium text-teal-600">{Math.round(pdfProgress)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${pdfProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    {pdfProgress < 30 && '正在載入模板...'}
+                    {pdfProgress >= 30 && pdfProgress < 60 && '正在處理資料...'}
+                    {pdfProgress >= 60 && pdfProgress < 90 && '正在生成 PDF...'}
+                    {pdfProgress >= 90 && '即將完成...'}
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-4 mt-8">
                 <button
                   type="button"
@@ -547,15 +604,15 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
                   disabled={isGeneratingPDF}
                 >
                   {isGeneratingPDF ? (
-                    <>
+                    <span className="flex items-center justify-center">
                       <i className="ri-loader-4-line animate-spin mr-2"></i>
                       生成中...
-                    </>
+                    </span>
                   ) : (
-                    <>
+                    <span className="flex items-center justify-center">
                       <i className="ri-download-line mr-2"></i>
                       下載報告
-                    </>
+                    </span>
                   )}
                 </button>
               </div>
