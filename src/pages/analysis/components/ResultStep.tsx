@@ -212,22 +212,37 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         htmlContent = htmlContent.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
       });
 
-      // 創建臨時容器
+      // 創建臨時容器 - 必須可見才能正確渲染
       const container = document.createElement('div');
       container.innerHTML = htmlContent;
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
+      container.style.position = 'fixed';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.width = '210mm'; // A4 寬度
+      container.style.minHeight = '297mm'; // A4 高度
+      container.style.padding = '20mm';
+      container.style.backgroundColor = 'white';
+      container.style.zIndex = '-9999';
+      container.style.opacity = '0';
+      container.style.pointerEvents = 'none';
+      container.style.fontFamily = '"Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif';
       document.body.appendChild(container);
+
+      // 等待 DOM 渲染完成
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // 使用 html2pdf 生成 PDF
       const opt = {
-        margin: 10,
+        margin: [10, 10, 10, 10] as [number, number, number, number],
         filename: `保障需求分析報告_${downloadData.name}.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: {
           scale: 2,
           useCORS: true,
-          letterRendering: true
+          letterRendering: true,
+          logging: false,
+          windowWidth: 794, // A4 at 96 DPI
+          windowHeight: 1123
         },
         jsPDF: {
           unit: 'mm' as const,
