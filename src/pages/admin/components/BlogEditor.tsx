@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import ImageUpload from './ImageUpload';
 import { uploadToCloudinary } from '../../../lib/cloudinary';
+import { SeoAnalyzer, type SeoAnalysisResult } from '../../../utils/seoAnalyzer';
 
 interface BlogPost {
   id: string;
@@ -30,6 +31,22 @@ export default function BlogEditor({ onBack }: Props) {
   const contentEditableRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const isInitialized = useRef(false);
+  
+  // SEO State
+  const [focusKeyword, setFocusKeyword] = useState('');
+  const [seoResult, setSeoResult] = useState<SeoAnalysisResult>({ score: 0, checks: [] });
+
+  useEffect(() => {
+    if (editingPost) {
+      const result = SeoAnalyzer.analyze(
+        editingPost.title,
+        editingPost.excerpt,
+        editingPost.content,
+        focusKeyword
+      );
+      setSeoResult(result);
+    }
+  }, [editingPost?.title, editingPost?.excerpt, editingPost?.content, focusKeyword]);
 
   useEffect(() => {
     fetchPosts();
@@ -529,6 +546,67 @@ export default function BlogEditor({ onBack }: Props) {
                   <i className="ri-information-line mr-1"></i>
                   提示：點擊「插入圖片」按鈕可以上傳圖片或影片
                 </p>
+              </div>
+
+              {/* SEO Analysis Section */}
+              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                    <i className="ri-seo-line mr-2 text-teal-600"></i>
+                    SEO 分析與優化
+                  </h3>
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-600 mr-2">SEO 分數：</span>
+                    <div className={`text-2xl font-bold ${
+                      seoResult.score >= 80 ? 'text-green-600' :
+                      seoResult.score >= 50 ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {seoResult.score}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    焦點關鍵字 (Focus Keyword)
+                    <span className="ml-2 text-xs text-gray-500 font-normal">
+                      (輸入您希望這篇文章排名的主要關鍵字，僅供分析使用)
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={focusKeyword}
+                    onChange={(e) => setFocusKeyword(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    placeholder="例如：新生兒保險、意外險推薦"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  {seoResult.checks.map((check) => (
+                    <div key={check.id} className="flex items-start">
+                      <div className={`mt-0.5 mr-3 flex-shrink-0 ${
+                        check.status === 'pass' ? 'text-green-500' :
+                        check.status === 'warning' ? 'text-yellow-500' : 'text-red-500'
+                      }`}>
+                        <i className={
+                          check.status === 'pass' ? 'ri-checkbox-circle-fill' :
+                          check.status === 'warning' ? 'ri-error-warning-fill' : 'ri-close-circle-fill'
+                        }></i>
+                      </div>
+                      <div>
+                        <p className={`text-sm font-medium ${
+                           check.status === 'pass' ? 'text-gray-900' : 'text-gray-700'
+                        }`}>
+                          {check.label}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {check.message}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="flex items-center gap-6">
