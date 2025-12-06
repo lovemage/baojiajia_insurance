@@ -39,6 +39,9 @@ export default function BlogEditor({ onBack }: Props) {
   // SEO State (Analysis Only)
   const [focusKeyword, setFocusKeyword] = useState('');
   const [seoResult, setSeoResult] = useState<SeoAnalysisResult>({ score: 0, checks: [] });
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
   // Update focus keyword when meta keywords change (optional convenience)
   useEffect(() => {
@@ -48,28 +51,71 @@ export default function BlogEditor({ onBack }: Props) {
     }
   }, [editingPost?.meta_keywords]);
 
-  useEffect(() => {
-    if (editingPost) {
-      // Analyze using Meta fields if available, otherwise fallback to standard fields
-      const analyzeTitle = editingPost.meta_title || editingPost.title;
-      const analyzeDesc = editingPost.meta_description || editingPost.excerpt;
-      
-      const result = SeoAnalyzer.analyze(
-        analyzeTitle,
-        analyzeDesc,
-        editingPost.content,
-        focusKeyword
-      );
-      setSeoResult(result);
+  const startSeoAnalysis = () => {
+    if (!editingPost) return;
+    
+    setIsAnalyzing(true);
+    setAnalysisProgress(0);
+    setHasAnalyzed(false);
+
+    // Random duration between 8-12 seconds
+    const duration = Math.floor(Math.random() * (12000 - 8000 + 1) + 8000);
+    const interval = 100;
+    const steps = duration / interval;
+    const increment = 100 / steps;
+
+    let currentProgress = 0;
+    const timer = setInterval(() => {
+      currentProgress += increment;
+      if (currentProgress >= 100) {
+        clearInterval(timer);
+        setAnalysisProgress(100);
+        
+        // Perform analysis
+        const analyzeTitle = editingPost.meta_title || editingPost.title;
+        const analyzeDesc = editingPost.meta_description || editingPost.excerpt;
+        
+        const result = SeoAnalyzer.analyze(
+          analyzeTitle,
+          analyzeDesc,
+          editingPost.content,
+          focusKeyword
+        );
+        setSeoResult(result);
+        setIsAnalyzing(false);
+        setHasAnalyzed(true);
+      } else {
+        setAnalysisProgress(currentProgress);
+      }
+    }, interval);
+  };
+
+  const autoFillSeo = () => {
+    if (!editingPost) return;
+    
+    // Simple heuristic to extract potential keywords from title
+    const keywords = editingPost.title
+      .replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, ' ')
+      .split(' ')
+      .filter(k => k.length >= 2)
+      .slice(0, 5)
+      .join(', ');
+
+    setEditingPost({
+      ...editingPost,
+      meta_title: editingPost.title,
+      meta_description: editingPost.excerpt,
+      meta_keywords: keywords,
+      slug: '' // User should probably define this manually to be safe, or we could auto-generate
+    });
+    
+    // Also set focus keyword for analysis
+    if (keywords) {
+      setFocusKeyword(keywords.split(',')[0].trim());
     }
-  }, [
-    editingPost?.title, 
-    editingPost?.excerpt, 
-    editingPost?.content, 
-    editingPost?.meta_title, 
-    editingPost?.meta_description, 
-    focusKeyword
-  ]);
+    
+    alert('已自動填入 SEO 標題、描述與關鍵字。請檢查並微調。');
+  };
 
   useEffect(() => {
     fetchPosts();
@@ -109,14 +155,15 @@ export default function BlogEditor({ onBack }: Props) {
   };
 
   const handleCreateNew = () => {
+    const today = new Date().toISOString().split('T')[0];
     setEditingPost({
       id: '',
       title: '',
       excerpt: '',
       category: categories[0] || '保險基礎',
-      author: '',
-      published_at: new Date().toISOString().split('T')[0],
-      read_time: '5分鐘',
+      author: '保家佳',
+      published_at: today,
+      read_time: '8',
       image_url: '',
       content: '',
       is_featured: false,
@@ -128,8 +175,8 @@ export default function BlogEditor({ onBack }: Props) {
     });
     setIsNewPost(true);
     setFocusKeyword('');
+    setHasAnalyzed(false);
   };
-
   const handleSave = async () => {
     if (!editingPost) return;
 
@@ -201,6 +248,7 @@ export default function BlogEditor({ onBack }: Props) {
   const handleEdit = (post: BlogPost) => {
     setEditingPost(post);
     setIsNewPost(false);
+    setHasAnalyzed(false);
     // Initialize focus keyword from meta keywords if available
     if (post.meta_keywords) {
       const first = post.meta_keywords.split(',')[0].trim();
@@ -213,6 +261,48 @@ export default function BlogEditor({ onBack }: Props) {
   const handleCancel = () => {
     setEditingPost(null);
     setIsNewPost(false);
+  };
+
+  const handleInsertTemplate = () => {
+    if (!editingPost) return;
+    
+    const template = `<!DOCTYPE html>
+<html lang="zh-Hant-TW" prefix="og: http://ogp.me/ns#">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="keywords" content="2025保險規劃, 38歲男性保險, 家庭支柱保險, 月薪5萬保險, 定期壽險, 實支實付醫療險, 癌症險一次金, 雙十原則, 高CP值保單">
+    <meta name="author" content="保家佳|保險理財知識分享平台">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+
+    <!-- Canonical Tag (避免重複內容問題，請替換為此文章的最終發布網址) -->
+    <link rel="canonical" href="[請替換為此文章的完整 URL, 例如: https://www.yourwebsite.com/blog/2025-insurance-guide-38yo]">
+
+    <!-- ====================================================================
+         Open Graph / Meta Data (針對 Facebook, Line, LinkedIn 社群分享優化)
+         ==================================================================== -->
+    <meta property="og:locale" content="zh_TW">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="2025成人保險規劃攻略：38歲家庭支柱，月薪5萬如何聰明買保險？(高CP值組合)">
+    <meta property="og:description" content="2025年保險怎麼買？針對38歲「三明治族」爸爸，月薪5萬預算。教你捨棄人情保單，用定期險組合建立千萬保障。內附實戰保單範例。">
+    <meta property="og:url" content="[請替換為此文章的完整 URL]">
+    <meta property="og:site_name" content="[請替換為您的網站名稱]">
+    <meta property="article:published_time" content="2024-12-06T12:00:00+08:00">
+    <meta property="article:modified_time" content="2024-12-06T12:00:00+08:00">
+    <meta property="article:section" content="保險理財">
+    <meta property="article:tag" content="保險規劃">
+    <meta property="article:tag" content="家庭理財">`;
+
+    setEditingPost({
+      ...editingPost,
+      content: editingPost.content ? editingPost.content + '\n' + template : template
+    });
+    
+    // Switch to HTML view to show the inserted code clearly
+    setViewMode('html');
+    alert('SEO 範本已插入！已自動切換至 HTML 模式以便查看與編輯。');
   };
 
   if (loading) {
@@ -293,32 +383,65 @@ export default function BlogEditor({ onBack }: Props) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    閱讀時間
-                    <span className="ml-2 text-xs text-gray-500 font-normal">
-                      （讀者閱讀此文章所需時間，例如：5分鐘）
-                    </span>
+                    閱讀時間 (分鐘)
                   </label>
-                  <input
-                    type="text"
-                    value={editingPost.read_time}
-                    onChange={(e) => setEditingPost({ ...editingPost, read_time: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="5分鐘"
-                  />
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={editingPost.read_time.replace(/[^0-9]/g, '')}
+                      onChange={(e) => setEditingPost({ ...editingPost, read_time: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent pr-12"
+                      placeholder="8"
+                    />
+                    <span className="absolute right-4 top-3.5 text-gray-500 text-sm">分鐘</span>
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    發布日期
+                    發布設定
                   </label>
-                  <input
-                    type="date"
-                    value={editingPost.published_at}
-                    onChange={(e) => setEditingPost({ ...editingPost, published_at: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  />
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-4">
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          className="form-radio text-teal-600"
+                          name="publishType"
+                          checked={new Date(editingPost.published_at) <= new Date()}
+                          onChange={() => setEditingPost({ ...editingPost, published_at: new Date().toISOString().split('T')[0] })}
+                        />
+                        <span className="ml-2">立即發布</span>
+                      </label>
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          className="form-radio text-teal-600"
+                          name="publishType"
+                          checked={new Date(editingPost.published_at) > new Date()}
+                          onChange={() => {
+                            // Default to tomorrow if switching to scheduled
+                            const tomorrow = new Date();
+                            tomorrow.setDate(tomorrow.getDate() + 1);
+                            setEditingPost({ ...editingPost, published_at: tomorrow.toISOString().split('T')[0] });
+                          }}
+                        />
+                        <span className="ml-2">預約發布</span>
+                      </label>
+                    </div>
+                    
+                    {new Date(editingPost.published_at) > new Date() && (
+                      <input
+                        type="date"
+                        value={editingPost.published_at}
+                        min={new Date().toISOString().split('T')[0]}
+                        onChange={(e) => setEditingPost({ ...editingPost, published_at: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    )}
+                  </div>
                 </div>
 
                 <ImageUpload
@@ -372,6 +495,15 @@ export default function BlogEditor({ onBack }: Props) {
                       預覽
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleInsertTemplate}
+                    className="px-3 py-1 text-sm font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-all cursor-pointer border border-purple-200 ml-2"
+                    title="插入標準 SEO HTML 結構範本"
+                  >
+                    <i className="ri-code-s-slash-line mr-1"></i>
+                    SEO 範本
+                  </button>
                 </div>
 
                 <div className="min-h-[400px]">
@@ -409,16 +541,62 @@ export default function BlogEditor({ onBack }: Props) {
                     <i className="ri-seo-line mr-2 text-teal-600"></i>
                     SEO 設定與分析
                   </h3>
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-600 mr-2">SEO 分數：</span>
-                    <div className={`text-2xl font-bold ${
-                      seoResult.score >= 80 ? 'text-green-600' :
-                      seoResult.score >= 50 ? 'text-yellow-600' : 'text-red-600'
-                    }`}>
-                      {seoResult.score}
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={autoFillSeo}
+                      className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+                    >
+                      <i className="ri-magic-line mr-1"></i>
+                      自動填入
+                    </button>
+                    <button
+                      type="button"
+                      onClick={startSeoAnalysis}
+                      disabled={isAnalyzing}
+                      className={`px-4 py-2 text-sm rounded-lg text-white transition-colors ${
+                        isAnalyzing ? 'bg-gray-400 cursor-not-allowed' : 'bg-teal-600 hover:bg-teal-700'
+                      }`}
+                    >
+                      {isAnalyzing ? '分析中...' : '開始分析'}
+                    </button>
                   </div>
                 </div>
+
+                {/* Analysis Progress Bar */}
+                {isAnalyzing && (
+                  <div className="mb-6">
+                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                      <span>正在分析文章結構與關鍵字密度...</span>
+                      <span>{Math.round(analysisProgress)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div 
+                        className="bg-teal-600 h-2.5 rounded-full transition-all duration-300 ease-out"
+                        style={{ width: `${analysisProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SEO Score Display (Only show after analysis) */}
+                {hasAnalyzed && !isAnalyzing && (
+                  <div className="mb-8 p-4 bg-white rounded-lg border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-gray-900">SEO 分析結果</h4>
+                      <p className="text-sm text-gray-500">根據最新的 Google 排名因素分析</p>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-sm text-gray-600 mr-2">總分：</span>
+                      <div className={`text-3xl font-bold ${
+                        seoResult.score >= 80 ? 'text-green-600' :
+                        seoResult.score >= 50 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {seoResult.score}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Database SEO Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -487,49 +665,51 @@ export default function BlogEditor({ onBack }: Props) {
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 pt-6">
-                  <div className="mb-4">
-                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      分析用焦點關鍵字 (Focus Keyword)
-                      <span className="ml-2 text-xs text-gray-500 font-normal">
-                        (用於即時 SEO 分析，不影響儲存內容)
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      value={focusKeyword}
-                      onChange={(e) => setFocusKeyword(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="輸入主要關鍵字進行分析"
-                    />
-                  </div>
+                {hasAnalyzed && !isAnalyzing && (
+                  <div className="border-t border-gray-200 pt-6">
+                    <div className="mb-4">
+                       <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        分析用焦點關鍵字 (Focus Keyword)
+                        <span className="ml-2 text-xs text-gray-500 font-normal">
+                          (用於 SEO 分析，建議與 Meta 關鍵字一致)
+                        </span>
+                      </label>
+                      <input
+                        type="text"
+                        value={focusKeyword}
+                        onChange={(e) => setFocusKeyword(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        placeholder="輸入主要關鍵字進行分析"
+                      />
+                    </div>
 
-                  <div className="space-y-3">
-                    {seoResult.checks.map((check) => (
-                      <div key={check.id} className="flex items-start">
-                        <div className={`mt-0.5 mr-3 flex-shrink-0 ${
-                          check.status === 'pass' ? 'text-green-500' :
-                          check.status === 'warning' ? 'text-yellow-500' : 'text-red-500'
-                        }`}>
-                          <i className={
-                            check.status === 'pass' ? 'ri-checkbox-circle-fill' :
-                            check.status === 'warning' ? 'ri-error-warning-fill' : 'ri-close-circle-fill'
-                          }></i>
-                        </div>
-                        <div>
-                          <p className={`text-sm font-medium ${
-                             check.status === 'pass' ? 'text-gray-900' : 'text-gray-700'
+                    <div className="space-y-3">
+                      {seoResult.checks.map((check) => (
+                        <div key={check.id} className="flex items-start">
+                          <div className={`mt-0.5 mr-3 flex-shrink-0 ${
+                            check.status === 'pass' ? 'text-green-500' :
+                            check.status === 'warning' ? 'text-yellow-500' : 'text-red-500'
                           }`}>
-                            {check.label}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {check.message}
-                          </p>
+                            <i className={
+                              check.status === 'pass' ? 'ri-checkbox-circle-fill' :
+                              check.status === 'warning' ? 'ri-error-warning-fill' : 'ri-close-circle-fill'
+                            }></i>
+                          </div>
+                          <div>
+                            <p className={`text-sm font-medium ${
+                               check.status === 'pass' ? 'text-gray-900' : 'text-gray-700'
+                            }`}>
+                              {check.label}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {check.message}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="flex items-center gap-6">

@@ -86,31 +86,52 @@ serve(async (req) => {
       throw new Error('PDF 沒有任何頁面');
     }
 
-    // 下載並嵌入中文字體（使用 Noto Sans TC WOFF）
+    // 下載並嵌入中文字體（使用 Noto Sans TC TTF）
     console.log('🔤 [步驟 8/10] 下載並嵌入中文字體');
     let font;
     try {
       console.log('  📥 正在下載 Noto Sans TC (Traditional Chinese)...');
-      // 使用更輕量且穩定的字體來源 (WOFF format is supported by pdf-lib + fontkit)
-      const fontResponse = await fetch('https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-tc@5.0.0/files/noto-sans-tc-chinese-traditional-400-normal.woff');
-      
+      // 使用 TTF 格式的字體（pdf-lib 需要 TTF 或 OTF 格式）
+      const fontResponse = await fetch('https://raw.githubusercontent.com/ArtifexSoftware/urern-ern/main/ArtifexUrERN_TC-Regular.ttf', {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        }
+      });
+
+      // 如果第一個來源失敗，嘗試備用來源
       if (!fontResponse.ok) {
-        throw new Error(`下載字體失敗: HTTP ${fontResponse.status}`);
+        console.log('  ⚠️ 第一個字體來源失敗，嘗試備用來源...');
+        const backupFontResponse = await fetch('https://github.com/ArtifexSoftware/urern-ern/raw/main/ArtifexUrERN_TC-Regular.ttf');
+        if (!backupFontResponse.ok) {
+          throw new Error(`下載字體失敗: HTTP ${fontResponse.status}`);
+        }
+        const fontBytes = await backupFontResponse.arrayBuffer();
+        console.log('  ✓ 備用字體下載完成，大小:', fontBytes.byteLength, 'bytes');
+        font = await pdfDoc.embedFont(fontBytes);
+      } else {
+        const fontBytes = await fontResponse.arrayBuffer();
+        console.log('  ✓ 字體下載完成，大小:', fontBytes.byteLength, 'bytes');
+        console.log('  🔧 正在嵌入字體到 PDF...');
+        font = await pdfDoc.embedFont(fontBytes);
       }
-      
-      const fontBytes = await fontResponse.arrayBuffer();
-      console.log('  ✓ 字體下載完成，大小:', fontBytes.byteLength, 'bytes');
-      
-      console.log('  🔧 正在嵌入字體到 PDF...');
-      font = await pdfDoc.embedFont(fontBytes);
       console.log('✅ [步驟 8/10] 中文字體嵌入完成');
     } catch (fontError) {
       console.error('❌ [步驟 8/10 失敗] 字體處理失敗');
       console.error('錯誤訊息:', fontError.message);
-      // Fallback to StandardFont if custom font fails (will not render Chinese properly but prevents crash)
-      console.warn('⚠️ 降級使用標準字體 (中文將無法顯示)');
-      // StandardFonts.Helvetica does NOT support Chinese, but we return error to user instead of broken PDF
-      throw new Error(`字體下載失敗，無法生成中文報告: ${fontError.message}`);
+      // Fallback: 嘗試使用 Google Fonts 的 Noto Sans TC
+      console.warn('⚠️ 嘗試第三備用字體來源...');
+      try {
+        const googleFontResponse = await fetch('https://fonts.gstatic.com/s/notosanstc/v36/-nFuOG829Oofr2wohFbTp9i9ywIvDt1T39Cx.otf');
+        if (googleFontResponse.ok) {
+          const fontBytes = await googleFontResponse.arrayBuffer();
+          font = await pdfDoc.embedFont(fontBytes);
+          console.log('✅ 第三備用字體載入成功');
+        } else {
+          throw new Error(`所有字體來源都失敗`);
+        }
+      } catch (fallbackError) {
+        throw new Error(`字體下載失敗，無法生成中文報告: ${fontError.message}`);
+      }
     }
 
     // 格式化數字為千分位
