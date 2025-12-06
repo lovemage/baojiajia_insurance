@@ -138,13 +138,6 @@ export default function HomepageEditor({ onBack }: Props) {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">首頁內容編輯</h1>
               <p className="text-gray-600">編輯首頁 Hero 區塊和行動呼籲內容</p>
             </div>
-            <button
-              onClick={onBack}
-              className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <i className="ri-arrow-left-line mr-2"></i>
-              返回
-            </button>
           </div>
         </div>
 
@@ -375,12 +368,6 @@ export default function HomepageEditor({ onBack }: Props) {
 
         {/* Save Button */}
         <div className="flex justify-end gap-4">
-          <button
-            onClick={onBack}
-            className="px-8 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors cursor-pointer whitespace-nowrap"
-          >
-            取消
-          </button>
           <button
             onClick={handleSave}
             disabled={saving}

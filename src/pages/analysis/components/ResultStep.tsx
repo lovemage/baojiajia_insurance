@@ -116,6 +116,24 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
     setIsGeneratingPDF(true);
 
     try {
+      // 保存會員問卷資料
+      if (user) {
+        const { error } = await supabase.from('member_submissions').insert({
+          user_id: user.id,
+          email: user.email,
+          name: downloadData.name,
+          phone: downloadData.phone,
+          city: downloadData.city,
+          line_id: downloadData.lineId,
+          questionnaire_data: data
+        });
+
+        if (error) {
+          console.error('Error saving member submission:', error);
+          // 不阻擋 PDF 生成，但記錄錯誤
+        }
+      }
+
       // 準備 PDF 填寫資料
       const pdfData = {
         // 基本資料

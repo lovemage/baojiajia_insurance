@@ -9,6 +9,7 @@ import FeaturesEditor from './components/FeaturesEditor';
 import TestimonialsEditor from './components/TestimonialsEditor';
 import BlogEditor from './components/BlogEditor';
 import AboutEditor from './components/AboutEditor';
+import MemberManager from './components/MemberManager';
 import ContactEditor from './components/ContactEditor';
 import NavigationEditor from './components/NavigationEditor';
 import SiteSettingsEditor from './components/SiteSettingsEditor';
@@ -28,7 +29,7 @@ interface ServiceItem {
   is_active: boolean;
 }
 
-type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'features' | 'testimonials' | 'blog' | 'about' | 'contact' | 'navigation' | 'site-settings' | 'statistics' | 'blog-categories' | 'change-password';
+type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'features' | 'testimonials' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'statistics' | 'blog-categories' | 'change-password';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ export default function AdminPage() {
     { id: 'blog', label: '知識專區', icon: 'ri-article-line' },
     { id: 'blog-categories', label: '文章分類', icon: 'ri-folder-settings-line' },
     { id: 'about', label: '關於我們', icon: 'ri-team-line' },
-    { id: 'contact', label: '聯絡資訊', icon: 'ri-contacts-line' },
+    { id: 'member-manager', label: '會員資訊', icon: 'ri-user-search-line' },
     { id: 'site-settings', label: '網站設定', icon: 'ri-settings-4-line' },
     { id: 'statistics', label: '統計數據', icon: 'ri-bar-chart-box-line' },
   ];
@@ -90,8 +91,8 @@ export default function AdminPage() {
         return <BlogEditor onBack={handleBack} />;
       case 'about':
         return <AboutEditor onBack={handleBack} />;
-      case 'contact':
-        return <ContactEditor onBack={handleBack} />;
+      case 'member-manager':
+        return <MemberManager />;
       case 'navigation':
         return <NavigationEditor onBack={handleBack} />;
       case 'site-settings':
