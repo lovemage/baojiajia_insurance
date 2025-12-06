@@ -14,6 +14,15 @@ interface MemberSubmission {
   created_at: string;
 }
 
+interface MemberGroup {
+  email: string;
+  user_id: string;
+  name: string;
+  phone: string;
+  submissions: MemberSubmission[];
+  last_submission_at: string;
+}
+
 // 安全讀取數據的輔助函數
 const safeGet = (obj: any, path: string, defaultValue: any = '-') => {
   try {
@@ -25,9 +34,10 @@ const safeGet = (obj: any, path: string, defaultValue: any = '-') => {
 };
 
 export default function MemberManager() {
-  const [members, setMembers] = useState<MemberSubmission[]>([]);
+  const [memberGroups, setMemberGroups] = useState<MemberGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<MemberSubmission | null>(null);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -39,15 +49,48 @@ export default function MemberManager() {
 
   const fetchMembers = async () => {
     try {
-      // 確保即使本地狀態更新，也從後端獲取最新數據
-      // (雖然這裡只是一次性的，但在 handleDelete 中我們會再次呼叫)
       const { data, error } = await supabase
         .from('member_submissions')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setMembers(data || []);
+      
+      // Group by email
+      const groups: Record<string, MemberGroup> = {};
+      
+      (data || []).forEach((submission: MemberSubmission) => {
+        const key = submission.email;
+        if (!groups[key]) {
+          groups[key] = {
+            email: submission.email,
+            user_id: submission.user_id,
+            name: submission.name,
+            phone: submission.phone,
+            submissions: [],
+            last_submission_at: submission.created_at
+          };
+        }
+        groups[key].submissions.push(submission);
+        // Keep latest info
+        if (new Date(submission.created_at) > new Date(groups[key].last_submission_at)) {
+           groups[key].last_submission_at = submission.created_at;
+           groups[key].name = submission.name;
+           groups[key].phone = submission.phone;
+        }
+      });
+
+      // Sort submissions within groups
+      Object.values(groups).forEach(g => {
+        g.submissions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      });
+
+      // Convert to array and sort by last submission date
+      const sortedGroups = Object.values(groups).sort((a, b) => 
+        new Date(b.last_submission_at).getTime() - new Date(a.last_submission_at).getTime()
+      );
+
+      setMemberGroups(sortedGroups);
     } catch (error) {
       console.error('Error fetching members:', error);
     } finally {
@@ -55,10 +98,9 @@ export default function MemberManager() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteSubmission = async (id: string) => {
     setDeleting(id);
     try {
-      // 確保刪除操作成功執行
       const { error } = await supabase
         .from('member_submissions')
         .delete()
@@ -66,21 +108,17 @@ export default function MemberManager() {
 
       if (error) throw error;
 
-      // 雙重確認：從本地狀態移除，並重新獲取數據以確保一致性
-      setMembers((prevMembers) => prevMembers.filter(m => m.id !== id));
-      setShowDeleteConfirm(null);
-
       // 如果正在查看被刪除的會員，關閉彈窗
       if (selectedMember?.id === id) {
         setSelectedMember(null);
       }
       
-      // 重新獲取一次列表，確保畫面與資料庫同步
       await fetchMembers();
-      
+      setShowDeleteConfirm(null);
+      alert('刪除成功');
     } catch (error) {
-      console.error('Error deleting member:', error);
-      alert('刪除失敗，請稍後再試');
+      console.error('Error deleting submission:', error);
+      alert('刪除失敗，請確認您有權限執行此操作');
     } finally {
       setDeleting(null);
     }
@@ -271,72 +309,118 @@ export default function MemberManager() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">註冊時間</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">姓名</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Email</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900"></th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">會員資料 (姓名/Email)</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">電話</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Line ID</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">操作</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">最新下載時間</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">下載次數</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {members.map((member) => (
-                  <tr key={member.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(member.created_at).toLocaleString('zh-TW')}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900">{member.name}</div>
-                      <div className="text-sm text-gray-500">{member.city}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{member.email}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{member.phone}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{member.line_id}</td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => setSelectedMember(member)}
-                          className="px-3 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer whitespace-nowrap text-sm"
-                        >
-                          <i className="ri-file-list-3-line mr-1"></i>
-                          詳情
-                        </button>
-                        {showDeleteConfirm === member.id ? (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleDelete(member.id)}
-                              disabled={deleting === member.id}
-                              className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer whitespace-nowrap text-sm disabled:opacity-50"
-                            >
-                              {deleting === member.id ? (
-                                <i className="ri-loader-4-line animate-spin"></i>
-                              ) : (
-                                '確認'
-                              )}
-                            </button>
-                            <button
-                              onClick={() => setShowDeleteConfirm(null)}
-                              className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors cursor-pointer whitespace-nowrap text-sm"
-                            >
-                              取消
-                            </button>
+                {memberGroups.map((group) => (
+                  <>
+                    <tr 
+                      key={group.email} 
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => setExpandedGroup(expandedGroup === group.email ? null : group.email)}
+                    >
+                      <td className="px-6 py-4 w-10 text-center">
+                        <i className={`ri-arrow-right-s-line transition-transform duration-200 text-gray-400 text-xl ${
+                          expandedGroup === group.email ? 'rotate-90' : ''
+                        }`}></i>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-gray-900">{group.name || '未填寫'}</div>
+                        <div className="text-sm text-gray-500">{group.email}</div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{group.phone || '-'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {new Date(group.last_submission_at).toLocaleString('zh-TW')}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                          {group.submissions.length} 次
+                        </span>
+                      </td>
+                    </tr>
+                    
+                    {expandedGroup === group.email && (
+                      <tr>
+                        <td colSpan={5} className="bg-gray-50 p-4">
+                          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                            <table className="w-full">
+                              <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
+                                <tr>
+                                  <th className="px-4 py-2 text-left">下載時間</th>
+                                  <th className="px-4 py-2 text-left">居住地</th>
+                                  <th className="px-4 py-2 text-left">Line ID</th>
+                                  <th className="px-4 py-2 text-right">操作</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100">
+                                {group.submissions.map((submission) => (
+                                  <tr key={submission.id} className="text-sm hover:bg-gray-50">
+                                    <td className="px-4 py-3 text-gray-600">
+                                      {new Date(submission.created_at).toLocaleString('zh-TW')}
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-900">{submission.city}</td>
+                                    <td className="px-4 py-3 text-gray-900">{submission.line_id}</td>
+                                    <td className="px-4 py-3 text-right space-x-2">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedMember(submission);
+                                        }}
+                                        className="text-teal-600 hover:text-teal-900 font-medium"
+                                      >
+                                        詳情
+                                      </button>
+                                      {showDeleteConfirm === submission.id ? (
+                                        <>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleDeleteSubmission(submission.id);
+                                            }}
+                                            className="text-red-600 hover:text-red-900 font-medium"
+                                          >
+                                            確認
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setShowDeleteConfirm(null);
+                                            }}
+                                            className="text-gray-500 hover:text-gray-700"
+                                          >
+                                            取消
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowDeleteConfirm(submission.id);
+                                          }}
+                                          className="text-red-600 hover:text-red-900 font-medium"
+                                        >
+                                          刪除
+                                        </button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
-                        ) : (
-                          <button
-                            onClick={() => setShowDeleteConfirm(member.id)}
-                            className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors cursor-pointer whitespace-nowrap text-sm"
-                          >
-                            <i className="ri-delete-bin-line mr-1"></i>
-                            刪除
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
-                {members.length === 0 && (
+                {memberGroups.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                       尚無會員資料
                     </td>
                   </tr>
@@ -475,28 +559,7 @@ export default function MemberManager() {
               </div>
             )}
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 flex justify-between">
-              <button
-                onClick={() => {
-                  if (confirm(`確定要刪除 ${selectedMember.name} 的資料嗎？此操作無法復原。`)) {
-                    handleDelete(selectedMember.id);
-                  }
-                }}
-                disabled={deleting === selectedMember.id || isGeneratingPDF}
-                className="px-6 py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {deleting === selectedMember.id ? (
-                  <>
-                    <i className="ri-loader-4-line animate-spin mr-2"></i>
-                    刪除中...
-                  </>
-                ) : (
-                  <>
-                    <i className="ri-delete-bin-line mr-2"></i>
-                    刪除此會員
-                  </>
-                )}
-              </button>
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 flex justify-end">
               <div className="flex gap-3">
                 <button
                   onClick={() => handleDownloadPDF(selectedMember)}
