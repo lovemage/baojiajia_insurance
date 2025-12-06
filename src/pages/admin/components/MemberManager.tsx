@@ -39,6 +39,8 @@ export default function MemberManager() {
 
   const fetchMembers = async () => {
     try {
+      // 確保即使本地狀態更新，也從後端獲取最新數據
+      // (雖然這裡只是一次性的，但在 handleDelete 中我們會再次呼叫)
       const { data, error } = await supabase
         .from('member_submissions')
         .select('*')
@@ -56,6 +58,7 @@ export default function MemberManager() {
   const handleDelete = async (id: string) => {
     setDeleting(id);
     try {
+      // 確保刪除操作成功執行
       const { error } = await supabase
         .from('member_submissions')
         .delete()
@@ -63,14 +66,18 @@ export default function MemberManager() {
 
       if (error) throw error;
 
-      // 更新本地狀態
-      setMembers(members.filter(m => m.id !== id));
+      // 雙重確認：從本地狀態移除，並重新獲取數據以確保一致性
+      setMembers((prevMembers) => prevMembers.filter(m => m.id !== id));
       setShowDeleteConfirm(null);
 
       // 如果正在查看被刪除的會員，關閉彈窗
       if (selectedMember?.id === id) {
         setSelectedMember(null);
       }
+      
+      // 重新獲取一次列表，確保畫面與資料庫同步
+      await fetchMembers();
+      
     } catch (error) {
       console.error('Error deleting member:', error);
       alert('刪除失敗，請稍後再試');
