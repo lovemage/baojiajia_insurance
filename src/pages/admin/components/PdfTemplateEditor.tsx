@@ -141,7 +141,25 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
     };
 
-    let html = `<style>${template.styles}</style>`;
+    // 預覽時使用與前端 PDF 生成一致的容器結構
+    let html = `
+      <style>
+        .page-break { page-break-before: always; }
+        .pdf-container {
+          font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+          color: #333;
+          line-height: 1.5;
+          width: 210mm; /* A4 width */
+          margin: 0 auto;
+          background: white;
+          padding: 20mm;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        ${template.styles}
+      </style>
+      <div class="pdf-container">
+    `;
+    
     html += template.header_html;
     html += template.basic_info_html;
     html += template.medical_html;
@@ -150,6 +168,8 @@ export default function PdfTemplateEditor({ onBack }: Props) {
     html += template.life_html;
     html += template.accident_html;
     html += template.footer_html;
+    
+    html += '</div>';
 
     // 替換變數
     Object.entries(mockData).forEach(([key, value]) => {
@@ -319,4 +339,3 @@ export default function PdfTemplateEditor({ onBack }: Props) {
     </div>
   );
 }
-

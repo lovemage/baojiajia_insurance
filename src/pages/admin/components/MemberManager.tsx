@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import html2pdf from 'html2pdf.js';
 
 interface MemberSubmission {
   id: string;
@@ -13,12 +14,24 @@ interface MemberSubmission {
   created_at: string;
 }
 
+// 安全讀取數據的輔助函數
+const safeGet = (obj: any, path: string, defaultValue: any = '-') => {
+  try {
+    const value = path.split('.').reduce((o, k) => (o || {})[k], obj);
+    return value !== undefined && value !== null ? value : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
 export default function MemberManager() {
   const [members, setMembers] = useState<MemberSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<MemberSubmission | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState(0);
 
   useEffect(() => {
     fetchMembers();
@@ -63,6 +76,165 @@ export default function MemberManager() {
       alert('刪除失敗，請稍後再試');
     } finally {
       setDeleting(null);
+    }
+  };
+
+  // PDF 下載功能
+  const handleDownloadPDF = async (member: MemberSubmission) => {
+    setIsGeneratingPDF(true);
+    setPdfProgress(0);
+
+    // 啟動進度條動畫
+    const progressInterval = setInterval(() => {
+      setPdfProgress(prev => {
+        if (prev >= 95) return prev;
+        return prev + (95 - prev) * 0.08;
+      });
+    }, 100);
+
+    try {
+      const data = member.questionnaire_data || {};
+
+      // 從 Supabase 獲取 PDF 模板
+      const { data: templateData, error: templateError } = await supabase
+        .from('pdf_templates')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+
+      if (templateError) {
+        throw new Error('無法載入 PDF 模板');
+      }
+
+      // 準備 PDF 填寫資料
+      const formatNumber = (num: number) => (num || 0).toLocaleString('zh-TW');
+      const roomTypeText = data.roomType === 'double' ? '雙人房' :
+                          data.roomType === 'single' ? '單人房' : '健保房';
+
+      const pdfVariables: Record<string, string> = {
+        '{{name}}': member.name || '-',
+        '{{phone}}': member.phone || '-',
+        '{{lineId}}': member.line_id || '-',
+        '{{city}}': member.city || '-',
+        '{{roomType}}': roomTypeText,
+        '{{roomCost}}': formatNumber(data.roomType === 'double' ? 3000 : data.roomType === 'single' ? 5000 : 0),
+        '{{hospitalDaily}}': formatNumber(data.hospitalDaily || 0),
+        '{{surgeryRange}}': data.surgerySubsidy === 'full' ? '30~40萬' :
+                           data.surgerySubsidy === 'recommended' ? '20~30萬' : '10~20萬',
+        '{{salaryLossInTenThousand}}': String(Math.round((data.salaryLoss || 0) / 10000)),
+        '{{livingExpenseInTenThousand}}': String(Math.round((data.livingExpense || 0) * 12 / 10000)),
+        '{{treatmentCostInTenThousand}}': String(Math.round((data.treatmentCost || 0) / 10000)),
+        '{{longTermCareInTenThousand}}': String(Math.round((data.longTermCare || 0) / 10000)),
+        '{{personalDebt}}': formatNumber(data.personalDebt || 0),
+        '{{familyCare}}': formatNumber(data.familyCare || 0),
+        '{{monthlyIncomeInTenThousand}}': String(Math.round((data.monthlyIncome || 0) / 10000)),
+        '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
+      };
+
+      // 替換變數
+      let processedStyles = templateData.styles || '';
+      Object.entries(pdfVariables).forEach(([key, value]) => {
+        processedStyles = processedStyles.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+      });
+
+      let header = templateData.header_html || '';
+      let basicInfo = templateData.basic_info_html || '';
+      let medical = templateData.medical_html || '';
+      let critical = templateData.critical_html || '';
+      let longterm = templateData.longterm_html || '';
+      let life = templateData.life_html || '';
+      let accident = templateData.accident_html || '';
+      let footer = templateData.footer_html || '';
+
+      [header, basicInfo, medical, critical, longterm, life, accident, footer].forEach((html, index) => {
+        let processedHtml = html;
+        Object.entries(pdfVariables).forEach(([key, value]) => {
+          processedHtml = processedHtml.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+        });
+
+        switch(index) {
+          case 0: header = processedHtml; break;
+          case 1: basicInfo = processedHtml; break;
+          case 2: medical = processedHtml; break;
+          case 3: critical = processedHtml; break;
+          case 4: longterm = processedHtml; break;
+          case 5: life = processedHtml; break;
+          case 6: accident = processedHtml; break;
+          case 7: footer = processedHtml; break;
+        }
+      });
+
+      // 創建臨時容器
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.width = '210mm';
+
+      container.innerHTML = `
+        <style>
+          ${processedStyles}
+          .pdf-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            background: white;
+            box-sizing: border-box;
+            position: relative;
+            page-break-after: always;
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+          }
+          .pdf-page:last-child {
+            page-break-after: avoid;
+          }
+          * { box-sizing: border-box; }
+        </style>
+        <div class="pdf-wrapper">
+          ${header}
+          ${basicInfo}
+          ${medical}
+          ${critical}
+          ${longterm}
+          ${life}
+          ${accident}
+          ${footer}
+        </div>
+      `;
+
+      document.body.appendChild(container);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const opt = {
+        margin: 0,
+        filename: `保障需求分析報告_${member.name}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          logging: false,
+        },
+        jsPDF: {
+          unit: 'mm' as const,
+          format: 'a4' as const,
+          orientation: 'portrait' as const
+        }
+      };
+
+      await html2pdf().set(opt).from(container).save();
+      document.body.removeChild(container);
+
+      clearInterval(progressInterval);
+      setPdfProgress(100);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setPdfProgress(0);
+    } catch (error) {
+      console.error('生成 PDF 失敗：', error);
+      clearInterval(progressInterval);
+      setPdfProgress(0);
+      alert('生成 PDF 時發生錯誤，請稍後再試。');
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -199,10 +371,10 @@ export default function MemberManager() {
                 <div className="bg-gray-50 rounded-xl p-6">
                   <h4 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">個人背景</h4>
                   <div className="space-y-3">
-                    <p className="flex justify-between"><span className="text-gray-500">性別：</span> <span className="font-medium">{selectedMember.questionnaire_data.gender === 'male' ? '男' : '女'}</span></p>
-                    <p className="flex justify-between"><span className="text-gray-500">出生日期：</span> <span className="font-medium">{selectedMember.questionnaire_data.birthDate}</span></p>
-                    <p className="flex justify-between"><span className="text-gray-500">職業等級：</span> <span className="font-medium">{selectedMember.questionnaire_data.occupation}</span></p>
-                    <p className="flex justify-between"><span className="text-gray-500">規劃對象：</span> <span className="font-medium">{selectedMember.questionnaire_data.planType === 'self' ? '本人' : '子女'}</span></p>
+                    <p className="flex justify-between"><span className="text-gray-500">性別：</span> <span className="font-medium">{safeGet(selectedMember.questionnaire_data, 'gender') === 'male' ? '男' : safeGet(selectedMember.questionnaire_data, 'gender') === 'female' ? '女' : '-'}</span></p>
+                    <p className="flex justify-between"><span className="text-gray-500">出生日期：</span> <span className="font-medium">{safeGet(selectedMember.questionnaire_data, 'birthDate')}</span></p>
+                    <p className="flex justify-between"><span className="text-gray-500">職業等級：</span> <span className="font-medium">{safeGet(selectedMember.questionnaire_data, 'occupation')}</span></p>
+                    <p className="flex justify-between"><span className="text-gray-500">規劃對象：</span> <span className="font-medium">{safeGet(selectedMember.questionnaire_data, 'planType') === 'self' ? '本人' : safeGet(selectedMember.questionnaire_data, 'planType') === 'child' ? '子女' : '-'}</span></p>
                   </div>
                 </div>
               </div>
@@ -213,56 +385,86 @@ export default function MemberManager() {
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">期望病房類型</div>
                     <div className="font-medium text-lg">
-                      {selectedMember.questionnaire_data.roomType === 'single' ? '單人房' : 
-                       selectedMember.questionnaire_data.roomType === 'double' ? '雙人房' : '健保房'}
+                      {safeGet(selectedMember.questionnaire_data, 'roomType') === 'single' ? '單人房' :
+                       safeGet(selectedMember.questionnaire_data, 'roomType') === 'double' ? '雙人房' :
+                       safeGet(selectedMember.questionnaire_data, 'roomType') === 'standard' ? '健保房' : '-'}
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">期望住院日額</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {selectedMember.questionnaire_data.hospitalDaily?.toLocaleString()} 元/日
+                      {safeGet(selectedMember.questionnaire_data, 'hospitalDaily', 0)?.toLocaleString() || 0} 元/日
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">手術醫療補貼</div>
                     <div className="font-medium text-lg">
-                      {selectedMember.questionnaire_data.surgerySubsidy === 'full' ? '全額負擔 (30-40萬)' : 
-                       selectedMember.questionnaire_data.surgerySubsidy === 'recommended' ? '建議額度 (20-30萬)' : '基本額度 (10-20萬)'}
+                      {safeGet(selectedMember.questionnaire_data, 'surgerySubsidy') === 'full' ? '全額負擔 (30-40萬)' :
+                       safeGet(selectedMember.questionnaire_data, 'surgerySubsidy') === 'recommended' ? '建議額度 (20-30萬)' :
+                       safeGet(selectedMember.questionnaire_data, 'surgerySubsidy') === 'basic' ? '基本額度 (10-20萬)' : '-'}
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">薪資損失補償</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {selectedMember.questionnaire_data.salaryLoss?.toLocaleString()} 元/月
+                      {safeGet(selectedMember.questionnaire_data, 'salaryLoss', 0)?.toLocaleString() || 0} 元/月
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">每月生活開銷</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {selectedMember.questionnaire_data.livingExpense?.toLocaleString()} 元/月
+                      {safeGet(selectedMember.questionnaire_data, 'livingExpense', 0)?.toLocaleString() || 0} 元/月
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">治療費用補償</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {selectedMember.questionnaire_data.treatmentCost?.toLocaleString()} 元
+                      {safeGet(selectedMember.questionnaire_data, 'treatmentCost', 0)?.toLocaleString() || 0} 元
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">長照費用需求</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {selectedMember.questionnaire_data.longTermCare?.toLocaleString()} 元/月
+                      {safeGet(selectedMember.questionnaire_data, 'longTermCare', 0)?.toLocaleString() || 0} 元/月
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">家人照顧金</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {selectedMember.questionnaire_data.familyCare?.toLocaleString()} 元
+                      {safeGet(selectedMember.questionnaire_data, 'familyCare', 0)?.toLocaleString() || 0} 元
+                    </div>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="text-sm text-gray-500 mb-1">個人負債</div>
+                    <div className="font-medium text-lg text-teal-600">
+                      {safeGet(selectedMember.questionnaire_data, 'personalDebt', 0)?.toLocaleString() || 0} 元
+                    </div>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="text-sm text-gray-500 mb-1">月收入</div>
+                    <div className="font-medium text-lg text-teal-600">
+                      {safeGet(selectedMember.questionnaire_data, 'monthlyIncome', 0)?.toLocaleString() || 0} 元/月
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* 進度條 */}
+            {isGeneratingPDF && (
+              <div className="px-8 py-4 bg-teal-50 border-t border-teal-100">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-teal-600">正在生成報告...</span>
+                  <span className="text-sm font-medium text-teal-600">{Math.round(pdfProgress)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${pdfProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 flex justify-between">
               <button
@@ -271,7 +473,7 @@ export default function MemberManager() {
                     handleDelete(selectedMember.id);
                   }
                 }}
-                disabled={deleting === selectedMember.id}
+                disabled={deleting === selectedMember.id || isGeneratingPDF}
                 className="px-6 py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {deleting === selectedMember.id ? (
@@ -286,12 +488,31 @@ export default function MemberManager() {
                   </>
                 )}
               </button>
-              <button
-                onClick={() => setSelectedMember(null)}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
-              >
-                關閉
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleDownloadPDF(selectedMember)}
+                  disabled={isGeneratingPDF}
+                  className="px-6 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-xl font-semibold hover:from-teal-600 hover:to-emerald-600 transition-all cursor-pointer disabled:opacity-50 shadow-lg"
+                >
+                  {isGeneratingPDF ? (
+                    <>
+                      <i className="ri-loader-4-line animate-spin mr-2"></i>
+                      生成中...
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-download-line mr-2"></i>
+                      下載 PDF
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setSelectedMember(null)}
+                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
+                >
+                  關閉
+                </button>
+              </div>
             </div>
           </div>
         </div>
