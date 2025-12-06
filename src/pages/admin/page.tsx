@@ -17,6 +17,7 @@ import StatisticsEditor from './components/StatisticsEditor';
 import CategoryManager from './components/CategoryManager';
 import ChangePassword from './components/ChangePassword';
 import ServiceManager from './components/ServiceManager';
+import PdfTemplateEditor from './components/PdfTemplateEditor';
 
 interface ServiceItem {
   id: string;
@@ -29,7 +30,7 @@ interface ServiceItem {
   is_active: boolean;
 }
 
-type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'features' | 'testimonials' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'statistics' | 'blog-categories' | 'change-password';
+type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'features' | 'testimonials' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'statistics' | 'blog-categories' | 'change-password' | 'pdf-template';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -71,6 +72,7 @@ export default function AdminPage() {
     { id: 'blog-categories', label: '文章分類', icon: 'ri-folder-settings-line' },
     { id: 'about', label: '關於我們', icon: 'ri-team-line' },
     { id: 'member-manager', label: '會員資訊', icon: 'ri-user-search-line' },
+    { id: 'pdf-template', label: 'PDF 報告模板', icon: 'ri-file-pdf-line' },
     { id: 'site-settings', label: '網站設定', icon: 'ri-settings-4-line' },
     { id: 'statistics', label: '統計數據', icon: 'ri-bar-chart-box-line' },
   ];
@@ -101,6 +103,8 @@ export default function AdminPage() {
         return <StatisticsEditor onBack={handleBack} />;
       case 'blog-categories':
         return <CategoryManager onBack={handleBack} />;
+      case 'pdf-template':
+        return <PdfTemplateEditor onBack={handleBack} />;
       case 'change-password':
         return <ChangePassword onBack={handleBack} />;
       case 'list':

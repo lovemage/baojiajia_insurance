@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
+import html2pdf from 'html2pdf.js';
+
+interface PdfTemplate {
+  header_html: string;
+  basic_info_html: string;
+  medical_html: string;
+  critical_html: string;
+  longterm_html: string;
+  life_html: string;
+  accident_html: string;
+  footer_html: string;
+  styles: string;
+}
 
 interface ResultStepProps {
   data: any;
@@ -133,87 +146,100 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
 
         if (error) {
           console.error('Error saving member submission:', error);
-          // 不阻擋 PDF 生成，但記錄錯誤
         }
+      }
+
+      // 從 Supabase 獲取 PDF 模板
+      const { data: templateData, error: templateError } = await supabase
+        .from('pdf_templates')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+
+      if (templateError) {
+        console.error('Error fetching template:', templateError);
+        throw new Error('無法載入 PDF 模板');
       }
 
       // 準備 PDF 填寫資料
-      const pdfData = {
-        // 基本資料
-        name: downloadData.name,
-        phone: downloadData.phone,
-        city: downloadData.city,
-        lineId: downloadData.lineId,
-        
-        // 規則 3: 病房選擇
-        roomType: data.roomType || 'health',
-        roomCost: data.roomType === 'double' ? 3000 : data.roomType === 'single' ? 5000 : 0,
-        
-        // 規則 4: 住院日額補償
-        hospitalDaily: data.hospitalDaily || 0,
-        
-        // 規則 5: 手術醫療補貼
-        surgerySubsidy: data.surgerySubsidy || 'partial',
-        surgeryRange: data.surgerySubsidy === 'full' ? '30～40萬' : 
-                      data.surgerySubsidy === 'recommended' ? '20～30萬' : '10～20萬',
-        
-        // 規則 6: 薪資損失補償
-        salaryLoss: data.salaryLoss || 0,
-        salaryLossInTenThousand: Math.round((data.salaryLoss || 0) / 10000),
-        
-        // 規則 7: 每月生活開銷
-        livingExpense: data.livingExpense || 0,
-        livingExpenseInTenThousand: Math.round((data.livingExpense || 0) * 12 / 10000),
-        
-        // 規則 8: 治療費用補償
-        treatmentCost: data.treatmentCost || 0,
-        treatmentCostInTenThousand: Math.round((data.treatmentCost || 0) / 10000),
-        
-        // 規則 9: 一次性理賠金（固定 100）
-        oneTimePayment: 100,
-        
-        // 規則 10: 長照費用需求
-        longTermCare: data.longTermCare || 0,
-        longTermCareInTenThousand: Math.round((data.longTermCare || 0) / 10000),
-        
-        // 規則 11: 個人債務總額
-        personalDebt: data.personalDebt || 0,
-        
-        // 規則 12: 家人照顧金
-        familyCare: data.familyCare || 0,
-        
-        // 規則 13: 意外保障
-        monthlyIncome: data.monthlyIncome || 0,
-        monthlyIncomeInTenThousand: Math.round((data.monthlyIncome || 0) / 10000)
+      const formatNumber = (num: number) => num.toLocaleString('zh-TW');
+      const roomTypeText = data.roomType === 'double' ? '雙人房' :
+                          data.roomType === 'single' ? '單人房' : '健保房';
+
+      const pdfVariables: Record<string, string> = {
+        '{{name}}': downloadData.name,
+        '{{phone}}': downloadData.phone,
+        '{{lineId}}': downloadData.lineId || '-',
+        '{{city}}': downloadData.city || '-',
+        '{{roomType}}': roomTypeText,
+        '{{roomCost}}': formatNumber(data.roomType === 'double' ? 3000 : data.roomType === 'single' ? 5000 : 0),
+        '{{hospitalDaily}}': formatNumber(data.hospitalDaily || 0),
+        '{{surgeryRange}}': data.surgerySubsidy === 'full' ? '30~40萬' :
+                           data.surgerySubsidy === 'recommended' ? '20~30萬' : '10~20萬',
+        '{{salaryLossInTenThousand}}': String(Math.round((data.salaryLoss || 0) / 10000)),
+        '{{livingExpenseInTenThousand}}': String(Math.round((data.livingExpense || 0) * 12 / 10000)),
+        '{{treatmentCostInTenThousand}}': String(Math.round((data.treatmentCost || 0) / 10000)),
+        '{{longTermCareInTenThousand}}': String(Math.round((data.longTermCare || 0) / 10000)),
+        '{{personalDebt}}': formatNumber(data.personalDebt || 0),
+        '{{familyCare}}': formatNumber(data.familyCare || 0),
+        '{{monthlyIncomeInTenThousand}}': String(Math.round((data.monthlyIncome || 0) / 10000)),
+        '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
       };
 
-      // 呼叫 Edge Function 生成 PDF
-      const response = await fetch(
-        `${import.meta.env.VITE_PUBLIC_SUPABASE_URL}/functions/v1/generate-insurance-pdf`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(pdfData)
+      // 組合 HTML 內容
+      let htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>${templateData.styles || ''}</style>
+        </head>
+        <body>
+          ${templateData.header_html || ''}
+          ${templateData.basic_info_html || ''}
+          ${templateData.medical_html || ''}
+          ${templateData.critical_html || ''}
+          ${templateData.longterm_html || ''}
+          ${templateData.life_html || ''}
+          ${templateData.accident_html || ''}
+          ${templateData.footer_html || ''}
+        </body>
+        </html>
+      `;
+
+      // 替換變數
+      Object.entries(pdfVariables).forEach(([key, value]) => {
+        htmlContent = htmlContent.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+      });
+
+      // 創建臨時容器
+      const container = document.createElement('div');
+      container.innerHTML = htmlContent;
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      document.body.appendChild(container);
+
+      // 使用 html2pdf 生成 PDF
+      const opt = {
+        margin: 10,
+        filename: `保障需求分析報告_${downloadData.name}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true
+        },
+        jsPDF: {
+          unit: 'mm' as const,
+          format: 'a4' as const,
+          orientation: 'portrait' as const
         }
-      );
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '生成 PDF 失敗');
-      }
+      await html2pdf().set(opt).from(container).save();
 
-      // 下載 PDF
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `保障需求分析報告_${downloadData.name}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // 清理臨時容器
+      document.body.removeChild(container);
 
       setShowDownloadForm(false);
       alert('PDF 報告已生成並下載！');
