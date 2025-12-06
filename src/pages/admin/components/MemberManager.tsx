@@ -213,6 +213,7 @@ export default function MemberManager() {
           useCORS: true,
           letterRendering: true,
           logging: false,
+          scrollY: 0
         },
         jsPDF: {
           unit: 'mm' as const,
@@ -221,7 +222,8 @@ export default function MemberManager() {
         }
       };
 
-      await html2pdf().set(opt).from(container).save();
+      const element = container.querySelector('.pdf-wrapper') as HTMLElement;
+      await html2pdf().set(opt).from(element).save();
       document.body.removeChild(container);
 
       clearInterval(progressInterval);
