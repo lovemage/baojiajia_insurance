@@ -416,14 +416,13 @@ export default function PdfTemplateEditor({ onBack }: Props) {
           htmlContent={currentTemplate.html_content}
           styles={currentTemplate.styles}
           onSave={(newHtml, newStyles) => {
-            // 使用函數式更新以避免 Race Condition，確保 HTML 和 Styles 同時更新
+            // 使用函數式更新以避免 Race Condition
             setTemplates(prev => prev.map(t => 
               t.id === currentTemplate.id 
                 ? { ...t, html_content: newHtml, styles: newStyles } 
                 : t
             ));
             setShowVisualEditor(false);
-            // 提示用戶
             alert('可視化調整已應用到暫存區，請點擊右上角「儲存模板」以寫入資料庫。');
           }}
           onClose={() => setShowVisualEditor(false)}
@@ -447,7 +446,6 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   const styleTagRef = useRef<HTMLStyleElement | null>(null);
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
   
-  // 初始化渲染
   useEffect(() => {
     if (!contentRef.current) return;
     
@@ -505,60 +503,55 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     
     const contentDiv = contentRef.current;
     
-    // 1. 移除注入的 style 標籤
-    contentDiv.querySelectorAll('style').forEach(s => s.remove());
-    
-    // 2. 構建新的 CSS 規則塊
+    // 1. 先讀取位置信息，生成新的 CSS (在移除 style 標籤之前！)
     let newPositionStyles = '\n/* === VISUAL EDITOR POSITIONS === */\n';
-    
     const fields = Array.from(contentDiv.querySelectorAll('.field')) as HTMLElement[];
     
     fields.forEach(el => {
-      // 移除選中狀態
-      el.classList.remove('selected-field');
-
-      // 獲取位置 (優先從 style 獲取，如果是拖曳過的；如果沒動過，這裡可能是空，則需要讀取 computed)
-      // 注意：如果是剛初始化的舊元素，style.top 是空的。
-      // 我們需要確保所有元素的位置都被寫入。
-      
       let top = el.style.top;
       let left = el.style.left;
       
+      // 如果沒有內聯樣式（未移動過），讀取當前 computed style
       if (!top || !left) {
-        // 如果內聯樣式為空，嘗試讀取 computed style
         const computed = window.getComputedStyle(el);
         top = computed.top !== 'auto' ? computed.top : '0px';
         left = computed.left !== 'auto' ? computed.left : '0px';
       }
 
-      // 獲取 Unique Class
-      const idClass = Array.from(el.classList).find(c => c.startsWith('v-'));
-      
-      if (idClass) {
-        // 生成 CSS 規則，使用 !important 確保覆蓋舊樣式
-        newPositionStyles += `.${idClass} { position: absolute !important; top: ${top} !important; left: ${left} !important; }\n`;
+      // 獲取或生成 ID Class
+      let idClass = Array.from(el.classList).find(c => c.startsWith('v-'));
+      if (!idClass) {
+        idClass = `v-${Math.random().toString(36).substr(2, 8)}`;
+        el.classList.add(idClass);
       }
 
-      // 清理內聯樣式 (保持 HTML 整潔)
-      el.style.removeProperty('top');
-      el.style.removeProperty('left');
-      el.style.removeProperty('position');
+      // 生成 CSS 規則
+      newPositionStyles += `.${idClass} { position: absolute !important; top: ${top} !important; left: ${left} !important; }\n`;
     });
     
     newPositionStyles += '/* === END VISUAL EDITOR POSITIONS === */';
 
-    // 3. 更新 CSS 字串
+    // 2. 更新 CSS 字串
     let currentStyles = stylesStringRef.current;
-    
-    // 移除舊的 VISUAL EDITOR POSITIONS 區塊 (如果存在)
     const blockRegex = /\/\* === VISUAL EDITOR POSITIONS === \*\/[\s\S]*\/\* === END VISUAL EDITOR POSITIONS === \*\//;
+    
     if (blockRegex.test(currentStyles)) {
       currentStyles = currentStyles.replace(blockRegex, newPositionStyles);
     } else {
       currentStyles += '\n' + newPositionStyles;
     }
 
-    // 4. 獲取清理後的 HTML
+    // 3. 清理 DOM (移除 style 標籤, 移除臨時 class 和內聯樣式)
+    contentDiv.querySelectorAll('style').forEach(s => s.remove());
+    
+    fields.forEach(el => {
+      el.classList.remove('selected-field');
+      el.style.removeProperty('top');
+      el.style.removeProperty('left');
+      el.style.removeProperty('position');
+    });
+
+    // 4. 獲取 HTML
     const newHtml = contentDiv.innerHTML;
     
     onSave(newHtml, currentStyles);
@@ -631,9 +624,7 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       const overlay = pageElement.querySelector('.overlay');
       if (overlay) {
         const newSpan = document.createElement('span');
-        const uniqueClass = `v-${Math.random().toString(36).substr(2, 8)}`;
-        
-        newSpan.className = `field ${uniqueClass}`;
+        newSpan.className = 'field';
         newSpan.innerText = variable;
         newSpan.style.position = 'absolute';
         newSpan.style.top = `${Math.round(dropY)}px`;
