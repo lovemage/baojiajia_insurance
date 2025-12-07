@@ -1,0 +1,20 @@
+# robots.txt for 保家佳 (Bao Jiajia) Insurance Platform
+# https://baojiajia.com
+
+User-agent: *
+Allow: /
+
+# 禁止爬取管理後台
+Disallow: /admin
+Disallow: /admin/
+Disallow: /admin/login
+
+# 禁止爬取 PDF 模板資源
+Disallow: /pdf-templates/
+
+# Sitemap 位置
+Sitemap: https://baojiajia.com/sitemap.xml
+
+# 爬蟲延遲（秒）- 避免過度請求
+Crawl-delay: 1
+

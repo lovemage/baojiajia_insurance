@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  
+  <!-- 首頁 - 最高優先級 -->
+  <url>
+    <loc>https://baojiajia.com/</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- 保障需求分析 - 核心功能頁面 -->
+  <url>
+    <loc>https://baojiajia.com/analysis</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- 服務項目 -->
+  <url>
+    <loc>https://baojiajia.com/services</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- 服務詳情頁 - 醫療保障 -->
+  <url>
+    <loc>https://baojiajia.com/services/medical</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- 服務詳情頁 - 重大疾病保障 -->
+  <url>
+    <loc>https://baojiajia.com/services/critical-illness</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- 服務詳情頁 - 長期照護 -->
+  <url>
+    <loc>https://baojiajia.com/services/long-term-care</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- 服務詳情頁 - 意外保障 -->
+  <url>
+    <loc>https://baojiajia.com/services/accident</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- 服務詳情頁 - 壽險保障 -->
+  <url>
+    <loc>https://baojiajia.com/services/life</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- 服務詳情頁 - 兒童保障 -->
+  <url>
+    <loc>https://baojiajia.com/services/child</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- 新手入門 -->
+  <url>
+    <loc>https://baojiajia.com/beginner</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- 部落格 -->
+  <url>
+    <loc>https://baojiajia.com/blog</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- 關於我們 -->
+  <url>
+    <loc>https://baojiajia.com/about</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- 聯繫我們 -->
+  <url>
+    <loc>https://baojiajia.com/contact</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- 服務條款 -->
+  <url>
+    <loc>https://baojiajia.com/terms</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+  <!-- 隱私政策 -->
+  <url>
+    <loc>https://baojiajia.com/privacy</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+</urlset>
+
