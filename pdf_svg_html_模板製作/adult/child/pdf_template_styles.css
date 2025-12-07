@@ -1,0 +1,41 @@
+/* 基礎設定 */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.pdf-page { width: 794px; height: 1123px; position: relative; page-break-after: always; background: white; overflow: hidden; }
+.pdf-page:last-child { page-break-after: avoid; }
+.svg-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+.svg-bg img { width: 100%; height: 100%; object-fit: contain; }
+.overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+.field { position: absolute; font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; font-size: 14px; color: #333; font-weight: 500; background: rgba(255,255,255,0.9); padding: 2px 8px; border-radius: 4px; }
+
+/* Page 1: 封面 */
+.page-1 .name-field { top: 420px; left: 280px; font-size: 24px; font-weight: 700; }
+.page-1 .date-field { top: 520px; left: 300px; font-size: 16px; }
+
+/* Page 2: 基本資料 */
+.page-2 .f-name { top: 250px; left: 180px; }
+.page-2 .f-phone { top: 290px; left: 180px; }
+.page-2 .f-line { top: 330px; left: 180px; }
+.page-2 .f-city { top: 370px; left: 180px; }
+
+/* Page 3: 醫療保障 */
+.page-3 .f-roomType { top: 320px; left: 350px; }
+.page-3 .f-roomCost { top: 360px; left: 350px; }
+.page-3 .f-hospitalDaily { top: 400px; left: 350px; }
+.page-3 .f-surgeryRange { top: 440px; left: 350px; }
+.page-3 .f-outpatient { top: 480px; left: 350px; }
+
+/* Page 6: 重症保障 (薪資/生活/治療) */
+.page-6 .f-salaryLoss { top: 300px; left: 350px; }
+.page-6 .f-livingExpense { top: 360px; left: 350px; }
+.page-6 .f-treatmentCost { top: 420px; left: 350px; }
+
+/* Page 7: 重症保障 (一次金) */
+.page-7 .f-oneTime { top: 300px; left: 350px; }
+
+/* Page 8: 長照保障 */
+.page-8 .f-ltc-1to6-dis { top: 300px; left: 350px; }
+.page-8 .f-ltc-1to6-acc { top: 360px; left: 350px; }
+.page-8 .f-ltc-1to11-dis { top: 420px; left: 350px; }
+.page-8 .f-ltc-1to11-acc { top: 480px; left: 350px; }
+
+@media print { .pdf-page { box-shadow: none; margin: 0; } .field { background: transparent; } }
