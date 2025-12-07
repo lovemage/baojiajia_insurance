@@ -513,10 +513,14 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
             .field {
               cursor: move;
               user-select: none;
+              pointer-events: auto !important;
               border: 1px solid #3b82f6;
               background: rgba(59, 130, 246, 0.2);
               transition: none !important;
               z-index: 100 !important;
+            }
+            .overlay {
+              z-index: 10 !important;
             }
             .field:hover {
               background: rgba(59, 130, 246, 0.4);
