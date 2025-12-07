@@ -435,7 +435,7 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   onClose: () => void;
 }) {
   const [scale, setScale] = useState(0.8);
-  const stylesStringRef = useRef(styles); // 使用 ref 存儲樣式
+  const stylesStringRef = useRef(styles); 
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null); 
   const styleTagRef = useRef<HTMLStyleElement | null>(null);
@@ -445,13 +445,29 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   useEffect(() => {
     if (!contentRef.current) return;
     
+    // 1. 設置 HTML
     contentRef.current.innerHTML = htmlContent;
     
+    // 2. 遷移舊元素：確保每個 .field 都有唯一的 ID class
+    const fields = contentRef.current.querySelectorAll('.field');
+    fields.forEach(el => {
+      const element = el as HTMLElement;
+      // 檢查是否有以 v- 開頭的 class
+      const hasIdClass = Array.from(element.classList).some(c => c.startsWith('v-'));
+      if (!hasIdClass) {
+        // 如果沒有，生成一個並加上
+        const newIdClass = `v-${Math.random().toString(36).substr(2, 8)}`;
+        element.classList.add(newIdClass);
+      }
+    });
+
+    // 3. 設置樣式
     const styleEl = document.createElement('style');
     styleEl.textContent = styles;
     contentRef.current.appendChild(styleEl);
     styleTagRef.current = styleEl;
     
+    // 4. 注入編輯器專用樣式
     const editorStyle = document.createElement('style');
     editorStyle.textContent = `
       .field {
@@ -482,63 +498,63 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     if (!contentRef.current) return;
     
     const contentDiv = contentRef.current;
-    let currentStyles = stylesStringRef.current;
     
     // 1. 移除注入的 style 標籤
     contentDiv.querySelectorAll('style').forEach(s => s.remove());
     
-    // 2. 處理每個變數：提取位置到 CSS，並移除內聯樣式
+    // 2. 構建新的 CSS 規則塊
+    let newPositionStyles = '\n/* === VISUAL EDITOR POSITIONS === */\n';
+    
     const fields = Array.from(contentDiv.querySelectorAll('.field')) as HTMLElement[];
     
     fields.forEach(el => {
-      const top = el.style.top;
-      const left = el.style.left;
-      
+      // 移除選中狀態
       el.classList.remove('selected-field');
 
-      const classes = Array.from(el.classList).filter(c => c !== 'field');
-      let uniqueClass = classes[0];
-
-      if (!uniqueClass) {
-        uniqueClass = `v-${Math.random().toString(36).substr(2, 6)}`;
-        el.classList.add(uniqueClass);
+      // 獲取位置 (優先從 style 獲取，如果是拖曳過的；如果沒動過，這裡可能是空，則需要讀取 computed)
+      // 注意：如果是剛初始化的舊元素，style.top 是空的。
+      // 我們需要確保所有元素的位置都被寫入。
+      
+      let top = el.style.top;
+      let left = el.style.left;
+      
+      if (!top || !left) {
+        // 如果內聯樣式為空，嘗試讀取 computed style
+        const computed = window.getComputedStyle(el);
+        top = computed.top !== 'auto' ? computed.top : '0px';
+        left = computed.left !== 'auto' ? computed.left : '0px';
       }
 
-      if (top || left) {
-        // Regex 尋找包含該 class 的 CSS 規則塊
-        // 注意：這裡使用更寬鬆的 Regex 來匹配任何選擇器組合
-        const ruleRegex = new RegExp(`([^}]*\\.${uniqueClass}[^{]*)\\{([^}]*)\\}`, 'g');
-        
-        if (ruleRegex.test(currentStyles)) {
-          currentStyles = currentStyles.replace(ruleRegex, (match, selector, content) => {
-            let newContent = content;
-            if (top) {
-              if (/top\s*:\s*[^;]+/.test(newContent)) {
-                newContent = newContent.replace(/top\s*:\s*[^;]+;?/, `top: ${top};`);
-              } else {
-                newContent += ` top: ${top};`;
-              }
-            }
-            if (left) {
-              if (/left\s*:\s*[^;]+/.test(newContent)) {
-                newContent = newContent.replace(/left\s*:\s*[^;]+;?/, `left: ${left};`);
-              } else {
-                newContent += ` left: ${left};`;
-              }
-            }
-            return `${selector}{${newContent}}`;
-          });
-        } else {
-          currentStyles += `\n.${uniqueClass} { position: absolute; top: ${top || '0px'}; left: ${left || '0px'}; }`;
-        }
+      // 獲取 Unique Class
+      const idClass = Array.from(el.classList).find(c => c.startsWith('v-'));
+      
+      if (idClass) {
+        // 生成 CSS 規則，使用 !important 確保覆蓋舊樣式
+        newPositionStyles += `.${idClass} { position: absolute !important; top: ${top} !important; left: ${left} !important; }\n`;
       }
 
+      // 清理內聯樣式 (保持 HTML 整潔)
       el.style.removeProperty('top');
       el.style.removeProperty('left');
       el.style.removeProperty('position');
     });
+    
+    newPositionStyles += '/* === END VISUAL EDITOR POSITIONS === */';
 
+    // 3. 更新 CSS 字串
+    let currentStyles = stylesStringRef.current;
+    
+    // 移除舊的 VISUAL EDITOR POSITIONS 區塊 (如果存在)
+    const blockRegex = /\/\* === VISUAL EDITOR POSITIONS === \*\/[\s\S]*\/\* === END VISUAL EDITOR POSITIONS === \*\//;
+    if (blockRegex.test(currentStyles)) {
+      currentStyles = currentStyles.replace(blockRegex, newPositionStyles);
+    } else {
+      currentStyles += '\n' + newPositionStyles;
+    }
+
+    // 4. 獲取清理後的 HTML
     const newHtml = contentDiv.innerHTML;
+    
     onSave(newHtml, currentStyles);
   };
 
@@ -609,8 +625,9 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       const overlay = pageElement.querySelector('.overlay');
       if (overlay) {
         const newSpan = document.createElement('span');
-        // 不需要 unique class，只用 generic class
-        newSpan.className = 'field';
+        const uniqueClass = `v-${Math.random().toString(36).substr(2, 8)}`;
+        
+        newSpan.className = `field ${uniqueClass}`;
         newSpan.innerText = variable;
         newSpan.style.position = 'absolute';
         newSpan.style.top = `${Math.round(dropY)}px`;
