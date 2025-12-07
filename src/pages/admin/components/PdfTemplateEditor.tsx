@@ -416,9 +416,15 @@ export default function PdfTemplateEditor({ onBack }: Props) {
           htmlContent={currentTemplate.html_content}
           styles={currentTemplate.styles}
           onSave={(newHtml, newStyles) => {
-            handleFieldChange('html_content', newHtml);
-            handleFieldChange('styles', newStyles);
+            // 使用函數式更新以避免 Race Condition，確保 HTML 和 Styles 同時更新
+            setTemplates(prev => prev.map(t => 
+              t.id === currentTemplate.id 
+                ? { ...t, html_content: newHtml, styles: newStyles } 
+                : t
+            ));
             setShowVisualEditor(false);
+            // 提示用戶
+            alert('可視化調整已應用到暫存區，請點擊右上角「儲存模板」以寫入資料庫。');
           }}
           onClose={() => setShowVisualEditor(false)}
         />
