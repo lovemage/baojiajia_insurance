@@ -444,38 +444,89 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   onClose: () => void;
 }) {
   const [scale, setScale] = useState(0.8);
-  const [modifiedStyles, setModifiedStyles] = useState(styles);
-  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
+  const stylesStringRef = useRef(styles); // 使用 ref 存儲樣式，避免重渲染
   const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null); // 用於存儲 HTML 內容的容器
+  const styleTagRef = useRef<HTMLStyleElement | null>(null);
+  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
   
-  // 處理保存
+  // 初始化渲染
+  useEffect(() => {
+    if (!contentRef.current) return;
+    
+    // 設置 HTML
+    contentRef.current.innerHTML = htmlContent;
+    
+    // 設置樣式
+    const styleEl = document.createElement('style');
+    styleEl.textContent = styles;
+    contentRef.current.appendChild(styleEl);
+    styleTagRef.current = styleEl;
+    
+    // 注入編輯器專用樣式
+    const editorStyle = document.createElement('style');
+    editorStyle.textContent = `
+      .field {
+        cursor: move;
+        user-select: none;
+        pointer-events: auto !important;
+        border: 1px solid #3b82f6;
+        background: rgba(59, 130, 246, 0.2);
+        transition: none !important;
+        z-index: 100 !important;
+      }
+      .overlay { z-index: 10 !important; }
+      .field:hover {
+        background: rgba(59, 130, 246, 0.4);
+        box-shadow: 0 0 0 2px #3b82f6;
+      }
+      .selected-field {
+        background: rgba(239, 68, 68, 0.2) !important;
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 2px #ef4444, 0 0 10px rgba(0,0,0,0.2) !important;
+        z-index: 101 !important;
+      }
+    `;
+    contentRef.current.appendChild(editorStyle);
+  }, []); // 僅執行一次
+
+  // 手動更新樣式，不觸發 React 渲染
+  const updateStyles = (newStyles: string) => {
+    stylesStringRef.current = newStyles;
+    if (styleTagRef.current) {
+      styleTagRef.current.textContent = newStyles;
+    }
+  };
+
   const handleSave = () => {
-    if (!containerRef.current) return;
+    if (!contentRef.current) return;
     
-    // 1. 獲取當前的 HTML 內容
-    const contentDiv = containerRef.current;
+    // 獲取內容容器
+    const contentDiv = contentRef.current;
     
-    // 2. 清理內聯樣式 (top, left) 並確保它們已經寫入 CSS
-    // 注意：我們在拖曳結束時已經更新了 modifiedStyles，所以這裡主要是移除 style 屬性
+    // 清理：移除注入的 style 標籤
+    const styles = contentDiv.querySelectorAll('style');
+    styles.forEach(s => s.remove());
+    
+    // 清理：移除臨時 class 和內聯樣式
     const fields = Array.from(contentDiv.querySelectorAll('.field'));
     fields.forEach(el => {
       const element = el as HTMLElement;
       element.style.removeProperty('top');
       element.style.removeProperty('left');
-      element.classList.remove('selected-field'); // 清理選中狀態class
+      element.classList.remove('selected-field');
     });
 
-    // 3. 獲取清理後的 HTML
-    let newHtml = contentDiv.innerHTML;
+    // 獲取 HTML
+    const newHtml = contentDiv.innerHTML;
     
-    onSave(newHtml, modifiedStyles);
+    onSave(newHtml, stylesStringRef.current);
   };
 
-  // 處理鍵盤事件 (刪除)
+  // 處理鍵盤刪除
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElement) {
-        // 從 DOM 中移除
         selectedElement.remove();
         setSelectedElement(null);
       }
@@ -484,26 +535,22 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedElement]);
 
-  // 拖曳處理邏輯
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    
-    // 如果點擊的不是變數，取消選中
     if (!target.classList.contains('field')) {
       setSelectedElement(null);
       return;
     }
 
-    e.preventDefault(); // 防止選中文字
+    e.preventDefault();
     setSelectedElement(target);
 
     const startX = e.clientX;
     const startY = e.clientY;
     
-    // 獲取元素當前的 top/left
-    const computedStyle = window.getComputedStyle(target);
-    const startTop = parseInt(computedStyle.top) || 0;
-    const startLeft = parseInt(computedStyle.left) || 0;
+    // 使用 offsetTop/Left 獲取準確的初始位置 (相對於 positioned parent)
+    const startTop = target.offsetTop;
+    const startLeft = target.offsetLeft;
 
     const onMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = (moveEvent.clientX - startX) / scale;
@@ -512,7 +559,6 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       const newTop = Math.round(startTop + deltaY);
       const newLeft = Math.round(startLeft + deltaX);
 
-      // 更新視覺位置
       target.style.top = `${newTop}px`;
       target.style.left = `${newLeft}px`;
     };
@@ -524,18 +570,16 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       const finalTop = target.style.top;
       const finalLeft = target.style.left;
       
-      // 識別或創建 unique class
       const classes = Array.from(target.classList);
       let uniqueClass = classes.find(c => c !== 'field' && c !== 'selected-field');
       
       if (!uniqueClass) {
-        // 如果沒有 unique class，創建一個
         uniqueClass = `v-${Math.random().toString(36).substr(2, 6)}`;
         target.classList.add(uniqueClass);
-        // 新增 CSS 規則
-        setModifiedStyles(prev => prev + `\n.${uniqueClass} { top: ${finalTop}; left: ${finalLeft}; }`);
+        // Append new style rule
+        updateStyles(stylesStringRef.current + `\n.${uniqueClass} { top: ${finalTop}; left: ${finalLeft}; }`);
       } else {
-        // 更新現有 CSS 規則
+        // Update existing rule
         updateStyleString(uniqueClass, finalTop, finalLeft);
       }
     };
@@ -545,35 +589,32 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   };
 
   const updateStyleString = (className: string, top: string, left: string) => {
-    setModifiedStyles(prevStyles => {
-      let newStyles = prevStyles;
-      // 匹配CSS塊
-      const blockRegex = new RegExp(`([^}]*\\.${className}[^{]*\\{)([^}]*)(\\})`, 'g');
-      
-      // 檢查是否存在該規則，若不存在則追加
-      if (!blockRegex.test(newStyles)) {
-        return newStyles + `\n.${className} { top: ${top}; left: ${left}; }`;
-      }
+    let newStyles = stylesStringRef.current;
+    const blockRegex = new RegExp(`([^}]*\\.${className}[^{]*\\{)([^}]*)(\\})`, 'g');
+    
+    if (!blockRegex.test(newStyles)) {
+      updateStyles(newStyles + `\n.${className} { top: ${top}; left: ${left}; }`);
+      return;
+    }
 
-      newStyles = newStyles.replace(blockRegex, (match, selector, content, closing) => {
-        let newContent = content;
-        if (/top:\s*[^;]+;/.test(newContent)) {
-          newContent = newContent.replace(/top:\s*[^;]+;/, `top: ${top};`);
-        } else {
-          newContent += ` top: ${top};`;
-        }
-        if (/left:\s*[^;]+;/.test(newContent)) {
-          newContent = newContent.replace(/left:\s*[^;]+;/, `left: ${left};`);
-        } else {
-          newContent += ` left: ${left};`;
-        }
-        return `${selector}${newContent}${closing}`;
-      });
-      return newStyles;
+    newStyles = newStyles.replace(blockRegex, (match, selector, content, closing) => {
+      let newContent = content;
+      if (/top:\s*[^;]+;/.test(newContent)) {
+        newContent = newContent.replace(/top:\s*[^;]+;/, `top: ${top};`);
+      } else {
+        newContent += ` top: ${top};`;
+      }
+      if (/left:\s*[^;]+;/.test(newContent)) {
+        newContent = newContent.replace(/left:\s*[^;]+;/, `left: ${left};`);
+      } else {
+        newContent += ` left: ${left};`;
+      }
+      return `${selector}${newContent}${closing}`;
     });
+    
+    updateStyles(newStyles);
   };
 
-  // 處理拖曳變數添加
   const handleDragStart = (e: React.DragEvent, variable: string) => {
     e.dataTransfer.setData('text/plain', variable);
   };
@@ -583,9 +624,6 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     const variable = e.dataTransfer.getData('text/plain');
     if (!variable) return;
 
-    // 計算放置位置 (相對於當前頁面)
-    // 我們需要找到放置點所在的 .pdf-page
-    // 由於我們是在最外層 drop，需要通過 elementFromPoint 或 target 判斷
     const target = e.target as HTMLElement;
     const pageElement = target.closest('.pdf-page');
     
@@ -594,7 +632,6 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       const dropX = (e.clientX - rect.left) / scale;
       const dropY = (e.clientY - rect.top) / scale;
 
-      // 創建新元素 (直接操作 DOM)
       const overlay = pageElement.querySelector('.overlay');
       if (overlay) {
         const newSpan = document.createElement('span');
@@ -606,12 +643,10 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
         newSpan.style.left = `${Math.round(dropX)}px`;
         
         overlay.appendChild(newSpan);
-        
-        // 選中新元素
         setSelectedElement(newSpan);
 
-        // 添加 CSS
-        setModifiedStyles(prev => prev + `\n.${uniqueClass} { top: ${Math.round(dropY)}px; left: ${Math.round(dropX)}px; }`);
+        // Add style
+        updateStyles(stylesStringRef.current + `\n.${uniqueClass} { top: ${Math.round(dropY)}px; left: ${Math.round(dropX)}px; }`);
       }
     }
   };
@@ -677,31 +712,8 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
               position: 'relative'
             }}
           >
-            <style>{modifiedStyles}</style>
-            <style>{`
-              .field {
-                cursor: move;
-                user-select: none;
-                pointer-events: auto !important;
-                border: 1px solid #3b82f6;
-                background: rgba(59, 130, 246, 0.2);
-                transition: none !important;
-                z-index: 100 !important;
-              }
-              .overlay { z-index: 10 !important; }
-              .field:hover {
-                background: rgba(59, 130, 246, 0.4);
-                box-shadow: 0 0 0 2px #3b82f6;
-              }
-              .selected-field {
-                background: rgba(239, 68, 68, 0.2) !important;
-                border-color: #ef4444 !important;
-                box-shadow: 0 0 0 2px #ef4444, 0 0 10px rgba(0,0,0,0.2) !important;
-                z-index: 101 !important;
-              }
-            `}</style>
-            {/* 使用 ref 獲取 DOM 內容 */}
-            <div ref={containerRef} dangerouslySetInnerHTML={{ __html: htmlContent }} />
+            {/* 這裡不再使用 dangerouslySetInnerHTML 直接渲染，而是交給 contentRef */}
+            <div ref={contentRef} />
           </div>
         </div>
 
