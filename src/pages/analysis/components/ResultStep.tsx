@@ -383,18 +383,44 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       container.innerHTML = `
         <style>
           ${processedStyles}
-          /* 強制樣式，確保變數正確顯示 */
+          /* 強制樣式修正 */
+          .pdf-page {
+            width: 210mm !important;
+            height: 296mm !important; /* 稍微小於 297mm 以防止自動分頁產生空白頁 */
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            page-break-after: always !important;
+            position: relative !important;
+          }
+          .pdf-page:last-child {
+            page-break-after: avoid !important;
+          }
+          
+          /* 確保變數正確顯示 */
           .field {
             position: absolute !important;
             z-index: 100 !important;
-            background: transparent !important; /* PDF 中不需要背景色 */
+            background: transparent !important;
           }
+          
           /* 確保 SVG 背景在下層 */
           .svg-bg {
             z-index: 1 !important;
+            width: 100% !important;
+            height: 100% !important;
           }
+          .svg-bg img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
+          }
+          
           .overlay {
             z-index: 10 !important;
+            width: 100% !important;
+            height: 100% !important;
           }
         </style>
         <div class="pdf-wrapper">
