@@ -21,7 +21,11 @@ export default function SalaryLossStep({ data, onUpdate, onNext, onBack }: Props
   }, [data.monthlyIncome, data.cancerSalaryLoss]);
 
   const handleNext = () => {
-    onUpdate({ cancerSalaryLoss: salaryLoss });
+    // 統一使用 salaryLoss 作為 key，以配合 ResultStep 和 MemberManager
+    onUpdate({ 
+      salaryLoss: salaryLoss,
+      cancerSalaryLoss: salaryLoss 
+    });
     onNext();
   };
 
