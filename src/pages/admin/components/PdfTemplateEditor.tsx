@@ -1,19 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import RichTextEditor from '../../../components/RichTextEditor';
 
 interface PdfTemplate {
   id: string;
   name: string;
   description: string;
-  header_html: string;
-  basic_info_html: string;
-  medical_html: string;
-  critical_html: string;
-  longterm_html: string;
-  life_html: string;
-  accident_html: string;
-  footer_html: string;
+  html_content: string;
   styles: string;
   is_active: boolean;
 }
@@ -21,18 +13,6 @@ interface PdfTemplate {
 interface Props {
   onBack?: () => void;
 }
-
-const TEMPLATE_SECTIONS = [
-  { key: 'header_html', label: '標題區塊', icon: 'ri-heading' },
-  { key: 'basic_info_html', label: '基本資料', icon: 'ri-user-line' },
-  { key: 'medical_html', label: '醫療保障', icon: 'ri-hospital-line' },
-  { key: 'critical_html', label: '重症保障', icon: 'ri-heart-pulse-line' },
-  { key: 'longterm_html', label: '長照保障', icon: 'ri-wheelchair-line' },
-  { key: 'life_html', label: '壽險保障', icon: 'ri-shield-user-line' },
-  { key: 'accident_html', label: '意外保障', icon: 'ri-alert-line' },
-  { key: 'footer_html', label: '頁尾區塊', icon: 'ri-file-text-line' },
-  { key: 'styles', label: 'CSS 樣式', icon: 'ri-code-line' },
-];
 
 const AVAILABLE_VARIABLES = [
   { var: '{{name}}', desc: '客戶姓名' },
@@ -57,10 +37,8 @@ export default function PdfTemplateEditor({ onBack }: Props) {
   const [template, setTemplate] = useState<PdfTemplate | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState('header_html');
   const [previewHtml, setPreviewHtml] = useState('');
   const [showPreview, setShowPreview] = useState(false);
-  const [editorMode, setEditorMode] = useState<'visual' | 'html'>('visual');
 
   useEffect(() => {
     fetchTemplate();
@@ -93,14 +71,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
         .update({
           name: template.name,
           description: template.description,
-          header_html: template.header_html,
-          basic_info_html: template.basic_info_html,
-          medical_html: template.medical_html,
-          critical_html: template.critical_html,
-          longterm_html: template.longterm_html,
-          life_html: template.life_html,
-          accident_html: template.accident_html,
-          footer_html: template.footer_html,
+          html_content: template.html_content,
           styles: template.styles,
         })
         .eq('id', template.id);
@@ -122,7 +93,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
 
   const generatePreview = () => {
     if (!template) return;
-    
+
     // 模擬資料
     const mockData: Record<string, string> = {
       '{{name}}': '王小明',
@@ -143,8 +114,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
     };
 
-    // 預覽時使用與前端 PDF 生成一致的結構和樣式
-    // 使用 reset CSS 確保預覽效果不受外部影響
     let html = `
       <style>
         .pdf-preview-wrapper {
@@ -166,18 +135,11 @@ export default function PdfTemplateEditor({ onBack }: Props) {
           box-shadow: 0 0 10px rgba(0,0,0,0.1);
           margin-bottom: 20px;
         }
-        ${template.styles}
+        ${template.styles || ''}
       </style>
       <div class="pdf-preview-wrapper">
         <div class="pdf-page">
-          ${template.header_html}
-          ${template.basic_info_html}
-          ${template.medical_html}
-          ${template.critical_html}
-          ${template.longterm_html}
-          ${template.life_html}
-          ${template.accident_html}
-          ${template.footer_html}
+          ${template.html_content || ''}
         </div>
       </div>
     `;
@@ -267,72 +229,43 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Editor (Full Width) */}
+        {/* Main Editor */}
         <div className="lg:col-span-3 space-y-6">
-          {TEMPLATE_SECTIONS.map((section) => (
-            <div key={section.key} className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <i className={`${section.icon} text-xl text-teal-600`}></i>
-                  <h3 className="font-bold text-gray-800 text-lg">
-                    {section.label}
-                  </h3>
-                </div>
-                {/* Visual/HTML Toggle - Only for non-style sections */}
-                {section.key !== 'styles' && (
-                  <div className="flex bg-gray-100 rounded-lg p-1">
-                    <button
-                      onClick={() => setEditorMode(editorMode === 'visual' ? 'html' : 'visual')}
-                      className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
-                        editorMode === 'visual'
-                          ? 'bg-white text-teal-600 shadow-sm'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      <i className={editorMode === 'visual' ? 'ri-edit-line' : 'ri-code-line'}></i>
-                      {editorMode === 'visual' ? '可視化編輯' : '原始碼編輯'}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {section.key === 'styles' ? (
-                // CSS Styles - Always Textarea
-                <div>
-                  <textarea
-                    value={(template as any)[section.key] || ''}
-                    onChange={(e) => handleFieldChange(section.key, e.target.value)}
-                    className="w-full h-64 px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-gray-50"
-                    placeholder="輸入 CSS 樣式..."
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    <i className="ri-information-line mr-1"></i>
-                    此處定義的 CSS 將套用到所有區塊。
-                  </p>
-                </div>
-              ) : (
-                // Content Sections - Toggleable Editor
-                <div className="min-h-[300px]">
-                  {editorMode === 'visual' ? (
-                    <div className="rich-text-container">
-                      <RichTextEditor
-                        value={(template as any)[section.key] || ''}
-                        onChange={(content) => handleFieldChange(section.key, content)}
-                        placeholder={`在此編輯${section.label}內容...`}
-                      />
-                    </div>
-                  ) : (
-                    <textarea
-                      value={(template as any)[section.key] || ''}
-                      onChange={(e) => handleFieldChange(section.key, e.target.value)}
-                      className="w-full h-[300px] px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder={`輸入${section.label} HTML 內容...`}
-                    />
-                  )}
-                </div>
-              )}
+          {/* CSS 樣式編輯器 */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <i className="ri-code-line text-xl text-teal-600"></i>
+              <h3 className="font-bold text-gray-800 text-lg">CSS 樣式</h3>
             </div>
-          ))}
+            <textarea
+              value={template.styles || ''}
+              onChange={(e) => handleFieldChange('styles', e.target.value)}
+              className="w-full h-64 px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-gray-50"
+              placeholder="輸入 CSS 樣式..."
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              <i className="ri-information-line mr-1"></i>
+              此處定義的 CSS 將套用到 PDF 內容。
+            </p>
+          </div>
+
+          {/* HTML 內容編輯器 */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <i className="ri-file-code-line text-xl text-teal-600"></i>
+              <h3 className="font-bold text-gray-800 text-lg">HTML 內容</h3>
+            </div>
+            <textarea
+              value={template.html_content || ''}
+              onChange={(e) => handleFieldChange('html_content', e.target.value)}
+              className="w-full h-[500px] px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              placeholder="輸入 HTML 內容，可使用變數如 {{name}}、{{phone}} 等..."
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              <i className="ri-information-line mr-1"></i>
+              在 HTML 中使用右側的變數，生成 PDF 時會自動替換為實際資料。
+            </p>
+          </div>
         </div>
 
         {/* Sidebar - Variables Reference (Sticky) */}
@@ -349,7 +282,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
                   className="group p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-teal-50 transition-colors border border-transparent hover:border-teal-100"
                   onClick={() => {
                     navigator.clipboard.writeText(v.var);
-                    // Optional: Add toast notification here
                   }}
                   title="點擊複製變數"
                 >

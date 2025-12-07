@@ -204,31 +204,26 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         processedStyles = processedStyles.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
       });
 
-      let header = templateData.header_html || '';
-      let basicInfo = templateData.basic_info_html || '';
-      let medical = templateData.medical_html || '';
-      let critical = templateData.critical_html || '';
-      let longterm = templateData.longterm_html || '';
-      let life = templateData.life_html || '';
-      let accident = templateData.accident_html || '';
-      let footer = templateData.footer_html || '';
+      // 處理 HTML 內容（支持新的 html_content 或舊的分區欄位）
+      let htmlContent = templateData.html_content || '';
 
-      [header, basicInfo, medical, critical, longterm, life, accident, footer].forEach((html, index) => {
-        let processedHtml = html;
-        Object.entries(pdfVariables).forEach(([key, value]) => {
-          processedHtml = processedHtml.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
-        });
-        
-        switch(index) {
-          case 0: header = processedHtml; break;
-          case 1: basicInfo = processedHtml; break;
-          case 2: medical = processedHtml; break;
-          case 3: critical = processedHtml; break;
-          case 4: longterm = processedHtml; break;
-          case 5: life = processedHtml; break;
-          case 6: accident = processedHtml; break;
-          case 7: footer = processedHtml; break;
-        }
+      // 如果沒有 html_content，則使用舊的分區欄位組合
+      if (!htmlContent) {
+        htmlContent = [
+          templateData.header_html || '',
+          templateData.basic_info_html || '',
+          templateData.medical_html || '',
+          templateData.critical_html || '',
+          templateData.longterm_html || '',
+          templateData.life_html || '',
+          templateData.accident_html || '',
+          templateData.footer_html || '',
+        ].join('\n');
+      }
+
+      // 替換 HTML 中的變數
+      Object.entries(pdfVariables).forEach(([key, value]) => {
+        htmlContent = htmlContent.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
       });
 
       // 創建臨時容器
@@ -237,8 +232,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       container.style.left = '-9999px';
       container.style.top = '0';
       container.style.width = '210mm'; // A4 width
-      
-      // 使用更簡單的結構，避免 html2pdf 解析問題
+
       container.innerHTML = `
         <style>
           ${processedStyles}
@@ -260,14 +254,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
           }
         </style>
         <div class="pdf-wrapper">
-          ${header}
-          ${basicInfo}
-          ${medical}
-          ${critical}
-          ${longterm}
-          ${life}
-          ${accident}
-          ${footer}
+          ${htmlContent}
         </div>
       `;
 

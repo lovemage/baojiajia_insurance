@@ -189,31 +189,26 @@ export default function MemberManager() {
         processedStyles = processedStyles.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
       });
 
-      let header = templateData.header_html || '';
-      let basicInfo = templateData.basic_info_html || '';
-      let medical = templateData.medical_html || '';
-      let critical = templateData.critical_html || '';
-      let longterm = templateData.longterm_html || '';
-      let life = templateData.life_html || '';
-      let accident = templateData.accident_html || '';
-      let footer = templateData.footer_html || '';
+      // 處理 HTML 內容（支持新的 html_content 或舊的分區欄位）
+      let htmlContent = templateData.html_content || '';
 
-      [header, basicInfo, medical, critical, longterm, life, accident, footer].forEach((html, index) => {
-        let processedHtml = html;
-        Object.entries(pdfVariables).forEach(([key, value]) => {
-          processedHtml = processedHtml.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
-        });
+      // 如果沒有 html_content，則使用舊的分區欄位組合
+      if (!htmlContent) {
+        htmlContent = [
+          templateData.header_html || '',
+          templateData.basic_info_html || '',
+          templateData.medical_html || '',
+          templateData.critical_html || '',
+          templateData.longterm_html || '',
+          templateData.life_html || '',
+          templateData.accident_html || '',
+          templateData.footer_html || '',
+        ].join('\n');
+      }
 
-        switch(index) {
-          case 0: header = processedHtml; break;
-          case 1: basicInfo = processedHtml; break;
-          case 2: medical = processedHtml; break;
-          case 3: critical = processedHtml; break;
-          case 4: longterm = processedHtml; break;
-          case 5: life = processedHtml; break;
-          case 6: accident = processedHtml; break;
-          case 7: footer = processedHtml; break;
-        }
+      // 替換 HTML 中的變數
+      Object.entries(pdfVariables).forEach(([key, value]) => {
+        htmlContent = htmlContent.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
       });
 
       // 創建臨時容器
@@ -242,14 +237,7 @@ export default function MemberManager() {
           * { box-sizing: border-box; }
         </style>
         <div class="pdf-wrapper">
-          ${header}
-          ${basicInfo}
-          ${medical}
-          ${critical}
-          ${longterm}
-          ${life}
-          ${accident}
-          ${footer}
+          ${htmlContent}
         </div>
       `;
 
@@ -505,27 +493,27 @@ export default function MemberManager() {
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-500 mb-1">薪資損失補償</div>
+                    <div className="text-sm text-gray-500 mb-1">薪資損失補償（萬/月）</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'salaryLoss', 0))} 元/月
+                      {Math.round(safeGet(selectedMember.questionnaire_data, 'salaryLoss', 0) / 10000)} 萬/月
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-500 mb-1">每月生活開銷</div>
+                    <div className="text-sm text-gray-500 mb-1">每月生活開銷（萬/年）</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'livingExpense', 0))} 元/月
+                      {Math.round(safeGet(selectedMember.questionnaire_data, 'livingExpense', 0) * 12 / 10000)} 萬/年
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-500 mb-1">治療費用補償</div>
+                    <div className="text-sm text-gray-500 mb-1">治療費用補償（萬）</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'treatmentCost', 0))} 元
+                      {Math.round(safeGet(selectedMember.questionnaire_data, 'treatmentCost', 0) / 10000)} 萬
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-500 mb-1">長照費用需求</div>
+                    <div className="text-sm text-gray-500 mb-1">長照費用需求（萬/月）</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'longTermCare', 0))} 元/月
+                      {Math.round(safeGet(selectedMember.questionnaire_data, 'longTermCare', 0) / 10000)} 萬/月
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
@@ -541,9 +529,9 @@ export default function MemberManager() {
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-500 mb-1">月收入</div>
+                    <div className="text-sm text-gray-500 mb-1">月收入（萬）</div>
                     <div className="font-medium text-lg text-teal-600">
-                      {formatNumber(safeGet(selectedMember.questionnaire_data, 'monthlyIncome', 0))} 元/月
+                      {Math.round(safeGet(selectedMember.questionnaire_data, 'monthlyIncome', 0) / 10000)} 萬/月
                     </div>
                   </div>
                 </div>
