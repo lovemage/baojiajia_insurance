@@ -47,7 +47,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
   const [saving, setSaving] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
   const [showPreview, setShowPreview] = useState(false);
-  const [showVisualEditor, setShowVisualEditor] = useState(false);
+  const [viewMode, setViewMode] = useState<'visual' | 'code'>('visual');
 
   const currentTemplate = templates.find(t => t.id === currentTemplateId) || null;
 
@@ -145,7 +145,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
   const generatePreview = () => {
     if (!currentTemplate) return;
     const template = currentTemplate;
-
+    
     const mockData: Record<string, string> = {
       '{{name}}': '王小明',
       '{{phone}}': '0912-345-678',
@@ -215,9 +215,9 @@ export default function PdfTemplateEditor({ onBack }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm">
         <div className="flex items-center gap-4">
           {onBack && (
             <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -229,14 +229,43 @@ export default function PdfTemplateEditor({ onBack }: Props) {
             <p className="text-gray-500 text-sm">編輯保障需求分析報告的 PDF 模板</p>
           </div>
         </div>
+
+        {/* Template Selector */}
+        <div className="flex gap-2">
+          <select
+            value={currentTemplateId || ''}
+            onChange={(e) => setCurrentTemplateId(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent min-w-[200px]"
+          >
+            {templates.map(t => (
+              <option key={t.id} value={t.id}>{t.name} ({t.description})</option>
+            ))}
+          </select>
+          {!templates.some(t => t.name === 'child') && (
+            <button
+              onClick={handleCreateChildTemplate}
+              className="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 whitespace-nowrap text-sm"
+              title="複製當前模板並創建「child」模板"
+            >
+              <i className="ri-add-line mr-1"></i>
+              建Child
+            </button>
+          )}
+        </div>
+
         <div className="flex gap-3">
           <button
-            onClick={() => setShowVisualEditor(true)}
-            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 flex items-center gap-2"
+            onClick={() => setViewMode(viewMode === 'visual' ? 'code' : 'visual')}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+              viewMode === 'code' 
+                ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
           >
-            <i className="ri-drag-move-2-line"></i>
-            可視化調整位置
+            <i className={`ri-${viewMode === 'code' ? 'eye-line' : 'code-line'}`}></i>
+            {viewMode === 'code' ? '切換可視化編輯' : '顯示原代碼'}
           </button>
+          
           <button
             onClick={generatePreview}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2"
@@ -244,142 +273,115 @@ export default function PdfTemplateEditor({ onBack }: Props) {
             <i className="ri-eye-line"></i>
             預覽
           </button>
+          
           <button
             onClick={handleSave}
             disabled={saving}
             className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 flex items-center gap-2"
           >
             <i className={saving ? 'ri-loader-4-line animate-spin' : 'ri-save-line'}></i>
-            {saving ? '儲存中...' : '儲存模板'}
+            {saving ? '儲存模板' : '儲存模板'}
           </button>
         </div>
       </div>
 
-      {/* Template Selector & Info */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-          <div className="md:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">選擇模板</label>
-            <div className="flex gap-2">
-              <select
-                value={currentTemplateId || ''}
-                onChange={(e) => setCurrentTemplateId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              >
-                {templates.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} ({t.description})</option>
-                ))}
-              </select>
-              {!templates.some(t => t.name === 'child') && (
-                <button
-                  onClick={handleCreateChildTemplate}
-                  className="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 whitespace-nowrap text-sm"
-                  title="複製當前模板並創建「child」模板"
-                >
-                  <i className="ri-add-line mr-1"></i>
-                  建Child
-                </button>
-              )}
+      {/* Main Content */}
+      <div className="flex-1 bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+        {viewMode === 'code' ? (
+          <div className="flex-1 overflow-auto p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="md:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">模板名稱</label>
+                <input
+                  type="text"
+                  value={currentTemplate?.name || ''}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">模板說明</label>
+                <input
+                  type="text"
+                  value={currentTemplate?.description || ''}
+                  onChange={(e) => handleFieldChange('description', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="md:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">模板名稱 (識別代碼)</label>
-            <input
-              type="text"
-              value={currentTemplate?.name || ''}
-              onChange={(e) => handleFieldChange('name', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              placeholder="例如: adult, child"
-            />
-            <p className="text-xs text-gray-500 mt-1">請使用 'adult' 或 'child' 以便系統識別</p>
-          </div>
-          
-          <div className="md:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">模板說明</label>
-            <input
-              type="text"
-              value={currentTemplate?.description || ''}
-              onChange={(e) => handleFieldChange('description', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-          </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Editor */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* CSS 樣式編輯器 */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <i className="ri-code-line text-xl text-teal-600"></i>
-              <h3 className="font-bold text-gray-800 text-lg">CSS 樣式</h3>
-            </div>
-            <textarea
-              value={currentTemplate?.styles || ''}
-              onChange={(e) => handleFieldChange('styles', e.target.value)}
-              className="w-full h-64 px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-gray-50"
-              placeholder="輸入 CSS 樣式..."
-            />
-            <p className="text-xs text-gray-500 mt-2">
-              <i className="ri-information-line mr-1"></i>
-              此處定義的 CSS 將套用到 PDF 內容。
-            </p>
-          </div>
-
-          {/* HTML 內容編輯器 */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <i className="ri-file-code-line text-xl text-teal-600"></i>
-              <h3 className="font-bold text-gray-800 text-lg">HTML 內容</h3>
-            </div>
-            <textarea
-              value={currentTemplate?.html_content || ''}
-              onChange={(e) => handleFieldChange('html_content', e.target.value)}
-              className="w-full h-[500px] px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              placeholder="輸入 HTML 內容，可使用變數如 {{name}}、{{phone}} 等..."
-            />
-            <p className="text-xs text-gray-500 mt-2">
-              <i className="ri-information-line mr-1"></i>
-              在 HTML 中使用右側的變數，生成 PDF 時會自動替換為實際資料。
-            </p>
-          </div>
-        </div>
-
-        {/* Sidebar - Variables Reference (Sticky) */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm p-4 sticky top-6">
-            <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-              <i className="ri-code-s-slash-line"></i>
-              可用變數
-            </h3>
-            <div className="space-y-2 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
-              {AVAILABLE_VARIABLES.map((v) => (
-                <div
-                  key={v.var}
-                  className="group p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-teal-50 transition-colors border border-transparent hover:border-teal-100"
-                  onClick={() => {
-                    navigator.clipboard.writeText(v.var);
-                  }}
-                  title="點擊複製變數"
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <code className="text-teal-700 font-mono text-xs font-bold bg-teal-100 px-1.5 py-0.5 rounded">
-                      {v.var}
-                    </code>
-                    <i className="ri-file-copy-line text-gray-400 group-hover:text-teal-500 text-xs"></i>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[800px]">
+              <div className="lg:col-span-3 space-y-6 h-full flex flex-col">
+                <div className="flex-1 flex flex-col">
+                  <div className="flex items-center gap-2 mb-2">
+                    <i className="ri-code-line text-xl text-teal-600"></i>
+                    <h3 className="font-bold text-gray-800 text-lg">CSS 樣式</h3>
                   </div>
-                  <p className="text-xs text-gray-600">{v.desc}</p>
+                  <textarea
+                    value={currentTemplate?.styles || ''}
+                    onChange={(e) => handleFieldChange('styles', e.target.value)}
+                    className="w-full flex-1 px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-gray-50"
+                  />
                 </div>
-              ))}
-            </div>
-            <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400 flex items-center gap-1">
-              <i className="ri-information-line"></i>
-              點擊變數可直接複製到剪貼簿
+
+                <div className="flex-[2] flex flex-col">
+                  <div className="flex items-center gap-2 mb-2">
+                    <i className="ri-file-code-line text-xl text-teal-600"></i>
+                    <h3 className="font-bold text-gray-800 text-lg">HTML 內容</h3>
+                  </div>
+                  <textarea
+                    value={currentTemplate?.html_content || ''}
+                    onChange={(e) => handleFieldChange('html_content', e.target.value)}
+                    className="w-full flex-1 px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="lg:col-span-1 h-full overflow-hidden flex flex-col">
+                <div className="bg-gray-50 rounded-xl p-4 h-full overflow-y-auto">
+                  <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <i className="ri-code-s-slash-line"></i>
+                    可用變數
+                  </h3>
+                  <div className="space-y-2">
+                    {AVAILABLE_VARIABLES.map((v) => (
+                      <div
+                        key={v.var}
+                        className="group p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:border-teal-500 transition-all"
+                        onClick={() => {
+                          navigator.clipboard.writeText(v.var);
+                        }}
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <code className="text-teal-700 font-mono text-xs font-bold bg-teal-50 px-1.5 py-0.5 rounded">
+                            {v.var}
+                          </code>
+                          <i className="ri-file-copy-line text-gray-400 group-hover:text-teal-500 text-xs"></i>
+                        </div>
+                        <p className="text-xs text-gray-600">{v.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          currentTemplate && (
+            <VisualEditor
+              key={currentTemplate.id}
+              htmlContent={currentTemplate.html_content}
+              styles={currentTemplate.styles}
+              onSave={(newHtml, newStyles) => {
+                setTemplates(prev => prev.map(t => 
+                  t.id === currentTemplate.id 
+                    ? { ...t, html_content: newHtml, styles: newStyles } 
+                    : t
+                ));
+              }}
+            />
+          )
+        )}
       </div>
 
       {/* Preview Modal */}
@@ -409,35 +411,15 @@ export default function PdfTemplateEditor({ onBack }: Props) {
           </div>
         </div>
       )}
-
-      {/* Visual Editor Modal */}
-      {showVisualEditor && currentTemplate && (
-        <VisualEditor
-          htmlContent={currentTemplate.html_content}
-          styles={currentTemplate.styles}
-          onSave={(newHtml, newStyles) => {
-            // 使用函數式更新以避免 Race Condition
-            setTemplates(prev => prev.map(t => 
-              t.id === currentTemplate.id 
-                ? { ...t, html_content: newHtml, styles: newStyles } 
-                : t
-            ));
-            setShowVisualEditor(false);
-            alert('可視化調整已應用到暫存區，請點擊右上角「儲存模板」以寫入資料庫。');
-          }}
-          onClose={() => setShowVisualEditor(false)}
-        />
-      )}
     </div>
   );
 }
 
 // 可視化編輯器組件
-function VisualEditor({ htmlContent, styles, onSave, onClose }: {
+function VisualEditor({ htmlContent, styles, onSave }: {
   htmlContent: string;
   styles: string;
   onSave: (newHtml: string, newStyles: string) => void;
-  onClose: () => void;
 }) {
   const [scale, setScale] = useState(0.8);
   const stylesStringRef = useRef(styles); 
@@ -446,32 +428,17 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   const styleTagRef = useRef<HTMLStyleElement | null>(null);
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
   
+  // 初始化渲染
   useEffect(() => {
     if (!contentRef.current) return;
     
-    // 1. 設置 HTML
     contentRef.current.innerHTML = htmlContent;
     
-    // 2. 遷移舊元素：確保每個 .field 都有唯一的 ID class
-    const fields = contentRef.current.querySelectorAll('.field');
-    fields.forEach(el => {
-      const element = el as HTMLElement;
-      // 檢查是否有以 v- 開頭的 class
-      const hasIdClass = Array.from(element.classList).some(c => c.startsWith('v-'));
-      if (!hasIdClass) {
-        // 如果沒有，生成一個並加上
-        const newIdClass = `v-${Math.random().toString(36).substr(2, 8)}`;
-        element.classList.add(newIdClass);
-      }
-    });
-
-    // 3. 設置樣式
     const styleEl = document.createElement('style');
     styleEl.textContent = styles;
     contentRef.current.appendChild(styleEl);
     styleTagRef.current = styleEl;
     
-    // 4. 注入編輯器專用樣式
     const editorStyle = document.createElement('style');
     editorStyle.textContent = `
       .field {
@@ -498,12 +465,13 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     contentRef.current.appendChild(editorStyle);
   }, []); 
 
-  const handleSave = () => {
+  // 自動同步 (Sync Changes) - 用於替代手動保存
+  const syncChanges = () => {
     if (!contentRef.current) return;
     
     const contentDiv = contentRef.current;
     
-    // 1. 先讀取位置信息，生成新的 CSS (在移除 style 標籤之前！)
+    // 構建新的 CSS 規則塊 (不移除 style 標籤)
     let newPositionStyles = '\n/* === VISUAL EDITOR POSITIONS === */\n';
     const fields = Array.from(contentDiv.querySelectorAll('.field')) as HTMLElement[];
     
@@ -511,27 +479,23 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       let top = el.style.top;
       let left = el.style.left;
       
-      // 如果沒有內聯樣式（未移動過），讀取當前 computed style
       if (!top || !left) {
         const computed = window.getComputedStyle(el);
         top = computed.top !== 'auto' ? computed.top : '0px';
         left = computed.left !== 'auto' ? computed.left : '0px';
       }
 
-      // 獲取或生成 ID Class
       let idClass = Array.from(el.classList).find(c => c.startsWith('v-'));
       if (!idClass) {
         idClass = `v-${Math.random().toString(36).substr(2, 8)}`;
         el.classList.add(idClass);
       }
 
-      // 生成 CSS 規則
       newPositionStyles += `.${idClass} { position: absolute !important; top: ${top} !important; left: ${left} !important; }\n`;
     });
     
     newPositionStyles += '/* === END VISUAL EDITOR POSITIONS === */';
 
-    // 2. 更新 CSS 字串
     let currentStyles = stylesStringRef.current;
     const blockRegex = /\/\* === VISUAL EDITOR POSITIONS === \*\/[\s\S]*\/\* === END VISUAL EDITOR POSITIONS === \*\//;
     
@@ -540,20 +504,33 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     } else {
       currentStyles += '\n' + newPositionStyles;
     }
-
-    // 3. 清理 DOM (移除 style 標籤, 移除臨時 class 和內聯樣式)
-    contentDiv.querySelectorAll('style').forEach(s => s.remove());
     
-    fields.forEach(el => {
-      el.classList.remove('selected-field');
-      el.style.removeProperty('top');
-      el.style.removeProperty('left');
-      el.style.removeProperty('position');
+    // 更新本地 ref (CSS)
+    stylesStringRef.current = currentStyles;
+    if (styleTagRef.current) {
+        // 同時更新視覺上的 CSS，這樣如果繼續拖曳新添加的元素，位置也能正確讀取
+        // 不過要注意不要把新生成的規則覆蓋掉原始規則（雖然 !important 解決了這個問題）
+        // 這裡我們只更新 stylesStringRef，不更新 DOM 裡的 styleTagRef，
+        // 因為 DOM 裡已經有內聯樣式在撐著了。
+    }
+
+    // 準備 HTML (需要一個乾淨的副本)
+    // 這裡我們不能直接操作 DOM 移除 class/style，因為那樣編輯器裡的視覺效果就沒了
+    // 我們 clone 一份來處理
+    const clone = contentDiv.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('style').forEach(s => s.remove());
+    
+    Array.from(clone.querySelectorAll('.field')).forEach(el => {
+      const element = el as HTMLElement;
+      element.classList.remove('selected-field');
+      element.style.removeProperty('top');
+      element.style.removeProperty('left');
+      element.style.removeProperty('position');
     });
 
-    // 4. 獲取 HTML
-    const newHtml = contentDiv.innerHTML;
+    const newHtml = clone.innerHTML;
     
+    // 通知父組件
     onSave(newHtml, currentStyles);
   };
 
@@ -562,6 +539,7 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElement) {
         selectedElement.remove();
         setSelectedElement(null);
+        syncChanges(); // 同步
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -598,6 +576,7 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     const onMouseUp = () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
+      syncChanges(); // 拖曳結束同步
     };
 
     document.addEventListener('mousemove', onMouseMove);
@@ -632,125 +611,102 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
         
         overlay.appendChild(newSpan);
         setSelectedElement(newSpan);
+        syncChanges(); // 添加結束同步
       }
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-100 z-50 flex flex-col">
-      {/* Toolbar */}
-      <div className="bg-white border-b px-6 py-3 flex items-center justify-between shadow-sm z-10">
-        <div className="flex items-center gap-4">
-          <h3 className="font-bold text-gray-800">可視化編輯器</h3>
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-            <button 
-              onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
-              className="p-1 hover:bg-white rounded"
-            >
-              <i className="ri-subtract-line"></i>
-            </button>
-            <span className="text-sm font-mono w-12 text-center">{Math.round(scale * 100)}%</span>
-            <button 
-              onClick={() => setScale(s => Math.min(2, s + 0.1))}
-              className="p-1 hover:bg-white rounded"
-            >
-              <i className="ri-add-line"></i>
-            </button>
-          </div>
-          <div className="text-sm text-gray-500 flex items-center gap-2">
-            <span className="flex items-center"><i className="ri-drag-move-2-line mr-1"></i> 拖曳調整位置</span>
-            <span className="flex items-center"><i className="ri-add-box-line mr-1"></i> 拖曳右側變數添加</span>
-            <span className="flex items-center"><i className="ri-delete-bin-line mr-1"></i> 選中後按 Delete 刪除</span>
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-          >
-            取消
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 shadow-sm"
-          >
-            <i className="ri-save-line mr-2"></i>
-            保存更改
-          </button>
+    <div className="flex-1 flex overflow-hidden relative">
+      {/* Zoom Controls (Overlay) */}
+      <div className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-white rounded-lg shadow-md p-1 border border-gray-200">
+        <button 
+          onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
+          className="p-1.5 hover:bg-gray-100 rounded text-gray-600"
+          title="縮小"
+        >
+          <i className="ri-subtract-line"></i>
+        </button>
+        <span className="text-sm font-mono w-12 text-center text-gray-700">{Math.round(scale * 100)}%</span>
+        <button 
+          onClick={() => setScale(s => Math.min(2, s + 0.1))}
+          className="p-1.5 hover:bg-gray-100 rounded text-gray-600"
+          title="放大"
+        >
+          <i className="ri-add-line"></i>
+        </button>
+      </div>
+
+      {/* Canvas Area */}
+      <div 
+        className="flex-1 overflow-auto p-8 relative bg-gray-100" 
+        onMouseDown={handleMouseDown}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+      >
+        <div 
+          style={{ 
+            transform: `scale(${scale})`, 
+            transformOrigin: 'top center',
+            width: '794px',
+            margin: '0 auto',
+            position: 'relative'
+          }}
+        >
+          {/* 這裡不再使用 dangerouslySetInnerHTML 直接渲染，而是交給 contentRef */}
+          <div ref={contentRef} />
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Canvas Area */}
-        <div 
-          className="flex-1 overflow-auto p-8 relative bg-gray-500/10" 
-          onMouseDown={handleMouseDown}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleDrop}
-        >
-          <div 
-            style={{ 
-              transform: `scale(${scale})`, 
-              transformOrigin: 'top center',
-              width: '794px',
-              margin: '0 auto',
-              position: 'relative'
-            }}
-          >
-            {/* 這裡不再使用 dangerouslySetInnerHTML 直接渲染，而是交給 contentRef */}
-            <div ref={contentRef} />
-          </div>
+      {/* Variables Sidebar */}
+      <div className="w-80 bg-white border-l shadow-lg overflow-y-auto z-20 flex flex-col">
+        <div className="p-4 border-b bg-gray-50">
+          <h4 className="font-bold text-gray-700 flex items-center gap-2">
+            <i className="ri-list-settings-line"></i> 可用變數
+          </h4>
+          <p className="text-xs text-gray-500 mt-1">拖曳變數到左側畫布即可添加</p>
         </div>
-
-        {/* Variables Sidebar */}
-        <div className="w-80 bg-white border-l shadow-lg overflow-y-auto z-20 flex flex-col">
-          <div className="p-4 border-b bg-gray-50">
-            <h4 className="font-bold text-gray-700 flex items-center gap-2">
-              <i className="ri-list-settings-line"></i> 可用變數
-            </h4>
-            <p className="text-xs text-gray-500 mt-1">拖曳變數到左側畫布即可添加</p>
-          </div>
-          
-          <div className="flex-1 p-4 space-y-2">
-            {AVAILABLE_VARIABLES.map((v) => (
-              <div
-                key={v.var}
-                draggable
-                onDragStart={(e) => handleDragStart(e, v.var)}
-                className="group p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:border-teal-500 hover:shadow-md transition-all active:cursor-grabbing"
-              >
-                <div className="flex justify-between items-start mb-1">
-                  <code className="text-teal-700 font-mono text-xs font-bold bg-teal-50 px-1.5 py-0.5 rounded">
-                    {v.var}
-                  </code>
-                  <i className="ri-drag-move-line text-gray-300 group-hover:text-teal-500"></i>
-                </div>
-                <p className="text-xs text-gray-600">{v.desc}</p>
+        
+        <div className="flex-1 p-4 space-y-2">
+          {AVAILABLE_VARIABLES.map((v) => (
+            <div
+              key={v.var}
+              draggable
+              onDragStart={(e) => handleDragStart(e, v.var)}
+              className="group p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:border-teal-500 hover:shadow-md transition-all active:cursor-grabbing"
+            >
+              <div className="flex justify-between items-start mb-1">
+                <code className="text-teal-700 font-mono text-xs font-bold bg-teal-50 px-1.5 py-0.5 rounded">
+                  {v.var}
+                </code>
+                <i className="ri-drag-move-line text-gray-300 group-hover:text-teal-500"></i>
               </div>
-            ))}
-          </div>
-
-          {selectedElement && (
-            <div className="p-4 border-t bg-red-50">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-red-700">已選中項目</span>
-                <button 
-                  onClick={() => {
-                    selectedElement.remove();
-                    setSelectedElement(null);
-                  }}
-                  className="text-red-600 hover:text-red-800"
-                  title="刪除"
-                >
-                  <i className="ri-delete-bin-line text-lg"></i>
-                </button>
-              </div>
-              <div className="text-xs text-gray-600 truncate bg-white p-2 rounded border border-red-100">
-                {selectedElement.innerText}
-              </div>
+              <p className="text-xs text-gray-600">{v.desc}</p>
             </div>
-          )}
+          ))}
         </div>
+
+        {selectedElement && (
+          <div className="p-4 border-t bg-red-50">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-red-700">已選中項目</span>
+              <button 
+                onClick={() => {
+                  selectedElement.remove();
+                  setSelectedElement(null);
+                  syncChanges(); // 刪除同步
+                }}
+                className="text-red-600 hover:text-red-800"
+                title="刪除"
+              >
+                <i className="ri-delete-bin-line text-lg"></i>
+              </button>
+            </div>
+            <div className="text-xs text-gray-600 truncate bg-white p-2 rounded border border-red-100">
+              {selectedElement.innerText}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
