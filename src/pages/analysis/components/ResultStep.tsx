@@ -352,6 +352,15 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
 
       // 處理 HTML 內容
       let htmlContent = templateData.html_content || DEFAULT_HTML_CONTENT;
+
+      // 清理 HTML 內容中的雜質 (例如用戶誤貼的文字或調試信息)
+      // 1. 移除主要內容之前的所有文字
+      const startIndex = htmlContent.indexOf('<div class="pdf-page');
+      if (startIndex > 0) {
+        htmlContent = htmlContent.substring(startIndex);
+      }
+      // 2. 移除特定的髒字串 (針對用戶反饋)
+      htmlContent = htmlContent.replace(/暫時加紅色背景[^<]*/g, '');
       
       // 若 html_content 仍為空（極端情況），嘗試舊欄位
       if (!htmlContent && (templateData as any).header_html) {
