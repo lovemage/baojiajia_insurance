@@ -55,7 +55,7 @@ const DEFAULT_HTML_CONTENT = `
 <div class="pdf-page page-5"><div class="svg-bg"><img src="/pdf-templates/adult/5.svg" alt="壽險-家人&意外" /></div><div class="overlay"><span class="field f-familyCare">{{familyCare}}</span><span class="field f-accidentDaily">{{accidentDailyRange}}</span><span class="field f-accidentReimburse">{{accidentReimbursementRange}}</span><span class="field f-majorBurn">{{majorBurnRange}}</span><span class="field f-homeCare">{{homeCareInTenThousand}} 萬</span></div></div>
 <div class="pdf-page page-6"><div class="svg-bg"><img src="/pdf-templates/adult/6.svg" alt="重症保障" /></div><div class="overlay"><span class="field f-salaryLoss">{{salaryLossInTenThousand}} 萬/月</span><span class="field f-livingExpense">{{livingExpenseInTenThousand}} 萬/年</span><span class="field f-treatmentCost">{{treatmentCostInTenThousand}} 萬</span></div></div>
 <div class="pdf-page page-7"><div class="svg-bg"><img src="/pdf-templates/adult/7.svg" alt="重症-一次金" /></div><div class="overlay"><span class="field f-oneTime">{{fixedOneTimeBenefit}} 萬</span></div></div>
-<div class="pdf-page page-8"><div class="svg-bg"><img src="/pdf-templates/adult/8.svg" alt="長照保障" /></div><div class="overlay"><span class="field f-ltc-1to6-dis">{{longTermCareInTenThousand}} 萬</span><span class="field f-ltc-1to6-acc">{{longTermCareInTenThousand}} 萬</span><span class="field f-ltc-1to11-dis">{{disabilityOneTimeRange}}</span><span class="field f-ltc-1to11-acc">{{disabilityOneTimeRange}}</span></div></div>
+<div class="pdf-page page-8"><div class="svg-bg"><img src="/pdf-templates/adult/8.svg" alt="長照保障" /></div><div class="overlay"><span class="field f-ltc-1to6-dis">{{longTermCare1to6Disease}} 萬</span><span class="field f-ltc-1to6-acc">{{longTermCare1to6Accident}} 萬</span><span class="field f-ltc-1to11-dis">{{longTermCare1to11Disease}}</span><span class="field f-ltc-1to11-acc">{{longTermCare1to11Accident}}</span></div></div>
 <div class="pdf-page page-9"><div class="svg-bg"><img src="/pdf-templates/adult/9.svg" alt="page9" /></div></div>
 <div class="pdf-page page-10"><div class="svg-bg"><img src="/pdf-templates/adult/10.svg" alt="page10" /></div></div>
 <div class="pdf-page page-11"><div class="svg-bg"><img src="/pdf-templates/adult/11.svg" alt="page11" /></div></div>
@@ -340,7 +340,11 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         '{{treatmentCostInTenThousand}}': String(Math.round((data.treatmentCost || 0) / 10000)),
         '{{fixedOneTimeBenefit}}': '100',
         '{{longTermCareInTenThousand}}': String(Math.round((data.longTermCare || 0) / 10000)),
+        '{{longTermCare1to6Disease}}': String(Math.round((data.longTermCare || 0) / 10000)),
+        '{{longTermCare1to6Accident}}': String(Math.round((data.longTermCare || 0) / 10000)),
         '{{disabilityOneTimeRange}}': `${disabilityMin}萬～${disabilityMax}萬`,
+        '{{longTermCare1to11Disease}}': `${disabilityMin}萬～${disabilityMax}萬`,
+        '{{longTermCare1to11Accident}}': `${disabilityMin}萬～${disabilityMax}萬`,
         '{{personalDebt}}': formatNumber(data.personalDebt || 0),
         '{{familyCare}}': formatNumber(data.familyCare || 0),
         '{{accidentDailyRange}}': '1,000～2,000',

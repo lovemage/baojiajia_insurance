@@ -15,29 +15,34 @@ interface Props {
 }
 
 const AVAILABLE_VARIABLES = [
+  // 基本資料
   { var: '{{name}}', desc: '客戶姓名' },
   { var: '{{phone}}', desc: '電話' },
   { var: '{{lineId}}', desc: 'Line ID' },
   { var: '{{city}}', desc: '居住城市' },
-  { var: '{{roomType}}', desc: '病房類型' },
+  { var: '{{generatedDate}}', desc: '報告生成日期' },
+  
+  // 問卷變數 (Adult: 17個, Child: 11個)
   { var: '{{roomCost}}', desc: '病房費用' },
   { var: '{{hospitalDaily}}', desc: '住院日額' },
   { var: '{{surgeryRange}}', desc: '手術補貼範圍' },
-  { var: '{{outpatientSurgeryRange}}', desc: '門診雜費開銷' },
+  // 重症
   { var: '{{salaryLossInTenThousand}}', desc: '薪資損失(萬)' },
   { var: '{{livingExpenseInTenThousand}}', desc: '生活開銷(萬/年)' },
   { var: '{{treatmentCostInTenThousand}}', desc: '治療費用(萬)' },
   { var: '{{fixedOneTimeBenefit}}', desc: '一次性理賠金(固定100)' },
-  { var: '{{longTermCareInTenThousand}}', desc: '長照費用(萬)' },
-  { var: '{{disabilityOneTimeRange}}', desc: '1~11級一次金範圍' },
+  // 長照 (4個)
+  { var: '{{longTermCare1to6Disease}}', desc: '1~6級扶助金(疾病)' },
+  { var: '{{longTermCare1to6Accident}}', desc: '1~6級扶助金(意外)' },
+  { var: '{{longTermCare1to11Disease}}', desc: '1~11級一次金(疾病)' },
+  { var: '{{longTermCare1to11Accident}}', desc: '1~11級一次金(意外)' },
+  // 壽險 & 意外 (Adult only)
   { var: '{{personalDebt}}', desc: '個人債務' },
   { var: '{{familyCare}}', desc: '家人照顧金' },
   { var: '{{accidentDailyRange}}', desc: '意外住院日額(固定)' },
   { var: '{{accidentReimbursementRange}}', desc: '意外實支實付(固定)' },
   { var: '{{majorBurnRange}}', desc: '重大燒燙傷(固定)' },
   { var: '{{homeCareInTenThousand}}', desc: '居家休養費用(萬)' },
-  { var: '{{monthlyIncomeInTenThousand}}', desc: '月收入(萬)' },
-  { var: '{{generatedDate}}', desc: '報告生成日期' },
 ];
 
 export default function PdfTemplateEditor({ onBack }: Props) {

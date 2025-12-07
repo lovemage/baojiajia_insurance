@@ -193,6 +193,11 @@ export default function MemberManager() {
       const roomTypeText = data.roomType === 'double' ? '雙人房' :
                           data.roomType === 'single' ? '單人房' : '健保房';
 
+      // 計算 1~11 級一次金範圍 (月薪 * 50 * 5% ~ 月薪 * 50) 單位：萬
+      const monthlyIncome = data.monthlyIncome || 0;
+      const disabilityMin = Math.round((monthlyIncome * 50 * 0.05) / 10000);
+      const disabilityMax = Math.round((monthlyIncome * 50) / 10000);
+
       const pdfVariables: Record<string, string> = {
         '{{name}}': member.name || '-',
         '{{phone}}': member.phone || '-',
@@ -207,6 +212,11 @@ export default function MemberManager() {
         '{{livingExpenseInTenThousand}}': String(Math.round((data.livingExpense || 0) * 12 / 10000)),
         '{{treatmentCostInTenThousand}}': String(Math.round((data.treatmentCost || 0) / 10000)),
         '{{longTermCareInTenThousand}}': String(Math.round((data.longTermCare || 0) / 10000)),
+        '{{longTermCare1to6Disease}}': String(Math.round((data.longTermCare || 0) / 10000)),
+        '{{longTermCare1to6Accident}}': String(Math.round((data.longTermCare || 0) / 10000)),
+        '{{disabilityOneTimeRange}}': `${disabilityMin}萬～${disabilityMax}萬`, // Assuming min/max are available in scope or need recalc
+        '{{longTermCare1to11Disease}}': `${disabilityMin}萬～${disabilityMax}萬`,
+        '{{longTermCare1to11Accident}}': `${disabilityMin}萬～${disabilityMax}萬`,
         '{{personalDebt}}': formatNumber(data.personalDebt || 0),
         '{{familyCare}}': formatNumber(data.familyCare || 0),
         '{{monthlyIncomeInTenThousand}}': String(Math.round((data.monthlyIncome || 0) / 10000)),
