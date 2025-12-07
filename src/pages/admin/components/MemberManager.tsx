@@ -147,16 +147,23 @@ export default function MemberManager() {
     try {
       const data = member.questionnaire_data || {};
 
-      // 從 Supabase 獲取 PDF 模板
-      const { data: templateData, error: templateError } = await supabase
+      // 判斷是 adult 還是 child 模板
+      const isChildPlan = data.planType === 'child';
+      const targetTemplateName = isChildPlan ? 'child' : 'adult';
+
+      // 從 Supabase 獲取對應的 PDF 模板
+      const { data: templates, error: templateError } = await supabase
         .from('pdf_templates')
         .select('*')
+        .ilike('name', `%${targetTemplateName}%`)
         .eq('is_active', true)
-        .single();
+        .limit(1);
 
-      if (templateError) {
+      if (templateError || !templates || templates.length === 0) {
         throw new Error('無法載入 PDF 模板');
       }
+
+      const templateData = templates[0];
 
       // 準備 PDF 填寫資料
       const formatNumber = (num: number) => (num || 0).toLocaleString('zh-TW');
