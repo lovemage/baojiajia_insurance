@@ -24,18 +24,25 @@ const DEFAULT_STYLES = `
 .page-3 .f-hospitalDaily { top: 400px; left: 350px; }
 .page-3 .f-surgeryRange { top: 440px; left: 350px; }
 .page-3 .f-outpatient { top: 480px; left: 350px; }
-.page-4 .f-salaryLoss { top: 300px; left: 350px; }
-.page-4 .f-livingExpense { top: 360px; left: 350px; }
-.page-4 .f-treatmentCost { top: 420px; left: 350px; }
-.page-4 .f-oneTime { top: 480px; left: 350px; }
-.page-5 .f-longTermCare { top: 350px; left: 350px; font-size: 18px; }
-.page-6 .f-personalDebt { top: 300px; left: 350px; }
-.page-6 .f-familyCare { top: 360px; left: 350px; }
-.page-6 .f-disability { top: 420px; left: 350px; }
-.page-7 .f-accidentDaily { top: 300px; left: 350px; }
-.page-7 .f-accidentReimburse { top: 360px; left: 350px; }
-.page-7 .f-majorBurn { top: 420px; left: 350px; }
-.page-7 .f-homeCare { top: 480px; left: 350px; }
+/* Page 4: 壽險需求評估-個人債務總額 */
+.page-4 .f-personalDebt { top: 300px; left: 350px; }
+/* Page 5: 壽險需求評估-家人照顧金 & 意外 */
+.page-5 .f-familyCare { top: 300px; left: 350px; }
+.page-5 .f-accidentDaily { top: 360px; left: 350px; }
+.page-5 .f-accidentReimburse { top: 420px; left: 350px; }
+.page-5 .f-majorBurn { top: 480px; left: 350px; }
+.page-5 .f-homeCare { top: 540px; left: 350px; }
+/* Page 6: 重症需求評估 */
+.page-6 .f-salaryLoss { top: 300px; left: 350px; }
+.page-6 .f-livingExpense { top: 360px; left: 350px; }
+.page-6 .f-treatmentCost { top: 420px; left: 350px; }
+/* Page 7: 一次性理賠金 */
+.page-7 .f-oneTime { top: 300px; left: 350px; }
+/* Page 8: 長照需求評估 */
+.page-8 .f-ltc-1to6-dis { top: 300px; left: 350px; }
+.page-8 .f-ltc-1to6-acc { top: 360px; left: 350px; }
+.page-8 .f-ltc-1to11-dis { top: 420px; left: 350px; }
+.page-8 .f-ltc-1to11-acc { top: 480px; left: 350px; }
 @media print { .pdf-page { box-shadow: none; margin: 0; } .field { background: transparent; } }
 `;
 
@@ -44,11 +51,11 @@ const DEFAULT_HTML_CONTENT = `
 <div class="pdf-page page-1"><div class="svg-bg"><img src="/pdf-templates/adult/1.svg" alt="封面" /></div><div class="overlay"><span class="field name-field">{{name}}</span><span class="field date-field">{{generatedDate}}</span></div></div>
 <div class="pdf-page page-2"><div class="svg-bg"><img src="/pdf-templates/adult/2.svg" alt="基本資料" /></div><div class="overlay"><span class="field f-name">{{name}}</span><span class="field f-phone">{{phone}}</span><span class="field f-line">{{lineId}}</span><span class="field f-city">{{city}}</span></div></div>
 <div class="pdf-page page-3"><div class="svg-bg"><img src="/pdf-templates/adult/3.svg" alt="醫療保障" /></div><div class="overlay"><span class="field f-roomType">{{roomType}}</span><span class="field f-roomCost">{{roomCost}}</span><span class="field f-hospitalDaily">{{hospitalDaily}}</span><span class="field f-surgeryRange">{{surgeryRange}}</span><span class="field f-outpatient">{{outpatientSurgeryRange}}</span></div></div>
-<div class="pdf-page page-4"><div class="svg-bg"><img src="/pdf-templates/adult/4.svg" alt="重症保障" /></div><div class="overlay"><span class="field f-salaryLoss">{{salaryLossInTenThousand}} 萬/月</span><span class="field f-livingExpense">{{livingExpenseInTenThousand}} 萬/年</span><span class="field f-treatmentCost">{{treatmentCostInTenThousand}} 萬</span><span class="field f-oneTime">{{fixedOneTimeBenefit}} 萬</span></div></div>
-<div class="pdf-page page-5"><div class="svg-bg"><img src="/pdf-templates/adult/5.svg" alt="長照保障" /></div><div class="overlay"><span class="field f-longTermCare">{{longTermCareInTenThousand}} 萬/月</span></div></div>
-<div class="pdf-page page-6"><div class="svg-bg"><img src="/pdf-templates/adult/6.svg" alt="壽險保障" /></div><div class="overlay"><span class="field f-personalDebt">{{personalDebt}}</span><span class="field f-familyCare">{{familyCare}}</span><span class="field f-disability">{{disabilityOneTimeRange}}</span></div></div>
-<div class="pdf-page page-7"><div class="svg-bg"><img src="/pdf-templates/adult/7.svg" alt="意外保障" /></div><div class="overlay"><span class="field f-accidentDaily">{{accidentDailyRange}}</span><span class="field f-accidentReimburse">{{accidentReimbursementRange}}</span><span class="field f-majorBurn">{{majorBurnRange}}</span><span class="field f-homeCare">{{homeCareInTenThousand}} 萬</span></div></div>
-<div class="pdf-page page-8"><div class="svg-bg"><img src="/pdf-templates/adult/8.svg" alt="page8" /></div></div>
+<div class="pdf-page page-4"><div class="svg-bg"><img src="/pdf-templates/adult/4.svg" alt="壽險-債務" /></div><div class="overlay"><span class="field f-personalDebt">{{personalDebt}}</span></div></div>
+<div class="pdf-page page-5"><div class="svg-bg"><img src="/pdf-templates/adult/5.svg" alt="壽險-家人&意外" /></div><div class="overlay"><span class="field f-familyCare">{{familyCare}}</span><span class="field f-accidentDaily">{{accidentDailyRange}}</span><span class="field f-accidentReimburse">{{accidentReimbursementRange}}</span><span class="field f-majorBurn">{{majorBurnRange}}</span><span class="field f-homeCare">{{homeCareInTenThousand}} 萬</span></div></div>
+<div class="pdf-page page-6"><div class="svg-bg"><img src="/pdf-templates/adult/6.svg" alt="重症保障" /></div><div class="overlay"><span class="field f-salaryLoss">{{salaryLossInTenThousand}} 萬/月</span><span class="field f-livingExpense">{{livingExpenseInTenThousand}} 萬/年</span><span class="field f-treatmentCost">{{treatmentCostInTenThousand}} 萬</span></div></div>
+<div class="pdf-page page-7"><div class="svg-bg"><img src="/pdf-templates/adult/7.svg" alt="重症-一次金" /></div><div class="overlay"><span class="field f-oneTime">{{fixedOneTimeBenefit}} 萬</span></div></div>
+<div class="pdf-page page-8"><div class="svg-bg"><img src="/pdf-templates/adult/8.svg" alt="長照保障" /></div><div class="overlay"><span class="field f-ltc-1to6-dis">{{longTermCareInTenThousand}} 萬</span><span class="field f-ltc-1to6-acc">{{longTermCareInTenThousand}} 萬</span><span class="field f-ltc-1to11-dis">{{disabilityOneTimeRange}}</span><span class="field f-ltc-1to11-acc">{{disabilityOneTimeRange}}</span></div></div>
 <div class="pdf-page page-9"><div class="svg-bg"><img src="/pdf-templates/adult/9.svg" alt="page9" /></div></div>
 <div class="pdf-page page-10"><div class="svg-bg"><img src="/pdf-templates/adult/10.svg" alt="page10" /></div></div>
 <div class="pdf-page page-11"><div class="svg-bg"><img src="/pdf-templates/adult/11.svg" alt="page11" /></div></div>

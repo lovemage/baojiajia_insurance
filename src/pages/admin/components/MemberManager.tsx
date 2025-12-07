@@ -40,6 +40,29 @@ const formatNumber = (num: any) => {
   return Number(num).toLocaleString('zh-TW');
 };
 
+// 選項映射
+const OPTIONS_MAP = {
+  insuranceKnowledge: {
+    'A': '完全清楚',
+    'B': '大概知道，但細節不清楚',
+    'C': '不太清楚，別人幫我規劃的',
+    'D': '完全不了解',
+    'E': '沒有規劃過保障'
+  } as Record<string, string>,
+  policyCheckExpectations: {
+    'A': '降低保費，提高保障',
+    'B': '避免買到「地雷保單」',
+    'C': '避免您重複或過度投保',
+    'D': '審視保障內容符合您的個人需求'
+  } as Record<string, string>,
+  monthlyBudget: {
+    'A': '3000 以下',
+    'B': '3000~5000 元',
+    'C': '5000~10000 元',
+    'D': '10000 以上'
+  } as Record<string, string>
+};
+
 export default function MemberManager() {
   const [memberGroups, setMemberGroups] = useState<MemberGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -539,6 +562,32 @@ export default function MemberManager() {
                     <div className="text-sm text-gray-500 mb-1">月收入（萬）</div>
                     <div className="font-medium text-lg text-teal-600">
                       {Math.round(safeGet(selectedMember.questionnaire_data, 'monthlyIncome', 0) / 10000)} 萬/月
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-8 space-y-6">
+                <h4 className="text-xl font-bold text-gray-900">其他需求評估</h4>
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="border border-gray-200 rounded-lg p-4 bg-purple-50">
+                    <div className="text-sm text-gray-500 mb-1">保險了解程度</div>
+                    <div className="font-medium text-lg text-purple-700">
+                      {OPTIONS_MAP.insuranceKnowledge[safeGet(selectedMember.questionnaire_data, 'insuranceKnowledge')] || safeGet(selectedMember.questionnaire_data, 'insuranceKnowledge')}
+                    </div>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-4 bg-emerald-50">
+                    <div className="text-sm text-gray-500 mb-1">保單健診期望</div>
+                    <div className="font-medium text-lg text-emerald-700">
+                      {(safeGet(selectedMember.questionnaire_data, 'policyCheckExpectations', []) as string[])
+                        .map(val => OPTIONS_MAP.policyCheckExpectations[val] || val)
+                        .join('、') || '-'}
+                    </div>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-4 bg-blue-50">
+                    <div className="text-sm text-gray-500 mb-1">每月預算</div>
+                    <div className="font-medium text-lg text-blue-700">
+                      {OPTIONS_MAP.monthlyBudget[safeGet(selectedMember.questionnaire_data, 'monthlyBudget')] || safeGet(selectedMember.questionnaire_data, 'monthlyBudget')}
                     </div>
                   </div>
                 </div>
