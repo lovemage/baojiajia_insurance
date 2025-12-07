@@ -41,50 +41,95 @@ const AVAILABLE_VARIABLES = [
 ];
 
 export default function PdfTemplateEditor({ onBack }: Props) {
-  const [template, setTemplate] = useState<PdfTemplate | null>(null);
+  const [templates, setTemplates] = useState<PdfTemplate[]>([]);
+  const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [showVisualEditor, setShowVisualEditor] = useState(false);
 
+  const currentTemplate = templates.find(t => t.id === currentTemplateId) || null;
+
   useEffect(() => {
-    fetchTemplate();
+    fetchTemplates();
   }, []);
 
-  const fetchTemplate = async () => {
+  const fetchTemplates = async () => {
     try {
       const { data, error } = await supabase
         .from('pdf_templates')
         .select('*')
-        .eq('is_active', true)
-        .single();
+        .order('name');
 
       if (error) throw error;
-      setTemplate(data);
+      
+      if (data && data.length > 0) {
+        setTemplates(data);
+        // 優先選擇 'adult'，否則選第一個
+        const adult = data.find(t => t.name === 'adult');
+        setCurrentTemplateId(adult ? adult.id : data[0].id);
+      }
     } catch (error) {
-      console.error('Error fetching template:', error);
+      console.error('Error fetching templates:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCreateChildTemplate = async () => {
+    if (!currentTemplate) return;
+    if (!confirm('確定要複製當前模板並創建「child」模板嗎？')) return;
+    
+    setSaving(true);
+    try {
+      // 替換圖片路徑
+      const childHtml = currentTemplate.html_content.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/');
+      
+      const { data, error } = await supabase
+        .from('pdf_templates')
+        .insert({
+          name: 'child',
+          description: '兒童版保障需求分析報告',
+          html_content: childHtml,
+          styles: currentTemplate.styles,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setTemplates([...templates, data]);
+      setCurrentTemplateId(data.id);
+      alert('已成功創建 child 模板！');
+    } catch (error) {
+      console.error('Error creating child template:', error);
+      alert('創建失敗');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSave = async () => {
-    if (!template) return;
+    if (!currentTemplate) return;
     setSaving(true);
 
     try {
       const { error } = await supabase
         .from('pdf_templates')
         .update({
-          name: template.name,
-          description: template.description,
-          html_content: template.html_content,
-          styles: template.styles,
+          name: currentTemplate.name,
+          description: currentTemplate.description,
+          html_content: currentTemplate.html_content,
+          styles: currentTemplate.styles,
         })
-        .eq('id', template.id);
+        .eq('id', currentTemplate.id);
 
       if (error) throw error;
+      
+      // Update local state
+      setTemplates(templates.map(t => t.id === currentTemplate.id ? currentTemplate : t));
       alert('模板已儲存！');
     } catch (error) {
       console.error('Error saving template:', error);
@@ -95,12 +140,14 @@ export default function PdfTemplateEditor({ onBack }: Props) {
   };
 
   const handleFieldChange = (key: string, value: string) => {
-    if (!template) return;
-    setTemplate({ ...template, [key]: value });
+    if (!currentTemplate) return;
+    const updated = { ...currentTemplate, [key]: value };
+    setTemplates(templates.map(t => t.id === currentTemplate.id ? updated : t));
   };
 
   const generatePreview = () => {
-    if (!template) return;
+    if (!currentTemplate) return;
+    const template = currentTemplate;
 
     // 模擬資料
     const mockData: Record<string, string> = {
@@ -164,7 +211,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
     );
   }
 
-  if (!template) {
+  if (!currentTemplate && !loading) {
     return (
       <div className="text-center py-12">
         <i className="ri-file-warning-line text-4xl text-gray-400 mb-4"></i>
@@ -214,23 +261,52 @@ export default function PdfTemplateEditor({ onBack }: Props) {
         </div>
       </div>
 
-      {/* Template Name */}
+      {/* Template Selector & Info */}
       <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">模板名稱</label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">選擇模板</label>
+            <div className="flex gap-2">
+              <select
+                value={currentTemplateId || ''}
+                onChange={(e) => setCurrentTemplateId(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              >
+                {templates.map(t => (
+                  <option key={t.id} value={t.id}>{t.name} ({t.description})</option>
+                ))}
+              </select>
+              {/* 如果沒有 child 模板，顯示創建按鈕 */}
+              {!templates.some(t => t.name === 'child') && (
+                <button
+                  onClick={handleCreateChildTemplate}
+                  className="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 whitespace-nowrap text-sm"
+                  title="複製當前模板並創建「child」模板"
+                >
+                  <i className="ri-add-line mr-1"></i>
+                  建Child
+                </button>
+              )}
+            </div>
+          </div>
+          
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">模板名稱 (識別代碼)</label>
             <input
               type="text"
-              value={template.name}
+              value={currentTemplate?.name || ''}
               onChange={(e) => handleFieldChange('name', e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              placeholder="例如: adult, child"
             />
+            <p className="text-xs text-gray-500 mt-1">請使用 'adult' 或 'child' 以便系統識別</p>
           </div>
-          <div>
+          
+          <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">模板說明</label>
             <input
               type="text"
-              value={template.description || ''}
+              value={currentTemplate?.description || ''}
               onChange={(e) => handleFieldChange('description', e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
@@ -248,7 +324,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
               <h3 className="font-bold text-gray-800 text-lg">CSS 樣式</h3>
             </div>
             <textarea
-              value={template.styles || ''}
+              value={currentTemplate?.styles || ''}
               onChange={(e) => handleFieldChange('styles', e.target.value)}
               className="w-full h-64 px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-gray-50"
               placeholder="輸入 CSS 樣式..."
@@ -266,7 +342,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
               <h3 className="font-bold text-gray-800 text-lg">HTML 內容</h3>
             </div>
             <textarea
-              value={template.html_content || ''}
+              value={currentTemplate?.html_content || ''}
               onChange={(e) => handleFieldChange('html_content', e.target.value)}
               className="w-full h-[500px] px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="輸入 HTML 內容，可使用變數如 {{name}}、{{phone}} 等..."
@@ -342,11 +418,12 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       )}
 
       {/* Visual Editor Modal */}
-      {showVisualEditor && template && (
+      {showVisualEditor && currentTemplate && (
         <VisualEditor
-          htmlContent={template.html_content}
-          styles={template.styles}
-          onSave={(newStyles) => {
+          htmlContent={currentTemplate.html_content}
+          styles={currentTemplate.styles}
+          onSave={(newHtml, newStyles) => {
+            handleFieldChange('html_content', newHtml);
             handleFieldChange('styles', newStyles);
             setShowVisualEditor(false);
           }}
@@ -358,31 +435,72 @@ export default function PdfTemplateEditor({ onBack }: Props) {
 }
 
 // 可視化編輯器組件
+import { useRef } from 'react';
+
 function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   htmlContent: string;
   styles: string;
-  onSave: (styles: string) => void;
+  onSave: (newHtml: string, newStyles: string) => void;
   onClose: () => void;
 }) {
   const [scale, setScale] = useState(0.8);
   const [modifiedStyles, setModifiedStyles] = useState(styles);
+  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // 處理保存
   const handleSave = () => {
-    onSave(modifiedStyles);
+    if (!containerRef.current) return;
+    
+    // 1. 獲取當前的 HTML 內容
+    const contentDiv = containerRef.current;
+    
+    // 2. 清理內聯樣式 (top, left) 並確保它們已經寫入 CSS
+    // 注意：我們在拖曳結束時已經更新了 modifiedStyles，所以這裡主要是移除 style 屬性
+    const fields = Array.from(contentDiv.querySelectorAll('.field'));
+    fields.forEach(el => {
+      const element = el as HTMLElement;
+      element.style.removeProperty('top');
+      element.style.removeProperty('left');
+      element.classList.remove('selected-field'); // 清理選中狀態class
+    });
+
+    // 3. 獲取清理後的 HTML
+    let newHtml = contentDiv.innerHTML;
+    
+    onSave(newHtml, modifiedStyles);
   };
+
+  // 處理鍵盤事件 (刪除)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElement) {
+        // 從 DOM 中移除
+        selectedElement.remove();
+        setSelectedElement(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedElement]);
 
   // 拖曳處理邏輯
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (!target.classList.contains('field')) return;
+    
+    // 如果點擊的不是變數，取消選中
+    if (!target.classList.contains('field')) {
+      setSelectedElement(null);
+      return;
+    }
 
     e.preventDefault(); // 防止選中文字
+    setSelectedElement(target);
 
     const startX = e.clientX;
     const startY = e.clientY;
     
-    // 獲取元素當前的 top/left (相對於父元素)
+    // 獲取元素當前的 top/left
     const computedStyle = window.getComputedStyle(target);
     const startTop = parseInt(computedStyle.top) || 0;
     const startLeft = parseInt(computedStyle.left) || 0;
@@ -403,15 +521,21 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
 
-      // 更新樣式字串
       const finalTop = target.style.top;
       const finalLeft = target.style.left;
       
-      // 識別該元素的 unique class (假設是第二個 class，例如 "field f-name")
+      // 識別或創建 unique class
       const classes = Array.from(target.classList);
-      const uniqueClass = classes.find(c => c !== 'field');
+      let uniqueClass = classes.find(c => c !== 'field' && c !== 'selected-field');
       
-      if (uniqueClass) {
+      if (!uniqueClass) {
+        // 如果沒有 unique class，創建一個
+        uniqueClass = `v-${Math.random().toString(36).substr(2, 6)}`;
+        target.classList.add(uniqueClass);
+        // 新增 CSS 規則
+        setModifiedStyles(prev => prev + `\n.${uniqueClass} { top: ${finalTop}; left: ${finalLeft}; }`);
+      } else {
+        // 更新現有 CSS 規則
         updateStyleString(uniqueClass, finalTop, finalLeft);
       }
     };
@@ -423,34 +547,73 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   const updateStyleString = (className: string, top: string, left: string) => {
     setModifiedStyles(prevStyles => {
       let newStyles = prevStyles;
-      
-      // 構建一個能匹配該 class 所在區塊的 Regex
-      // 尋找 `.${className} {` 或 `.${className}\s*{`
-      // 並捕獲整個區塊直到 `}`
+      // 匹配CSS塊
       const blockRegex = new RegExp(`([^}]*\\.${className}[^{]*\\{)([^}]*)(\\})`, 'g');
       
+      // 檢查是否存在該規則，若不存在則追加
+      if (!blockRegex.test(newStyles)) {
+        return newStyles + `\n.${className} { top: ${top}; left: ${left}; }`;
+      }
+
       newStyles = newStyles.replace(blockRegex, (match, selector, content, closing) => {
         let newContent = content;
-        
-        // 替換 top
         if (/top:\s*[^;]+;/.test(newContent)) {
           newContent = newContent.replace(/top:\s*[^;]+;/, `top: ${top};`);
         } else {
           newContent += ` top: ${top};`;
         }
-        
-        // 替換 left
         if (/left:\s*[^;]+;/.test(newContent)) {
           newContent = newContent.replace(/left:\s*[^;]+;/, `left: ${left};`);
         } else {
           newContent += ` left: ${left};`;
         }
-        
         return `${selector}${newContent}${closing}`;
       });
-      
       return newStyles;
     });
+  };
+
+  // 處理拖曳變數添加
+  const handleDragStart = (e: React.DragEvent, variable: string) => {
+    e.dataTransfer.setData('text/plain', variable);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const variable = e.dataTransfer.getData('text/plain');
+    if (!variable) return;
+
+    // 計算放置位置 (相對於當前頁面)
+    // 我們需要找到放置點所在的 .pdf-page
+    // 由於我們是在最外層 drop，需要通過 elementFromPoint 或 target 判斷
+    const target = e.target as HTMLElement;
+    const pageElement = target.closest('.pdf-page');
+    
+    if (pageElement) {
+      const rect = pageElement.getBoundingClientRect();
+      const dropX = (e.clientX - rect.left) / scale;
+      const dropY = (e.clientY - rect.top) / scale;
+
+      // 創建新元素 (直接操作 DOM)
+      const overlay = pageElement.querySelector('.overlay');
+      if (overlay) {
+        const newSpan = document.createElement('span');
+        const uniqueClass = `v-${Math.random().toString(36).substr(2, 6)}`;
+        
+        newSpan.className = `field ${uniqueClass}`;
+        newSpan.innerText = variable;
+        newSpan.style.top = `${Math.round(dropY)}px`;
+        newSpan.style.left = `${Math.round(dropX)}px`;
+        
+        overlay.appendChild(newSpan);
+        
+        // 選中新元素
+        setSelectedElement(newSpan);
+
+        // 添加 CSS
+        setModifiedStyles(prev => prev + `\n.${uniqueClass} { top: ${Math.round(dropY)}px; left: ${Math.round(dropX)}px; }`);
+      }
+    }
   };
 
   return (
@@ -458,7 +621,7 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       {/* Toolbar */}
       <div className="bg-white border-b px-6 py-3 flex items-center justify-between shadow-sm z-10">
         <div className="flex items-center gap-4">
-          <h3 className="font-bold text-gray-800">可視化位置調整</h3>
+          <h3 className="font-bold text-gray-800">可視化編輯器</h3>
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
             <button 
               onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
@@ -474,10 +637,11 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
               <i className="ri-add-line"></i>
             </button>
           </div>
-          <p className="text-sm text-gray-500">
-            <i className="ri-information-line mr-1"></i>
-            直接拖曳藍色變數框調整位置
-          </p>
+          <div className="text-sm text-gray-500 flex items-center gap-2">
+            <span className="flex items-center"><i className="ri-drag-move-2-line mr-1"></i> 拖曳調整位置</span>
+            <span className="flex items-center"><i className="ri-add-box-line mr-1"></i> 拖曳右側變數添加</span>
+            <span className="flex items-center"><i className="ri-delete-bin-line mr-1"></i> 選中後按 Delete 刪除</span>
+          </div>
         </div>
         <div className="flex gap-3">
           <button
@@ -491,43 +655,104 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
             className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 shadow-sm"
           >
             <i className="ri-save-line mr-2"></i>
-            保存位置更改
+            保存更改
           </button>
         </div>
       </div>
 
-      {/* Canvas */}
-      <div className="flex-1 overflow-auto p-8 relative bg-gray-500/10" onMouseDown={handleMouseDown}>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Canvas Area */}
         <div 
-          style={{ 
-            transform: `scale(${scale})`, 
-            transformOrigin: 'top center',
-            width: '794px',
-            margin: '0 auto',
-            position: 'relative'
-          }}
+          className="flex-1 overflow-auto p-8 relative bg-gray-500/10" 
+          onMouseDown={handleMouseDown}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
         >
-          <style>{modifiedStyles}</style>
-          <style>{`
-            /* 強制覆蓋樣式以支持編輯 */
-            .field {
-              cursor: move;
-              user-select: none;
-              pointer-events: auto !important;
-              border: 1px solid #3b82f6;
-              background: rgba(59, 130, 246, 0.2);
-              transition: none !important;
-              z-index: 100 !important;
-            }
-            .overlay {
-              z-index: 10 !important;
-            }
-            .field:hover {
-              background: rgba(59, 130, 246, 0.4);
-              box-shadow: 0 0 0 2px #3b82f6;
-            }
-          `}</style>
-          <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+          <div 
+            style={{ 
+              transform: `scale(${scale})`, 
+              transformOrigin: 'top center',
+              width: '794px',
+              margin: '0 auto',
+              position: 'relative'
+            }}
+          >
+            <style>{modifiedStyles}</style>
+            <style>{`
+              .field {
+                cursor: move;
+                user-select: none;
+                pointer-events: auto !important;
+                border: 1px solid #3b82f6;
+                background: rgba(59, 130, 246, 0.2);
+                transition: none !important;
+                z-index: 100 !important;
+              }
+              .overlay { z-index: 10 !important; }
+              .field:hover {
+                background: rgba(59, 130, 246, 0.4);
+                box-shadow: 0 0 0 2px #3b82f6;
+              }
+              .selected-field {
+                background: rgba(239, 68, 68, 0.2) !important;
+                border-color: #ef4444 !important;
+                box-shadow: 0 0 0 2px #ef4444, 0 0 10px rgba(0,0,0,0.2) !important;
+                z-index: 101 !important;
+              }
+            `}</style>
+            {/* 使用 ref 獲取 DOM 內容 */}
+            <div ref={containerRef} dangerouslySetInnerHTML={{ __html: htmlContent }} />
+          </div>
+        </div>
+
+        {/* Variables Sidebar */}
+        <div className="w-80 bg-white border-l shadow-lg overflow-y-auto z-20 flex flex-col">
+          <div className="p-4 border-b bg-gray-50">
+            <h4 className="font-bold text-gray-700 flex items-center gap-2">
+              <i className="ri-list-settings-line"></i> 可用變數
+            </h4>
+            <p className="text-xs text-gray-500 mt-1">拖曳變數到左側畫布即可添加</p>
+          </div>
+          
+          <div className="flex-1 p-4 space-y-2">
+            {AVAILABLE_VARIABLES.map((v) => (
+              <div
+                key={v.var}
+                draggable
+                onDragStart={(e) => handleDragStart(e, v.var)}
+                className="group p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:border-teal-500 hover:shadow-md transition-all active:cursor-grabbing"
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <code className="text-teal-700 font-mono text-xs font-bold bg-teal-50 px-1.5 py-0.5 rounded">
+                    {v.var}
+                  </code>
+                  <i className="ri-drag-move-line text-gray-300 group-hover:text-teal-500"></i>
+                </div>
+                <p className="text-xs text-gray-600">{v.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {selectedElement && (
+            <div className="p-4 border-t bg-red-50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-red-700">已選中項目</span>
+                <button 
+                  onClick={() => {
+                    selectedElement.remove();
+                    setSelectedElement(null);
+                  }}
+                  className="text-red-600 hover:text-red-800"
+                  title="刪除"
+                >
+                  <i className="ri-delete-bin-line text-lg"></i>
+                </button>
+              </div>
+              <div className="text-xs text-gray-600 truncate bg-white p-2 rounded border border-red-100">
+                {selectedElement.innerText}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

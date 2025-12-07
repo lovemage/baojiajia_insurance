@@ -244,29 +244,54 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         }
       }
 
-      // 從 Supabase 獲取 PDF 模板，若失敗則使用預設模板
+      // 從 Supabase 獲取對應的 PDF 模板
       let templateData;
+      const targetTemplateName = isChildPlan ? 'child' : 'adult';
+
       try {
-        const { data, error } = await supabase
+        // 1. 嘗試獲取指定名稱的模板
+        let { data, error } = await supabase
           .from('pdf_templates')
           .select('*')
+          .eq('name', targetTemplateName)
           .eq('is_active', true)
           .single();
-        
-        if (error || !data) {
-          console.warn('Using default template due to fetch error or empty data');
-          templateData = {
-            styles: DEFAULT_STYLES,
-            html_content: DEFAULT_HTML_CONTENT
-          };
-        } else {
-          templateData = data;
+
+        // 2. 如果找不到指定模板，且是 child，嘗試創建預設的 child 模板資料 (僅記憶體中，不寫入DB)
+        if (!data && isChildPlan) {
+           console.warn('Child template not found in DB, generating from default');
+           templateData = {
+             styles: DEFAULT_STYLES,
+             html_content: DEFAULT_HTML_CONTENT.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
+           };
+        } else if (!data) {
+           // 3. 如果是 adult 且找不到，或者其他情況，嘗試獲取任意 active 模板
+           const { data: anyData } = await supabase
+             .from('pdf_templates')
+             .select('*')
+             .eq('is_active', true)
+             .single();
+           data = anyData;
         }
+
+        if (data) {
+          templateData = data;
+        } else if (!templateData) {
+          // 4. 最後的 Fallback
+          throw new Error('No template found');
+        }
+
       } catch (e) {
         console.warn('Using default template due to exception', e);
+        // 根據類型選擇預設模板內容
+        const baseHtml = DEFAULT_HTML_CONTENT;
+        const finalHtml = isChildPlan 
+            ? baseHtml.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
+            : baseHtml;
+
         templateData = {
           styles: DEFAULT_STYLES,
-          html_content: DEFAULT_HTML_CONTENT
+          html_content: finalHtml
         };
       }
 
