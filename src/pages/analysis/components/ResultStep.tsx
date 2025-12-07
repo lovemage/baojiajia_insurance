@@ -59,9 +59,11 @@ const DEFAULT_HTML_CONTENT = `
 <div class="pdf-page page-16"><div class="svg-bg"><img src="/pdf-templates/adult/16.svg" alt="page16" /></div></div>
 `;
 
-// Helper: 將圖片轉為 Base64
+// Helper: 將圖片轉為 Base64 並等待載入
 const processImages = async (container: HTMLElement) => {
   const images = Array.from(container.querySelectorAll('img'));
+  console.log(`Processing ${images.length} images...`);
+  
   await Promise.all(images.map(async (img) => {
     try {
       const src = img.getAttribute('src');
@@ -72,9 +74,17 @@ const processImages = async (container: HTMLElement) => {
       
       await new Promise<void>((resolve) => {
         const reader = new FileReader();
-        reader.onloadend = () => {
+        reader.onloadend = async () => {
           if (reader.result) {
             img.src = reader.result as string;
+            // 嘗試等待圖片解碼完成，確保渲染時圖片已就緒
+            try {
+              if (img.decode) {
+                await img.decode();
+              }
+            } catch (e) {
+              console.warn('Image decode failed', e);
+            }
           }
           resolve();
         };
@@ -395,20 +405,23 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       document.body.appendChild(container);
 
       // 處理圖片：將所有圖片轉換為 Base64 以解決跨域和加載問題
+      // 這是解決 PDF 空白最關鍵的一步
       await processImages(container);
 
-      // 給予充分時間讓瀏覽器渲染
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 給予充分時間讓瀏覽器渲染 (增加到 3000ms)
+      // 對於 16 頁的大文件，瀏覽器需要時間重新排版和繪製
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       const opt = {
         margin: 0,
         filename: `保障需求分析報告_${downloadData.name}.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { 
-          scale: 2, 
+          scale: 1.5, // 稍微降低縮放比例以減少記憶體消耗，避免大文件崩潰導致空白
           useCORS: true,
           letterRendering: true,
-          scrollY: 0
+          scrollY: 0,
+          logging: true // 啟用日誌以便排查
         },
         jsPDF: { 
           unit: 'mm' as const, 
