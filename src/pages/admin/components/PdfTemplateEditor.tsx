@@ -46,6 +46,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
   const [saving, setSaving] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [showVisualEditor, setShowVisualEditor] = useState(false);
 
   useEffect(() => {
     fetchTemplate();
@@ -332,6 +333,192 @@ export default function PdfTemplateEditor({ onBack }: Props) {
           </div>
         </div>
       )}
+
+      {/* Visual Editor Modal */}
+      {showVisualEditor && template && (
+        <VisualEditor
+          htmlContent={template.html_content}
+          styles={template.styles}
+          onSave={(newStyles) => {
+            handleFieldChange('styles', newStyles);
+            setShowVisualEditor(false);
+          }}
+          onClose={() => setShowVisualEditor(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// 可視化編輯器組件
+function VisualEditor({ htmlContent, styles, onSave, onClose }: {
+  htmlContent: string;
+  styles: string;
+  onSave: (styles: string) => void;
+  onClose: () => void;
+}) {
+  const [scale, setScale] = useState(0.8);
+  const [modifiedStyles, setModifiedStyles] = useState(styles);
+  
+  // 處理保存
+  const handleSave = () => {
+    onSave(modifiedStyles);
+  };
+
+  // 拖曳處理邏輯
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (!target.classList.contains('field')) return;
+
+    e.preventDefault(); // 防止選中文字
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    
+    // 獲取元素當前的 top/left (相對於父元素)
+    const computedStyle = window.getComputedStyle(target);
+    const startTop = parseInt(computedStyle.top) || 0;
+    const startLeft = parseInt(computedStyle.left) || 0;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = (moveEvent.clientX - startX) / scale;
+      const deltaY = (moveEvent.clientY - startY) / scale;
+
+      const newTop = Math.round(startTop + deltaY);
+      const newLeft = Math.round(startLeft + deltaX);
+
+      // 更新視覺位置
+      target.style.top = `${newTop}px`;
+      target.style.left = `${newLeft}px`;
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+
+      // 更新樣式字串
+      const finalTop = target.style.top;
+      const finalLeft = target.style.left;
+      
+      // 識別該元素的 unique class (假設是第二個 class，例如 "field f-name")
+      const classes = Array.from(target.classList);
+      const uniqueClass = classes.find(c => c !== 'field');
+      
+      if (uniqueClass) {
+        updateStyleString(uniqueClass, finalTop, finalLeft);
+      }
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const updateStyleString = (className: string, top: string, left: string) => {
+    setModifiedStyles(prevStyles => {
+      let newStyles = prevStyles;
+      
+      // 構建一個能匹配該 class 所在區塊的 Regex
+      // 尋找 `.${className} {` 或 `.${className}\s*{`
+      // 並捕獲整個區塊直到 `}`
+      const blockRegex = new RegExp(`([^}]*\\.${className}[^{]*\\{)([^}]*)(\\})`, 'g');
+      
+      newStyles = newStyles.replace(blockRegex, (match, selector, content, closing) => {
+        let newContent = content;
+        
+        // 替換 top
+        if (/top:\s*[^;]+;/.test(newContent)) {
+          newContent = newContent.replace(/top:\s*[^;]+;/, `top: ${top};`);
+        } else {
+          newContent += ` top: ${top};`;
+        }
+        
+        // 替換 left
+        if (/left:\s*[^;]+;/.test(newContent)) {
+          newContent = newContent.replace(/left:\s*[^;]+;/, `left: ${left};`);
+        } else {
+          newContent += ` left: ${left};`;
+        }
+        
+        return `${selector}${newContent}${closing}`;
+      });
+      
+      return newStyles;
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-100 z-50 flex flex-col">
+      {/* Toolbar */}
+      <div className="bg-white border-b px-6 py-3 flex items-center justify-between shadow-sm z-10">
+        <div className="flex items-center gap-4">
+          <h3 className="font-bold text-gray-800">可視化位置調整</h3>
+          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+            <button 
+              onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
+              className="p-1 hover:bg-white rounded"
+            >
+              <i className="ri-subtract-line"></i>
+            </button>
+            <span className="text-sm font-mono w-12 text-center">{Math.round(scale * 100)}%</span>
+            <button 
+              onClick={() => setScale(s => Math.min(2, s + 0.1))}
+              className="p-1 hover:bg-white rounded"
+            >
+              <i className="ri-add-line"></i>
+            </button>
+          </div>
+          <p className="text-sm text-gray-500">
+            <i className="ri-information-line mr-1"></i>
+            直接拖曳藍色變數框調整位置
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+          >
+            取消
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 shadow-sm"
+          >
+            <i className="ri-save-line mr-2"></i>
+            保存位置更改
+          </button>
+        </div>
+      </div>
+
+      {/* Canvas */}
+      <div className="flex-1 overflow-auto p-8 relative bg-gray-500/10" onMouseDown={handleMouseDown}>
+        <div 
+          style={{ 
+            transform: `scale(${scale})`, 
+            transformOrigin: 'top center',
+            width: '794px',
+            margin: '0 auto',
+            position: 'relative'
+          }}
+        >
+          <style>{modifiedStyles}</style>
+          <style>{`
+            /* 強制覆蓋樣式以支持編輯 */
+            .field {
+              cursor: move;
+              user-select: none;
+              border: 1px solid #3b82f6;
+              background: rgba(59, 130, 246, 0.2);
+              transition: none !important;
+              z-index: 100 !important;
+            }
+            .field:hover {
+              background: rgba(59, 130, 246, 0.4);
+              box-shadow: 0 0 0 2px #3b82f6;
+            }
+          `}</style>
+          <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+        </div>
+      </div>
     </div>
   );
 }
