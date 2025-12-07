@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 
 interface PdfTemplate {
@@ -66,7 +66,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       
       if (data && data.length > 0) {
         setTemplates(data);
-        // 優先選擇 'adult'，否則選第一個
         const adult = data.find(t => t.name === 'adult');
         setCurrentTemplateId(adult ? adult.id : data[0].id);
       }
@@ -83,7 +82,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
     
     setSaving(true);
     try {
-      // 替換圖片路徑
       const childHtml = currentTemplate.html_content.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/');
       
       const { data, error } = await supabase
@@ -128,7 +126,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
 
       if (error) throw error;
       
-      // Update local state
       setTemplates(templates.map(t => t.id === currentTemplate.id ? currentTemplate : t));
       alert('模板已儲存！');
     } catch (error) {
@@ -149,7 +146,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
     if (!currentTemplate) return;
     const template = currentTemplate;
 
-    // 模擬資料
     const mockData: Record<string, string> = {
       '{{name}}': '王小明',
       '{{phone}}': '0912-345-678',
@@ -176,7 +172,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
     };
 
-    // 預覽容器樣式 - 直接顯示 html_content 內容，不再包一層 .pdf-page
     let html = `
       <style>
         .pdf-preview-container {
@@ -194,7 +189,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       </div>
     `;
 
-    // 替換變數
     Object.entries(mockData).forEach(([key, value]) => {
       html = html.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
     });
@@ -276,7 +270,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
                   <option key={t.id} value={t.id}>{t.name} ({t.description})</option>
                 ))}
               </select>
-              {/* 如果沒有 child 模板，顯示創建按鈕 */}
               {!templates.some(t => t.name === 'child') && (
                 <button
                   onClick={handleCreateChildTemplate}
@@ -435,8 +428,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
 }
 
 // 可視化編輯器組件
-import { useRef } from 'react';
-
 function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   htmlContent: string;
   styles: string;
@@ -454,16 +445,13 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   useEffect(() => {
     if (!contentRef.current) return;
     
-    // 設置 HTML
     contentRef.current.innerHTML = htmlContent;
     
-    // 設置樣式
     const styleEl = document.createElement('style');
     styleEl.textContent = styles;
     contentRef.current.appendChild(styleEl);
     styleTagRef.current = styleEl;
     
-    // 注入編輯器專用樣式
     const editorStyle = document.createElement('style');
     editorStyle.textContent = `
       .field {
@@ -493,32 +481,67 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   const handleSave = () => {
     if (!contentRef.current) return;
     
-    // 獲取內容容器
     const contentDiv = contentRef.current;
+    let currentStyles = stylesStringRef.current;
     
-    // 清理：移除注入的 style 標籤
-    const stylesTags = contentDiv.querySelectorAll('style');
-    stylesTags.forEach(s => s.remove());
+    // 1. 移除注入的 style 標籤
+    contentDiv.querySelectorAll('style').forEach(s => s.remove());
     
-    // 清理：移除臨時 class，但 **保留** 內聯 style (top, left)
-    // 這是解決位置保存問題的關鍵：我們不再依賴 CSS 文件來存儲位置，而是直接用內聯樣式覆蓋
-    const fields = Array.from(contentDiv.querySelectorAll('.field'));
+    // 2. 處理每個變數：提取位置到 CSS，並移除內聯樣式
+    const fields = Array.from(contentDiv.querySelectorAll('.field')) as HTMLElement[];
+    
     fields.forEach(el => {
-      const element = el as HTMLElement;
-      element.classList.remove('selected-field');
-      // 確保 position 是 absolute
-      element.style.position = 'absolute';
+      const top = el.style.top;
+      const left = el.style.left;
+      
+      el.classList.remove('selected-field');
+
+      const classes = Array.from(el.classList).filter(c => c !== 'field');
+      let uniqueClass = classes[0];
+
+      if (!uniqueClass) {
+        uniqueClass = `v-${Math.random().toString(36).substr(2, 6)}`;
+        el.classList.add(uniqueClass);
+      }
+
+      if (top || left) {
+        // Regex 尋找包含該 class 的 CSS 規則塊
+        // 注意：這裡使用更寬鬆的 Regex 來匹配任何選擇器組合
+        const ruleRegex = new RegExp(`([^}]*\\.${uniqueClass}[^{]*)\\{([^}]*)\\}`, 'g');
+        
+        if (ruleRegex.test(currentStyles)) {
+          currentStyles = currentStyles.replace(ruleRegex, (match, selector, content) => {
+            let newContent = content;
+            if (top) {
+              if (/top\s*:\s*[^;]+/.test(newContent)) {
+                newContent = newContent.replace(/top\s*:\s*[^;]+;?/, `top: ${top};`);
+              } else {
+                newContent += ` top: ${top};`;
+              }
+            }
+            if (left) {
+              if (/left\s*:\s*[^;]+/.test(newContent)) {
+                newContent = newContent.replace(/left\s*:\s*[^;]+;?/, `left: ${left};`);
+              } else {
+                newContent += ` left: ${left};`;
+              }
+            }
+            return `${selector}{${newContent}}`;
+          });
+        } else {
+          currentStyles += `\n.${uniqueClass} { position: absolute; top: ${top || '0px'}; left: ${left || '0px'}; }`;
+        }
+      }
+
+      el.style.removeProperty('top');
+      el.style.removeProperty('left');
+      el.style.removeProperty('position');
     });
 
-    // 獲取 HTML
     const newHtml = contentDiv.innerHTML;
-    
-    // 保存 HTML 和 原有的 Styles (不修改 CSS 文件了，因為位置都在 HTML 裡了)
-    // 這樣可以避免複雜的 CSS 解析錯誤
-    onSave(newHtml, stylesStringRef.current);
+    onSave(newHtml, currentStyles);
   };
 
-  // 處理鍵盤刪除
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElement) {
@@ -560,7 +583,6 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     const onMouseUp = () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
-      // 不再需要更新 CSS 字串，位置信息已保留在 DOM 的 style 屬性中
     };
 
     document.addEventListener('mousemove', onMouseMove);
