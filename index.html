@@ -7,24 +7,57 @@
     <title>保家佳 | 保險理財知識分享 - 專業保險規劃服務</title>
     <meta name="description" content="保家佳提供專業的保險規劃服務與保險知識分享。透過淺顯易懂的方式，讓您真正了解保險、善用保險，為家人建立完整的保護網。提供壽險、醫療險、意外險、儲蓄理財等全方位保險諮詢服務。" />
     <meta name="keywords" content="保家佳,保險規劃,保險知識,醫療保險,壽險,意外險,儲蓄險,退休規劃,保險理財,保險顧問" />
-    
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://baojiajia.org/" />
     <meta property="og:title" content="保家佳 | 保險理財知識分享 - 專業保險規劃服務" />
     <meta property="og:description" content="用知識守護每個家庭，讓保險不再艱澀難懂。提供專業保險規劃與免費知識分享。" />
-    
+
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:title" content="保家佳 | 保險理財知識分享" />
     <meta property="twitter:description" content="用知識守護每個家庭，讓保險不再艱澀難懂。" />
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://baojiajia.org/" />
+
+    <!-- DNS Prefetch & Preconnect for performance -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+    <link rel="dns-prefetch" href="https://kdqktpprqasgdxihacwc.supabase.co" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://kdqktpprqasgdxihacwc.supabase.co" crossorigin />
+
+    <!-- Optimized Font Loading with display=swap -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" /></noscript>
+
+    <!-- Defer non-critical CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet" /></noscript>
+
+    <!-- Critical CSS inline for faster FCP -->
+    <style>
+      body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif}
+      #root{min-height:100vh}
+      .loading-spinner{display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f9fafb}
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Loading placeholder for better perceived performance -->
+      <div class="loading-spinner" aria-label="載入中...">
+        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="18" stroke="#0d9488" stroke-width="3" fill="none" stroke-dasharray="90 150" stroke-linecap="round">
+            <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

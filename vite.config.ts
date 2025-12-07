@@ -67,8 +67,45 @@ export default defineConfig({
   ],
   base,
   build: {
-    sourcemap: true,
+    sourcemap: false, // 生產環境禁用 sourcemap 減少打包大小
     outDir: "out",
+    minify: 'terser', // 使用 terser 進行更好的壓縮
+    terserOptions: {
+      compress: {
+        drop_console: true, // 移除 console.log
+        drop_debugger: true,
+      },
+    },
+    rollupOptions: {
+      output: {
+        // 手動分割 chunks 優化載入
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-pdf': ['html2pdf.js', 'jspdf'],
+          'vendor-ui': ['dompurify', 'i18next', 'react-i18next'],
+        },
+        // 資源文件命名優化
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name?.split('.') || [];
+          const ext = info[info.length - 1];
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+            return 'assets/images/[name]-[hash][extname]';
+          }
+          if (/woff|woff2|eot|ttf|otf/i.test(ext)) {
+            return 'assets/fonts/[name]-[hash][extname]';
+          }
+          if (ext === 'css') {
+            return 'assets/css/[name]-[hash][extname]';
+          }
+          return 'assets/[name]-[hash][extname]';
+        },
+      },
+    },
+    // 設定 chunk 警告閾值
+    chunkSizeWarningLimit: 600,
   },
   resolve: {
     alias: {

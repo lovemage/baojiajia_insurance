@@ -39,12 +39,18 @@ export default function Hero() {
   };
 
   return (
-    <section 
+    <section
       className="relative min-h-screen flex items-center bg-cover bg-center"
-      style={{
-        backgroundImage: `url(${content.hero_image_url})`
-      }}
     >
+      {/* LCP 優化：使用 img 元素預載入背景圖片 */}
+      <img
+        src={content.hero_image_url}
+        alt=""
+        fetchPriority="high"
+        decoding="async"
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ zIndex: -1 }}
+      />
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40"></div>
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
