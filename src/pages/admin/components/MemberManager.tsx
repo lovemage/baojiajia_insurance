@@ -487,7 +487,7 @@ export default function MemberManager() {
                     <div className="font-medium text-lg">
                       {safeGet(selectedMember.questionnaire_data, 'roomType') === 'single' ? '單人房' :
                        safeGet(selectedMember.questionnaire_data, 'roomType') === 'double' ? '雙人房' :
-                       safeGet(selectedMember.questionnaire_data, 'roomType') === 'standard' ? '健保房' : '-'}
+                       safeGet(selectedMember.questionnaire_data, 'roomType') === 'health-insurance' ? '健保房' : '-'}
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">

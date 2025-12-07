@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import RichTextEditor from '../../../components/RichTextEditor';
 
 interface PdfTemplate {
   id: string;
@@ -59,6 +60,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
   const [activeSection, setActiveSection] = useState('header_html');
   const [previewHtml, setPreviewHtml] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [editorMode, setEditorMode] = useState<'visual' | 'html'>('visual');
 
   useEffect(() => {
     fetchTemplate();
@@ -265,60 +267,107 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar - Section Tabs */}
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">模板區塊</h3>
-          <div className="space-y-1">
-            {TEMPLATE_SECTIONS.map((section) => (
-              <button
-                key={section.key}
-                onClick={() => setActiveSection(section.key)}
-                className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  activeSection === section.key
-                    ? 'bg-teal-50 text-teal-700'
-                    : 'hover:bg-gray-50 text-gray-600'
-                }`}
-              >
-                <i className={`${section.icon} text-lg`}></i>
-                <span className="text-sm">{section.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Editor */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-700">
-              {TEMPLATE_SECTIONS.find(s => s.key === activeSection)?.label}
-            </h3>
-            <span className="text-xs text-gray-400">支援 HTML 格式</span>
-          </div>
-          <textarea
-            value={(template as any)[activeSection] || ''}
-            onChange={(e) => handleFieldChange(activeSection, e.target.value)}
-            className="w-full h-96 px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            placeholder="輸入 HTML 內容..."
-          />
-        </div>
-
-        {/* Variables Reference */}
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">可用變數</h3>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {AVAILABLE_VARIABLES.map((v) => (
-              <div
-                key={v.var}
-                className="text-xs p-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-teal-50"
-                onClick={() => navigator.clipboard.writeText(v.var)}
-                title="點擊複製"
-              >
-                <code className="text-teal-600 font-mono">{v.var}</code>
-                <p className="text-gray-500 mt-1">{v.desc}</p>
+        {/* Main Editor (Full Width) */}
+        <div className="lg:col-span-3 space-y-6">
+          {TEMPLATE_SECTIONS.map((section) => (
+            <div key={section.key} className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <i className={`${section.icon} text-xl text-teal-600`}></i>
+                  <h3 className="font-bold text-gray-800 text-lg">
+                    {section.label}
+                  </h3>
+                </div>
+                {/* Visual/HTML Toggle - Only for non-style sections */}
+                {section.key !== 'styles' && (
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setEditorMode(editorMode === 'visual' ? 'html' : 'visual')}
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
+                        editorMode === 'visual'
+                          ? 'bg-white text-teal-600 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <i className={editorMode === 'visual' ? 'ri-edit-line' : 'ri-code-line'}></i>
+                      {editorMode === 'visual' ? '可視化編輯' : '原始碼編輯'}
+                    </button>
+                  </div>
+                )}
               </div>
-            ))}
+
+              {section.key === 'styles' ? (
+                // CSS Styles - Always Textarea
+                <div>
+                  <textarea
+                    value={(template as any)[section.key] || ''}
+                    onChange={(e) => handleFieldChange(section.key, e.target.value)}
+                    className="w-full h-64 px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-gray-50"
+                    placeholder="輸入 CSS 樣式..."
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    <i className="ri-information-line mr-1"></i>
+                    此處定義的 CSS 將套用到所有區塊。
+                  </p>
+                </div>
+              ) : (
+                // Content Sections - Toggleable Editor
+                <div className="min-h-[300px]">
+                  {editorMode === 'visual' ? (
+                    <div className="rich-text-container">
+                      <RichTextEditor
+                        value={(template as any)[section.key] || ''}
+                        onChange={(content) => handleFieldChange(section.key, content)}
+                        placeholder={`在此編輯${section.label}內容...`}
+                      />
+                    </div>
+                  ) : (
+                    <textarea
+                      value={(template as any)[section.key] || ''}
+                      onChange={(e) => handleFieldChange(section.key, e.target.value)}
+                      className="w-full h-[300px] px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      placeholder={`輸入${section.label} HTML 內容...`}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Sidebar - Variables Reference (Sticky) */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-xl shadow-sm p-4 sticky top-6">
+            <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i className="ri-code-s-slash-line"></i>
+              可用變數
+            </h3>
+            <div className="space-y-2 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+              {AVAILABLE_VARIABLES.map((v) => (
+                <div
+                  key={v.var}
+                  className="group p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-teal-50 transition-colors border border-transparent hover:border-teal-100"
+                  onClick={() => {
+                    navigator.clipboard.writeText(v.var);
+                    // Optional: Add toast notification here
+                  }}
+                  title="點擊複製變數"
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <code className="text-teal-700 font-mono text-xs font-bold bg-teal-100 px-1.5 py-0.5 rounded">
+                      {v.var}
+                    </code>
+                    <i className="ri-file-copy-line text-gray-400 group-hover:text-teal-500 text-xs"></i>
+                  </div>
+                  <p className="text-xs text-gray-600">{v.desc}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400 flex items-center gap-1">
+              <i className="ri-information-line"></i>
+              點擊變數可直接複製到剪貼簿
+            </div>
           </div>
-          <p className="text-xs text-gray-400 mt-3">點擊變數可複製</p>
         </div>
       </div>
 
