@@ -190,6 +190,13 @@ export default function PdfTemplateEditor({ onBack }: Props) {
         </div>
         <div className="flex gap-3">
           <button
+            onClick={() => setShowVisualEditor(true)}
+            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 flex items-center gap-2"
+          >
+            <i className="ri-drag-move-2-line"></i>
+            可視化調整位置
+          </button>
+          <button
             onClick={generatePreview}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2"
           >
