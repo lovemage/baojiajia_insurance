@@ -444,9 +444,9 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
   onClose: () => void;
 }) {
   const [scale, setScale] = useState(0.8);
-  const stylesStringRef = useRef(styles); // 使用 ref 存儲樣式，避免重渲染
+  const stylesStringRef = useRef(styles); // 使用 ref 存儲樣式
   const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null); // 用於存儲 HTML 內容的容器
+  const contentRef = useRef<HTMLDivElement>(null); 
   const styleTagRef = useRef<HTMLStyleElement | null>(null);
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
   
@@ -488,15 +488,7 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       }
     `;
     contentRef.current.appendChild(editorStyle);
-  }, []); // 僅執行一次
-
-  // 手動更新樣式，不觸發 React 渲染
-  const updateStyles = (newStyles: string) => {
-    stylesStringRef.current = newStyles;
-    if (styleTagRef.current) {
-      styleTagRef.current.textContent = newStyles;
-    }
-  };
+  }, []); 
 
   const handleSave = () => {
     if (!contentRef.current) return;
@@ -505,21 +497,24 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     const contentDiv = contentRef.current;
     
     // 清理：移除注入的 style 標籤
-    const styles = contentDiv.querySelectorAll('style');
-    styles.forEach(s => s.remove());
+    const stylesTags = contentDiv.querySelectorAll('style');
+    stylesTags.forEach(s => s.remove());
     
-    // 清理：移除臨時 class 和內聯樣式
+    // 清理：移除臨時 class，但 **保留** 內聯 style (top, left)
+    // 這是解決位置保存問題的關鍵：我們不再依賴 CSS 文件來存儲位置，而是直接用內聯樣式覆蓋
     const fields = Array.from(contentDiv.querySelectorAll('.field'));
     fields.forEach(el => {
       const element = el as HTMLElement;
-      element.style.removeProperty('top');
-      element.style.removeProperty('left');
       element.classList.remove('selected-field');
+      // 確保 position 是 absolute
+      element.style.position = 'absolute';
     });
 
     // 獲取 HTML
     const newHtml = contentDiv.innerHTML;
     
+    // 保存 HTML 和 原有的 Styles (不修改 CSS 文件了，因為位置都在 HTML 裡了)
+    // 這樣可以避免複雜的 CSS 解析錯誤
     onSave(newHtml, stylesStringRef.current);
   };
 
@@ -548,7 +543,6 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     const startX = e.clientX;
     const startY = e.clientY;
     
-    // 使用 offsetTop/Left 獲取準確的初始位置 (相對於 positioned parent)
     const startTop = target.offsetTop;
     const startLeft = target.offsetLeft;
 
@@ -566,53 +560,11 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
     const onMouseUp = () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
-
-      const finalTop = target.style.top;
-      const finalLeft = target.style.left;
-      
-      const classes = Array.from(target.classList);
-      let uniqueClass = classes.find(c => c !== 'field' && c !== 'selected-field');
-      
-      if (!uniqueClass) {
-        uniqueClass = `v-${Math.random().toString(36).substr(2, 6)}`;
-        target.classList.add(uniqueClass);
-        // Append new style rule
-        updateStyles(stylesStringRef.current + `\n.${uniqueClass} { top: ${finalTop}; left: ${finalLeft}; }`);
-      } else {
-        // Update existing rule
-        updateStyleString(uniqueClass, finalTop, finalLeft);
-      }
+      // 不再需要更新 CSS 字串，位置信息已保留在 DOM 的 style 屬性中
     };
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-  };
-
-  const updateStyleString = (className: string, top: string, left: string) => {
-    let newStyles = stylesStringRef.current;
-    const blockRegex = new RegExp(`([^}]*\\.${className}[^{]*\\{)([^}]*)(\\})`, 'g');
-    
-    if (!blockRegex.test(newStyles)) {
-      updateStyles(newStyles + `\n.${className} { top: ${top}; left: ${left}; }`);
-      return;
-    }
-
-    newStyles = newStyles.replace(blockRegex, (match, selector, content, closing) => {
-      let newContent = content;
-      if (/top:\s*[^;]+;/.test(newContent)) {
-        newContent = newContent.replace(/top:\s*[^;]+;/, `top: ${top};`);
-      } else {
-        newContent += ` top: ${top};`;
-      }
-      if (/left:\s*[^;]+;/.test(newContent)) {
-        newContent = newContent.replace(/left:\s*[^;]+;/, `left: ${left};`);
-      } else {
-        newContent += ` left: ${left};`;
-      }
-      return `${selector}${newContent}${closing}`;
-    });
-    
-    updateStyles(newStyles);
   };
 
   const handleDragStart = (e: React.DragEvent, variable: string) => {
@@ -635,18 +587,15 @@ function VisualEditor({ htmlContent, styles, onSave, onClose }: {
       const overlay = pageElement.querySelector('.overlay');
       if (overlay) {
         const newSpan = document.createElement('span');
-        const uniqueClass = `v-${Math.random().toString(36).substr(2, 6)}`;
-        
-        newSpan.className = `field ${uniqueClass}`;
+        // 不需要 unique class，只用 generic class
+        newSpan.className = 'field';
         newSpan.innerText = variable;
+        newSpan.style.position = 'absolute';
         newSpan.style.top = `${Math.round(dropY)}px`;
         newSpan.style.left = `${Math.round(dropX)}px`;
         
         overlay.appendChild(newSpan);
         setSelectedElement(newSpan);
-
-        // Add style
-        updateStyles(stylesStringRef.current + `\n.${uniqueClass} { top: ${Math.round(dropY)}px; left: ${Math.round(dropX)}px; }`);
       }
     }
   };

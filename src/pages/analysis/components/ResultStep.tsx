@@ -371,6 +371,19 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       container.innerHTML = `
         <style>
           ${processedStyles}
+          /* 強制樣式，確保變數正確顯示 */
+          .field {
+            position: absolute !important;
+            z-index: 100 !important;
+            background: transparent !important; /* PDF 中不需要背景色 */
+          }
+          /* 確保 SVG 背景在下層 */
+          .svg-bg {
+            z-index: 1 !important;
+          }
+          .overlay {
+            z-index: 10 !important;
+          }
         </style>
         <div class="pdf-wrapper">
           ${htmlContent}
