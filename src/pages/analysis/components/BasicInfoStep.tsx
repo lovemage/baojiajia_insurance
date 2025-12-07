@@ -36,7 +36,11 @@ export default function BasicInfoStep({ data, onUpdate, onNext }: BasicInfoStepP
   };
 
   const handleSubmit = () => {
-    onUpdate(formData);
+    // 確保所有數據都被傳遞,包括可能為0的monthlyIncome
+    onUpdate({
+      ...formData,
+      monthlyIncome: formData.monthlyIncome
+    });
     onNext();
   };
 
