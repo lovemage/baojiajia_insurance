@@ -249,13 +249,15 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       const targetTemplateName = isChildPlan ? 'child' : 'adult';
 
       try {
-        // 1. 嘗試獲取指定名稱的模板
-        let { data, error } = await supabase
+        // 1. 嘗試獲取指定名稱的模板 (使用 limit(1) 避免多筆結果導致 406 錯誤)
+        let { data: templates } = await supabase
           .from('pdf_templates')
           .select('*')
           .eq('name', targetTemplateName)
           .eq('is_active', true)
-          .single();
+          .limit(1);
+        
+        let data = templates?.[0];
 
         // 2. 如果找不到指定模板，且是 child，嘗試創建預設的 child 模板資料 (僅記憶體中，不寫入DB)
         if (!data && isChildPlan) {
@@ -266,12 +268,12 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
            };
         } else if (!data) {
            // 3. 如果是 adult 且找不到，或者其他情況，嘗試獲取任意 active 模板
-           const { data: anyData } = await supabase
+           const { data: anyTemplates } = await supabase
              .from('pdf_templates')
              .select('*')
              .eq('is_active', true)
-             .single();
-           data = anyData;
+             .limit(1);
+           data = anyTemplates?.[0];
         }
 
         if (data) {
