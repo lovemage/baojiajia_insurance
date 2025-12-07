@@ -259,11 +259,11 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       const targetTemplateName = isChildPlan ? 'child' : 'adult';
 
       try {
-        // 1. 嘗試獲取指定名稱的模板 (使用 limit(1) 避免多筆結果導致 406 錯誤)
+        // 1. 嘗試獲取指定名稱的模板 (使用 ilike 模糊匹配，支援 "adult" 或 "Adult 保障需求分析報告")
         let { data: templates } = await supabase
           .from('pdf_templates')
           .select('*')
-          .eq('name', targetTemplateName)
+          .ilike('name', `%${targetTemplateName}%`)
           .eq('is_active', true)
           .limit(1);
         
