@@ -1,0 +1,115 @@
+/* 
+  Adult PDF 模板 CSS 樣式
+  此內容可以直接複製到 Admin PDF 模板編輯器的 CSS 樣式區域
+  或存入 pdf_templates 表的 styles 欄位
+*/
+
+/* 基礎設定 */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* 每一頁的樣式 */
+.pdf-page {
+  width: 794px;
+  height: 1123px;
+  position: relative;
+  page-break-after: always;
+  background: white;
+  overflow: hidden;
+}
+.pdf-page:last-child { page-break-after: avoid; }
+
+/* SVG 背景 */
+.svg-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+.svg-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 覆蓋層（放置變數欄位）*/
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 欄位基礎樣式 */
+.field {
+  position: absolute;
+  font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  background: rgba(255,255,255,0.9);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* ========== 第1頁 - 封面欄位位置 ========== */
+.page-1 .name-field {
+  top: 420px;
+  left: 280px;
+  font-size: 24px;
+  font-weight: 700;
+}
+.page-1 .date-field {
+  top: 520px;
+  left: 300px;
+  font-size: 16px;
+}
+
+/* ========== 第2頁 - 基本資料欄位位置 ========== */
+.page-2 .f-name { top: 250px; left: 180px; }
+.page-2 .f-phone { top: 290px; left: 180px; }
+.page-2 .f-line { top: 330px; left: 180px; }
+.page-2 .f-city { top: 370px; left: 180px; }
+
+/* ========== 第3頁 - 醫療保障欄位位置 ========== */
+.page-3 .f-roomType { top: 320px; left: 350px; }
+.page-3 .f-roomCost { top: 360px; left: 350px; }
+.page-3 .f-hospitalDaily { top: 400px; left: 350px; }
+.page-3 .f-surgeryRange { top: 440px; left: 350px; }
+.page-3 .f-outpatient { top: 480px; left: 350px; }
+
+/* ========== 第4頁 - 重症保障欄位位置 ========== */
+.page-4 .f-salaryLoss { top: 300px; left: 350px; }
+.page-4 .f-livingExpense { top: 360px; left: 350px; }
+.page-4 .f-treatmentCost { top: 420px; left: 350px; }
+.page-4 .f-oneTime { top: 480px; left: 350px; }
+
+/* ========== 第5頁 - 長照保障欄位位置 ========== */
+.page-5 .f-longTermCare { top: 350px; left: 350px; font-size: 18px; }
+
+/* ========== 第6頁 - 壽險保障欄位位置 ========== */
+.page-6 .f-personalDebt { top: 300px; left: 350px; }
+.page-6 .f-familyCare { top: 360px; left: 350px; }
+.page-6 .f-disability { top: 420px; left: 350px; }
+
+/* ========== 第7頁 - 意外保障欄位位置 ========== */
+.page-7 .f-accidentDaily { top: 300px; left: 350px; }
+.page-7 .f-accidentReimburse { top: 360px; left: 350px; }
+.page-7 .f-majorBurn { top: 420px; left: 350px; }
+.page-7 .f-homeCare { top: 480px; left: 350px; }
+
+/* 列印優化 */
+@media print {
+  .pdf-page {
+    box-shadow: none;
+    margin: 0;
+  }
+  .field {
+    background: transparent;
+  }
+}
+

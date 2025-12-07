@@ -178,6 +178,11 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       const roomTypeText = data.roomType === 'double' ? '雙人房' :
                           data.roomType === 'single' ? '單人房' : '健保房';
 
+      // 計算 1~11 級一次金範圍 (月薪 * 50 * 5% ~ 月薪 * 50) 單位：萬
+      const monthlyIncome = data.monthlyIncome || 0;
+      const disabilityMin = Math.round((monthlyIncome * 50 * 0.05) / 10000);
+      const disabilityMax = Math.round((monthlyIncome * 50) / 10000);
+
       const pdfVariables: Record<string, string> = {
         '{{name}}': downloadData.name,
         '{{phone}}': downloadData.phone,
@@ -188,13 +193,20 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         '{{hospitalDaily}}': formatNumber(data.hospitalDaily || 0),
         '{{surgeryRange}}': data.surgerySubsidy === 'full' ? '30~40萬' :
                            data.surgerySubsidy === 'recommended' ? '20~30萬' : '10~20萬',
+        '{{outpatientSurgeryRange}}': '5~10萬',
         '{{salaryLossInTenThousand}}': String(Math.round((data.salaryLoss || 0) / 10000)),
         '{{livingExpenseInTenThousand}}': String(Math.round((data.livingExpense || 0) * 12 / 10000)),
         '{{treatmentCostInTenThousand}}': String(Math.round((data.treatmentCost || 0) / 10000)),
+        '{{fixedOneTimeBenefit}}': '100',
         '{{longTermCareInTenThousand}}': String(Math.round((data.longTermCare || 0) / 10000)),
+        '{{disabilityOneTimeRange}}': `${disabilityMin}萬～${disabilityMax}萬`,
         '{{personalDebt}}': formatNumber(data.personalDebt || 0),
         '{{familyCare}}': formatNumber(data.familyCare || 0),
-        '{{monthlyIncomeInTenThousand}}': String(Math.round((data.monthlyIncome || 0) / 10000)),
+        '{{accidentDailyRange}}': '1,000～2,000',
+        '{{accidentReimbursementRange}}': '5～10',
+        '{{majorBurnRange}}': '50～100',
+        '{{homeCareInTenThousand}}': String(Math.round(monthlyIncome / 10000)),
+        '{{monthlyIncomeInTenThousand}}': String(Math.round(monthlyIncome / 10000)),
         '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
       };
 

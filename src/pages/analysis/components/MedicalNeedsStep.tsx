@@ -3,9 +3,11 @@ import { useState } from 'react';
 type Props = {
   data: {
     roomType: string;
+    hospitalDaily?: number;
   };
   onUpdate: (data: {
     roomType: string;
+    hospitalDaily?: number;
   }) => void;
   onNext: () => void;
   onBack: () => void;
@@ -44,7 +46,15 @@ export default function MedicalNeedsStep({ data, onUpdate, onNext, onBack }: Pro
 
   const handleNext = () => {
     if (selectedRoom) {
-      onUpdate({ roomType: selectedRoom });
+      // 根據選擇的房型設定預設住院日額
+      let hospitalDaily = 2000;
+      if (selectedRoom === 'double') hospitalDaily = 3000;
+      if (selectedRoom === 'single') hospitalDaily = 5000;
+
+      onUpdate({ 
+        roomType: selectedRoom,
+        hospitalDaily: hospitalDaily
+      });
       onNext();
     }
   };
