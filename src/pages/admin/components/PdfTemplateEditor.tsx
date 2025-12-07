@@ -128,33 +128,21 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
     };
 
+    // 預覽容器樣式 - 直接顯示 html_content 內容，不再包一層 .pdf-page
     let html = `
       <style>
-        .pdf-preview-wrapper {
-          all: initial;
-          font-family: sans-serif;
-          background: #f0f0f0;
-          padding: 20px;
+        .pdf-preview-container {
           display: flex;
-          justify-content: center;
-        }
-        .pdf-page {
-          width: 210mm;
-          min-height: 297mm;
-          padding: 20mm;
-          background: white;
-          box-sizing: border-box;
-          position: relative;
-          font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
-          box-shadow: 0 0 10px rgba(0,0,0,0.1);
-          margin-bottom: 20px;
+          flex-direction: column;
+          align-items: center;
+          gap: 20px;
+          padding: 20px;
+          background: #e5e5e5;
         }
         ${template.styles || ''}
       </style>
-      <div class="pdf-preview-wrapper">
-        <div class="pdf-page">
-          ${template.html_content || ''}
-        </div>
+      <div class="pdf-preview-container">
+        ${template.html_content || ''}
       </div>
     `;
 
@@ -320,9 +308,9 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       {/* Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-xl w-[95vw] max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-semibold text-gray-800">模板預覽</h3>
+              <h3 className="font-semibold text-gray-800">模板預覽（共 16 頁）</h3>
               <button
                 onClick={() => setShowPreview(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg"
@@ -330,10 +318,14 @@ export default function PdfTemplateEditor({ onBack }: Props) {
                 <i className="ri-close-line text-xl"></i>
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-6 bg-gray-50">
+            <div className="flex-1 overflow-auto bg-gray-200">
               <div
-                className="bg-white p-8 shadow-lg mx-auto"
-                style={{ maxWidth: '800px' }}
+                className="mx-auto"
+                style={{
+                  transform: 'scale(0.5)',
+                  transformOrigin: 'top center',
+                  width: '794px'
+                }}
                 dangerouslySetInnerHTML={{ __html: previewHtml }}
               />
             </div>
