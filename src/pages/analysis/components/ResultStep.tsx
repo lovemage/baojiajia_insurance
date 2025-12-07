@@ -690,9 +690,25 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
               </button>
             </div>
 
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-4">
               請填寫以下資料，我們將為您生成專屬的保障分析報告
             </p>
+
+            {/* 報告特色說明 */}
+            <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-2">
+              <div className="flex items-center gap-2 text-gray-500 text-sm">
+                <i className="ri-file-chart-line text-teal-500"></i>
+                <span>專業精美分析報告</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-500 text-sm">
+                <i className="ri-printer-line text-teal-500"></i>
+                <span>報告可直接彩色列印</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-500 text-sm">
+                <i className="ri-robot-line text-teal-500"></i>
+                <span>線上 AI 直接生成，無需等待</span>
+              </div>
+            </div>
 
             <form onSubmit={handleDownloadSubmit} className="space-y-5">
               <div>
