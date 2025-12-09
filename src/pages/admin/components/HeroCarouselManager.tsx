@@ -407,20 +407,26 @@ function HeroItemEditor({ item, onSave }: HeroItemEditorProps) {
 
           {/* 圖片預覽 */}
           {formData.image_url && (
-            <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+            <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50 relative h-48">
               <img
                 src={formData.image_url}
                 alt="Hero 預覽"
-                className="w-full h-48 object-cover"
+                className="w-full h-full object-cover"
                 onError={(e) => {
-                  if (!e.currentTarget.dataset.errorHandled) {
-                    e.currentTarget.dataset.errorHandled = 'true';
-                    e.currentTarget.style.display = 'none';
-                  }
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+                onLoad={(e) => {
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'none';
                 }}
               />
-              <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                {formData.image_url ? '圖片載入中或 URL 無效' : '未設定圖片'}
+              <div
+                className="absolute inset-0 bg-gray-200 flex items-center justify-center text-gray-500 text-sm"
+                style={{ display: 'none' }}
+              >
+                圖片載入中或 URL 無效
               </div>
             </div>
           )}
