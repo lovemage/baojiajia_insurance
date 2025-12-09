@@ -21,6 +21,8 @@ interface HeroItem {
   button_position: 'left' | 'center' | 'right';
   display_order: number;
   is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export default function Hero() {

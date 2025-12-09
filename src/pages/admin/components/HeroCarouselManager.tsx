@@ -22,6 +22,8 @@ interface HeroItem {
   button_position: 'left' | 'center' | 'right';
   display_order: number;
   is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface Props {
@@ -293,8 +295,8 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
   const handleSave = async () => {
     try {
       setSaving(true);
-      // 排除 id 欄位，只更新其他欄位
-      const { id, ...updateData } = formData;
+      // 排除 id、created_at、updated_at 欄位，只更新其他欄位
+      const { id, created_at, updated_at, ...updateData } = formData;
       const { error } = await supabase
         .from('hero_carousel')
         .update(updateData)
