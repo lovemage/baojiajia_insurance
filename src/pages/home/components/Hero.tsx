@@ -72,6 +72,7 @@ export default function Hero() {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
+      console.log('Carousel images loaded:', data);
       setCarouselImages(data || []);
     } catch (error) {
       console.error('Error fetching carousel images:', error);
@@ -110,24 +111,32 @@ export default function Hero() {
 
   return (
     <section
-      className="relative min-h-screen flex items-center bg-cover bg-center overflow-hidden"
+      className="relative min-h-screen flex items-center bg-cover bg-center overflow-hidden bg-black"
     >
       {/* 輪播圖片 */}
-      {currentImage && (
+      {currentImage ? (
         <img
           src={currentImage.image_url}
           alt="Hero carousel"
           fetchPriority="high"
           decoding="async"
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
-          style={{ zIndex: -1 }}
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 z-0"
           key={currentImage.id}
+          onError={(e) => {
+            console.error('Image failed to load:', currentImage.image_url);
+            e.currentTarget.style.display = 'none';
+          }}
+          onLoad={() => {
+            console.log('Image loaded successfully:', currentImage.image_url);
+          }}
         />
+      ) : (
+        <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-800 to-black z-0"></div>
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40 z-5"></div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="max-w-2xl">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight whitespace-pre-line">
             {content.hero_title}
@@ -164,7 +173,7 @@ export default function Hero() {
           {/* 上一張按鈕 */}
           <button
             onClick={handlePrevImage}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
             aria-label="Previous image"
           >
             <i className="ri-arrow-left-s-line text-2xl"></i>
@@ -173,14 +182,14 @@ export default function Hero() {
           {/* 下一張按鈕 */}
           <button
             onClick={handleNextImage}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
             aria-label="Next image"
           >
             <i className="ri-arrow-right-s-line text-2xl"></i>
           </button>
 
           {/* 指示點 */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
             {carouselImages.map((_, index) => (
               <button
                 key={index}
