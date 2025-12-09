@@ -50,6 +50,7 @@ export default function Hero() {
         decoding="async"
         className="absolute inset-0 w-full h-full object-cover"
         style={{ zIndex: -1 }}
+        key={content.hero_image_url} // 強制重新載入當 URL 改變時
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40"></div>
       
