@@ -293,9 +293,11 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
   const handleSave = async () => {
     try {
       setSaving(true);
+      // 排除 id 欄位，只更新其他欄位
+      const { id, ...updateData } = formData;
       const { error } = await supabase
         .from('hero_carousel')
-        .update(formData)
+        .update(updateData)
         .eq('id', item.id);
 
       if (error) throw error;
