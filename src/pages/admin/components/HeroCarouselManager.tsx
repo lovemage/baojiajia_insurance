@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import ImageUpload from './ImageUpload';
+import { uploadToCloudinary } from '../../../lib/cloudinary';
 
 interface HeroItem {
   id: string;
@@ -248,6 +249,25 @@ interface HeroItemEditorProps {
 function HeroItemEditor({ item, onSave }: HeroItemEditorProps) {
   const [formData, setFormData] = useState(item);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      setFormData({ ...formData, image_url: url });
+      alert('圖片上傳成功！');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('上傳失敗，請稍後再試');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -341,15 +361,60 @@ function HeroItemEditor({ item, onSave }: HeroItemEditorProps) {
         </div>
       </div>
 
+      {/* 圖片上傳區域 */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">圖片 URL (Cloudinary)</label>
-        <input
-          type="url"
-          value={formData.image_url}
-          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-          placeholder="https://res.cloudinary.com/..."
-        />
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Hero 背景圖片</label>
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <input
+              type="url"
+              value={formData.image_url}
+              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              placeholder="https://res.cloudinary.com/..."
+            />
+            <div className="relative">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={uploading}
+              />
+              <button
+                type="button"
+                className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer whitespace-nowrap disabled:bg-gray-400 flex items-center gap-2"
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <>
+                    <i className="ri-loader-4-line animate-spin"></i>
+                    上傳中...
+                  </>
+                ) : (
+                  <>
+                    <i className="ri-upload-cloud-2-line"></i>
+                    上傳圖片
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* 圖片預覽 */}
+          {formData.image_url && (
+            <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+              <img
+                src={formData.image_url}
+                alt="Hero 預覽"
+                className="w-full h-48 object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://via.placeholder.com/800x300?text=圖片載入失敗';
+                }}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <div>
