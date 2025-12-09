@@ -27,6 +27,17 @@ interface Props {
   onBack: () => void;
 }
 
+interface CarouselImage {
+  id: string;
+  image_url: string;
+  display_order: number;
+  is_active: boolean;
+}
+
+interface CarouselSettings {
+  carousel_interval: string;
+}
+
 export default function HomepageEditor({ onBack }: Props) {
   const [content, setContent] = useState<HomepageContent | null>({
     id: '',
@@ -50,9 +61,16 @@ export default function HomepageEditor({ onBack }: Props) {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
+  const [carouselSettings, setCarouselSettings] = useState<CarouselSettings>({
+    carousel_interval: '5000'
+  });
+  const [newCarouselImage, setNewCarouselImage] = useState('');
 
   useEffect(() => {
     fetchContent();
+    fetchCarouselImages();
+    fetchCarouselSettings();
   }, []);
 
   const fetchContent = async () => {
@@ -63,7 +81,7 @@ export default function HomepageEditor({ onBack }: Props) {
         .order('display_order');
 
       if (error) throw error;
-      
+
       // 將多筆資料組織成物件格式
       if (data && data.length > 0) {
         const organized: any = {};
@@ -76,6 +94,118 @@ export default function HomepageEditor({ onBack }: Props) {
       console.error('Error fetching homepage content:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCarouselImages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('hero_carousel')
+        .select('*')
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setCarouselImages(data || []);
+    } catch (error) {
+      console.error('Error fetching carousel images:', error);
+    }
+  };
+
+  const fetchCarouselSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('carousel_settings')
+        .select('*');
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const settings: any = {};
+        data.forEach((item: any) => {
+          settings[item.setting_key] = item.setting_value;
+        });
+        setCarouselSettings(settings);
+      }
+    } catch (error) {
+      console.error('Error fetching carousel settings:', error);
+    }
+  };
+
+  const handleAddCarouselImage = async () => {
+    if (!newCarouselImage.trim()) {
+      alert('請輸入圖片網址');
+      return;
+    }
+
+    if (carouselImages.length >= 5) {
+      alert('最多只能新增 5 張輪播圖片');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('hero_carousel')
+        .insert({
+          image_url: newCarouselImage,
+          display_order: carouselImages.length + 1,
+          is_active: true
+        });
+
+      if (error) throw error;
+      setNewCarouselImage('');
+      fetchCarouselImages();
+      alert('圖片新增成功！');
+    } catch (error) {
+      console.error('Error adding carousel image:', error);
+      alert('新增失敗，請稍後再試');
+    }
+  };
+
+  const handleDeleteCarouselImage = async (id: string) => {
+    if (!confirm('確定要刪除這張圖片嗎？')) return;
+
+    try {
+      const { error } = await supabase
+        .from('hero_carousel')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchCarouselImages();
+      alert('圖片已刪除');
+    } catch (error) {
+      console.error('Error deleting carousel image:', error);
+      alert('刪除失敗，請稍後再試');
+    }
+  };
+
+  const handleUpdateCarouselInterval = async (interval: string) => {
+    try {
+      const { data: existing } = await supabase
+        .from('carousel_settings')
+        .select('id')
+        .eq('setting_key', 'carousel_interval');
+
+      if (existing && existing.length > 0) {
+        await supabase
+          .from('carousel_settings')
+          .update({ setting_value: interval })
+          .eq('setting_key', 'carousel_interval');
+      } else {
+        await supabase
+          .from('carousel_settings')
+          .insert({
+            setting_key: 'carousel_interval',
+            setting_value: interval,
+            description: '輪播間隔時間（毫秒）'
+          });
+      }
+
+      setCarouselSettings(prev => ({ ...prev, carousel_interval: interval }));
+      alert('輪播間隔已更新！');
+    } catch (error) {
+      console.error('Error updating carousel interval:', error);
+      alert('更新失敗，請稍後再試');
     }
   };
 
@@ -94,11 +224,11 @@ export default function HomepageEditor({ onBack }: Props) {
         if (key === 'id') return null; // Skip ID
 
         const existing = existingData?.find((item: any) => item.content_key === key);
-        
+
         if (existing) {
           return supabase
             .from('homepage_content')
-            .update({ 
+            .update({
               content_value: value as string,
               updated_at: new Date().toISOString()
             })
@@ -271,6 +401,102 @@ export default function HomepageEditor({ onBack }: Props) {
               onChange={(url) => handleChange('hero_image_url', url)}
               label="背景圖片網址"
             />
+          </div>
+        </div>
+
+        {/* Hero 輪播圖片管理 */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <i className="ri-image-carousel-line text-blue-600 mr-3"></i>
+            Hero 輪播圖片管理
+          </h2>
+
+          <div className="space-y-6">
+            {/* 輪播間隔設定 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                輪播間隔時間（毫秒）
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  value={carouselSettings.carousel_interval}
+                  onChange={(e) => setCarouselSettings(prev => ({ ...prev, carousel_interval: e.target.value }))}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  placeholder="5000"
+                  min="1000"
+                  step="1000"
+                />
+                <button
+                  onClick={() => handleUpdateCarouselInterval(carouselSettings.carousel_interval)}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  更新間隔
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">預設 5000ms = 5秒</p>
+            </div>
+
+            {/* 新增輪播圖片 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                新增輪播圖片 ({carouselImages.length}/5)
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="url"
+                  value={newCarouselImage}
+                  onChange={(e) => setNewCarouselImage(e.target.value)}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  placeholder="輸入圖片網址"
+                  disabled={carouselImages.length >= 5}
+                />
+                <button
+                  onClick={handleAddCarouselImage}
+                  disabled={carouselImages.length >= 5}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  新增圖片
+                </button>
+              </div>
+            </div>
+
+            {/* 輪播圖片列表 */}
+            {carouselImages.length > 0 && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  已新增的輪播圖片
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {carouselImages.map((image, index) => (
+                    <div key={image.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="relative h-40 bg-gray-100">
+                        <img
+                          src={image.image_url}
+                          alt={`Carousel ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://via.placeholder.com/400x300?text=圖片載入失敗';
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                          #{index + 1}
+                        </div>
+                      </div>
+                      <div className="p-3 bg-gray-50">
+                        <p className="text-xs text-gray-600 truncate mb-2">{image.image_url}</p>
+                        <button
+                          onClick={() => handleDeleteCarouselImage(image.id)}
+                          className="w-full px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors cursor-pointer"
+                        >
+                          刪除
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -1,6 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
+
+interface CarouselImage {
+  id: string;
+  image_url: string;
+  display_order: number;
+}
 
 export default function Hero() {
   const [content, setContent] = useState({
@@ -10,13 +16,32 @@ export default function Hero() {
     hero_button1_text: '需求分析 DIY',
     hero_button1_link: '/analysis',
     hero_button2_text: '保險知識分享',
-    hero_button2_link: '/blog',
-    hero_image_url: 'https://readdy.ai/api/search-image?query=Warm%20family%20protection%20concept%20with%20happy%20Asian%20family%20silhouette%20in%20bright%20natural%20setting%2C%20soft%20golden%20lighting%2C%20simple%20clean%20background%20showing%20security%20and%20care%2C%20professional%20lifestyle%20photography%20with%20emotional%20warmth&width=1920&height=1080&seq=hero-baojia-main&orientation=landscape'
+    hero_button2_link: '/blog'
   });
+
+  const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [carouselInterval, setCarouselInterval] = useState(5000);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetchContent();
+    fetchCarouselImages();
+    fetchCarouselSettings();
   }, []);
+
+  // 輪播自動播放
+  useEffect(() => {
+    if (carouselImages.length > 1) {
+      intervalRef.current = setInterval(() => {
+        setCurrentImageIndex(prev => (prev + 1) % carouselImages.length);
+      }, carouselInterval);
+
+      return () => {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+      };
+    }
+  }, [carouselImages.length, carouselInterval]);
 
   const fetchContent = async () => {
     try {
@@ -38,22 +63,70 @@ export default function Hero() {
     }
   };
 
+  const fetchCarouselImages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('hero_carousel')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setCarouselImages(data || []);
+    } catch (error) {
+      console.error('Error fetching carousel images:', error);
+    }
+  };
+
+  const fetchCarouselSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('carousel_settings')
+        .select('*')
+        .eq('setting_key', 'carousel_interval');
+
+      if (error) throw error;
+      if (data && data.length > 0) {
+        setCarouselInterval(parseInt(data[0].setting_value) || 5000);
+      }
+    } catch (error) {
+      console.error('Error fetching carousel settings:', error);
+    }
+  };
+
+  const currentImage = carouselImages.length > 0 ? carouselImages[currentImageIndex] : null;
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex(prev => (prev - 1 + carouselImages.length) % carouselImages.length);
+    // 重置自動播放計時器
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex(prev => (prev + 1) % carouselImages.length);
+    // 重置自動播放計時器
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
   return (
     <section
-      className="relative min-h-screen flex items-center bg-cover bg-center"
+      className="relative min-h-screen flex items-center bg-cover bg-center overflow-hidden"
     >
-      {/* LCP 優化：使用 img 元素預載入背景圖片 */}
-      <img
-        src={content.hero_image_url}
-        alt=""
-        fetchPriority="high"
-        decoding="async"
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ zIndex: -1 }}
-        key={content.hero_image_url} // 強制重新載入當 URL 改變時
-      />
+      {/* 輪播圖片 */}
+      {currentImage && (
+        <img
+          src={currentImage.image_url}
+          alt="Hero carousel"
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+          style={{ zIndex: -1 }}
+          key={currentImage.id}
+        />
+      )}
+
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40"></div>
-      
+
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="max-w-2xl">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight whitespace-pre-line">
@@ -69,14 +142,14 @@ export default function Hero() {
             {content.hero_description}
           </div>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Link 
-              to={content.hero_button1_link} 
+            <Link
+              to={content.hero_button1_link}
               className="bg-teal-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-teal-700 transition-colors text-center cursor-pointer whitespace-nowrap"
             >
               {content.hero_button1_text}
             </Link>
-            <Link 
-              to={content.hero_button2_link} 
+            <Link
+              to={content.hero_button2_link}
               className="bg-white/10 backdrop-blur-sm text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-white/20 transition-colors border-2 border-white/30 text-center cursor-pointer whitespace-nowrap"
             >
               {content.hero_button2_text}
@@ -84,6 +157,45 @@ export default function Hero() {
           </div>
         </div>
       </div>
+
+      {/* 輪播控制 - 只在有多張圖片時顯示 */}
+      {carouselImages.length > 1 && (
+        <>
+          {/* 上一張按鈕 */}
+          <button
+            onClick={handlePrevImage}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+            aria-label="Previous image"
+          >
+            <i className="ri-arrow-left-s-line text-2xl"></i>
+          </button>
+
+          {/* 下一張按鈕 */}
+          <button
+            onClick={handleNextImage}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+            aria-label="Next image"
+          >
+            <i className="ri-arrow-right-s-line text-2xl"></i>
+          </button>
+
+          {/* 指示點 */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            {carouselImages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentImageIndex(index)}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  index === currentImageIndex
+                    ? 'bg-white w-8'
+                    : 'bg-white/50 hover:bg-white/75'
+                }`}
+                aria-label={`Go to image ${index + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }
