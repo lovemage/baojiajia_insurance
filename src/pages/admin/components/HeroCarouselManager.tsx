@@ -10,8 +10,12 @@ interface HeroItem {
   description: string;
   button1_text: string;
   button1_link: string;
+  button1_bg_color: string;
+  button1_text_color: string;
   button2_text: string;
   button2_link: string;
+  button2_bg_color: string;
+  button2_text_color: string;
   image_url: string;
   cloudinary_public_id: string;
   overlay_opacity: number;
@@ -31,6 +35,7 @@ export default function HeroCarouselManager({ onBack }: Props) {
   const [carouselInterval, setCarouselInterval] = useState('5000');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<HeroItem | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     fetchHeroItems();
@@ -110,8 +115,12 @@ export default function HeroCarouselManager({ onBack }: Props) {
           description: '描述',
           button1_text: '按鈕 1',
           button1_link: '/',
+          button1_bg_color: '#0d9488',
+          button1_text_color: '#ffffff',
           button2_text: '按鈕 2',
           button2_link: '/',
+          button2_bg_color: 'rgba(255, 255, 255, 0.1)',
+          button2_text_color: '#ffffff',
           image_url: '',
           cloudinary_public_id: '',
           overlay_opacity: 90,
@@ -292,8 +301,98 @@ function HeroItemEditor({ item, onSave }: HeroItemEditorProps) {
     }
   };
 
+  // Popup 預覽組件
+  const PreviewPopup = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        {/* 預覽頭部 */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Hero 預覽</h3>
+          <button
+            onClick={() => setShowPreview(false)}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* 預覽內容 - 模擬 Hero 組件 */}
+        <div className="relative min-h-screen flex items-center bg-cover bg-center overflow-hidden bg-black">
+          {/* 背景圖片 */}
+          {formData.image_url ? (
+            <img
+              src={formData.image_url}
+              alt={formData.title}
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-800 to-black"></div>
+          )}
+
+          {/* 動態遮罩 */}
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-black to-black/30"
+            style={{
+              opacity: formData.overlay_opacity / 100
+            }}
+          ></div>
+
+          {/* 內容 */}
+          <div className="relative z-10 w-full">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <div className={`${
+                formData.button_position === 'center' ? 'mx-auto text-center' :
+                formData.button_position === 'right' ? 'ml-auto text-right' :
+                'max-w-2xl'
+              }`}>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight whitespace-pre-line">
+                  {formData.title}
+                  {formData.subtitle && (
+                    <>
+                      <br />
+                      <span className="text-2xl sm:text-3xl md:text-4xl mt-2 block">{formData.subtitle}</span>
+                    </>
+                  )}
+                </h1>
+                <div className="text-lg sm:text-xl md:text-2xl text-white/90 mb-6 sm:mb-8 leading-relaxed max-w-3xl whitespace-pre-line">
+                  {formData.description}
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <button
+                    className="px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold transition-colors text-center cursor-pointer whitespace-nowrap"
+                    style={{
+                      backgroundColor: formData.button1_bg_color,
+                      color: formData.button1_text_color
+                    }}
+                  >
+                    {formData.button1_text}
+                  </button>
+                  <button
+                    className="px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold transition-colors border-2 text-center cursor-pointer whitespace-nowrap"
+                    style={{
+                      backgroundColor: formData.button2_bg_color,
+                      color: formData.button2_text_color,
+                      borderColor: formData.button2_text_color
+                    }}
+                  >
+                    {formData.button2_text}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
+    <>
+      {showPreview && <PreviewPopup />}
+      <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">標題</label>
         <input
@@ -362,6 +461,86 @@ function HeroItemEditor({ item, onSave }: HeroItemEditorProps) {
             onChange={(e) => setFormData({ ...formData, button2_link: e.target.value })}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
           />
+        </div>
+      </div>
+
+      {/* 按鈕 1 顏色 */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">按鈕 1 背景色</label>
+          <div className="flex gap-2">
+            <input
+              type="color"
+              value={formData.button1_bg_color}
+              onChange={(e) => setFormData({ ...formData, button1_bg_color: e.target.value })}
+              className="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer"
+            />
+            <input
+              type="text"
+              value={formData.button1_bg_color}
+              onChange={(e) => setFormData({ ...formData, button1_bg_color: e.target.value })}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-sm"
+              placeholder="#0d9488"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">按鈕 1 文字色</label>
+          <div className="flex gap-2">
+            <input
+              type="color"
+              value={formData.button1_text_color}
+              onChange={(e) => setFormData({ ...formData, button1_text_color: e.target.value })}
+              className="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer"
+            />
+            <input
+              type="text"
+              value={formData.button1_text_color}
+              onChange={(e) => setFormData({ ...formData, button1_text_color: e.target.value })}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-sm"
+              placeholder="#ffffff"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 按鈕 2 顏色 */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">按鈕 2 背景色</label>
+          <div className="flex gap-2">
+            <input
+              type="color"
+              value={formData.button2_bg_color}
+              onChange={(e) => setFormData({ ...formData, button2_bg_color: e.target.value })}
+              className="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer"
+            />
+            <input
+              type="text"
+              value={formData.button2_bg_color}
+              onChange={(e) => setFormData({ ...formData, button2_bg_color: e.target.value })}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-sm"
+              placeholder="rgba(255, 255, 255, 0.1)"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">按鈕 2 文字色</label>
+          <div className="flex gap-2">
+            <input
+              type="color"
+              value={formData.button2_text_color}
+              onChange={(e) => setFormData({ ...formData, button2_text_color: e.target.value })}
+              className="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer"
+            />
+            <input
+              type="text"
+              value={formData.button2_text_color}
+              onChange={(e) => setFormData({ ...formData, button2_text_color: e.target.value })}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-sm"
+              placeholder="#ffffff"
+            />
+          </div>
         </div>
       </div>
 
@@ -482,6 +661,14 @@ function HeroItemEditor({ item, onSave }: HeroItemEditorProps) {
 
       <div className="flex gap-3">
         <button
+          type="button"
+          onClick={() => setShowPreview(true)}
+          className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer flex items-center justify-center gap-2"
+        >
+          <i className="ri-eye-line"></i>
+          預覽效果
+        </button>
+        <button
           onClick={handleSave}
           disabled={saving}
           className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer disabled:bg-gray-400"
@@ -490,6 +677,7 @@ function HeroItemEditor({ item, onSave }: HeroItemEditorProps) {
         </button>
       </div>
     </div>
+    </>
   );
 }
 

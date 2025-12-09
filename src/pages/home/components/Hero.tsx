@@ -9,8 +9,12 @@ interface HeroItem {
   description: string;
   button1_text: string;
   button1_link: string;
+  button1_bg_color: string;
+  button1_text_color: string;
   button2_text: string;
   button2_link: string;
+  button2_bg_color: string;
+  button2_text_color: string;
   image_url: string;
   cloudinary_public_id: string;
   overlay_opacity: number;
@@ -156,13 +160,22 @@ export default function Hero() {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Link
               to={currentHero.button1_link}
-              className="bg-teal-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-teal-700 transition-colors text-center cursor-pointer whitespace-nowrap"
+              className="px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold transition-colors text-center cursor-pointer whitespace-nowrap hover:opacity-80"
+              style={{
+                backgroundColor: currentHero.button1_bg_color,
+                color: currentHero.button1_text_color
+              }}
             >
               {currentHero.button1_text}
             </Link>
             <Link
               to={currentHero.button2_link}
-              className="bg-white/10 backdrop-blur-sm text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-white/20 transition-colors border-2 border-white/30 text-center cursor-pointer whitespace-nowrap"
+              className="px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold transition-colors text-center cursor-pointer whitespace-nowrap border-2 hover:opacity-80"
+              style={{
+                backgroundColor: currentHero.button2_bg_color,
+                color: currentHero.button2_text_color,
+                borderColor: currentHero.button2_text_color
+              }}
             >
               {currentHero.button2_text}
             </Link>
