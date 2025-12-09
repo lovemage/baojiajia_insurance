@@ -297,17 +297,23 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
       setSaving(true);
       // 排除 id、created_at、updated_at 欄位，只更新其他欄位
       const { id, created_at, updated_at, ...updateData } = formData;
-      const { error } = await supabase
+      console.log('Saving hero with data:', updateData);
+      const { error, data } = await supabase
         .from('hero_carousel')
         .update(updateData)
-        .eq('id', item.id);
+        .eq('id', item.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      console.log('Save successful:', data);
       alert('Hero 已更新');
       onSave();
     } catch (error) {
       console.error('Error saving hero:', error);
-      alert('保存失敗');
+      alert('保存失敗: ' + (error instanceof Error ? error.message : '未知錯誤'));
     } finally {
       setSaving(false);
     }
