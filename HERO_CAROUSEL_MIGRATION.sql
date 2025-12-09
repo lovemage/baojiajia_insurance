@@ -38,37 +38,6 @@ create trigger handle_hero_carousel_updated_at
   before update on public.hero_carousel
   for each row execute procedure public.handle_updated_at();
 
--- 創建輪播設定表
-create table if not exists public.carousel_settings (
-  id uuid default gen_random_uuid() primary key,
-  setting_key text unique not null,
-  setting_value text,
-  description text,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-
--- 啟用 RLS
-alter table public.carousel_settings enable row level security;
-
--- 創建 RLS 政策
-create policy "Allow public to read carousel settings" on public.carousel_settings
-  for select using (true);
-
-create policy "Allow authenticated users to manage carousel settings" on public.carousel_settings
-  for all using (auth.role() = 'authenticated');
-
--- 創建觸發器
-create trigger handle_carousel_settings_updated_at
-  before update on public.carousel_settings
-  for each row execute procedure public.handle_updated_at();
-
--- 插入預設輪播設定
-insert into public.carousel_settings (setting_key, setting_value, description) values
-  ('carousel_interval', '5000', '輪播間隔時間（毫秒），預設 5000ms = 5秒'),
-  ('carousel_auto_play', 'true', '是否自動播放輪播')
-on conflict (setting_key) do nothing;
-
 -- 插入預設 Hero 輪播項目
 insert into public.hero_carousel (
   title, subtitle, description,
@@ -88,3 +57,4 @@ insert into public.hero_carousel (
   true
 )
 on conflict do nothing;
+
