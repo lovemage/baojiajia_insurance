@@ -409,9 +409,15 @@ function HeroItemEditor({ item, onSave }: HeroItemEditorProps) {
                 alt="Hero 預覽"
                 className="w-full h-48 object-cover"
                 onError={(e) => {
-                  e.currentTarget.src = 'https://via.placeholder.com/800x300?text=圖片載入失敗';
+                  if (!e.currentTarget.dataset.errorHandled) {
+                    e.currentTarget.dataset.errorHandled = 'true';
+                    e.currentTarget.style.display = 'none';
+                  }
                 }}
               />
+              <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+                {formData.image_url ? '圖片載入中或 URL 無效' : '未設定圖片'}
+              </div>
             </div>
           )}
         </div>

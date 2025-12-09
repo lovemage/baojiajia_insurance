@@ -83,7 +83,7 @@ insert into public.hero_carousel (
   '/analysis',
   '保險知識分享',
   '/blog',
-  'https://res.cloudinary.com/demo/image/fetch/w_1920,h_1080,c_fill/https://readdy.ai/api/search-image?query=Warm%20family%20protection',
+  '',
   1,
   true
 )
