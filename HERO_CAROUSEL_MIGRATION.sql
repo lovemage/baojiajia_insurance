@@ -51,9 +51,9 @@ insert into public.hero_carousel (
   button2_text, button2_link,
   image_url, display_order, is_active
 ) values (
-  '我們的願景是\n打破傳統保險業務的框架',
+  '我們的願景是打破傳統保險業務的框架',
   '',
-  '提供對等、客觀、正確的資訊，\n讓大家在資訊爆炸的環境中有辨別好壞的能力。\n用專業的知識為你在市場中找出最適合的規劃方案！',
+  '提供對等、客觀、正確的資訊，讓大家在資訊爆炸的環境中有辨別好壞的能力。用專業的知識為你在市場中找出最適合的規劃方案！',
   '需求分析 DIY',
   '/analysis',
   '保險知識分享',

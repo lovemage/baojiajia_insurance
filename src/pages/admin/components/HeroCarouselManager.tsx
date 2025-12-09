@@ -244,6 +244,8 @@ export default function HeroCarouselManager({ onBack }: Props) {
                     fetchHeroItems();
                     setEditingId(null);
                   }}
+                  showPreview={showPreview}
+                  setShowPreview={setShowPreview}
                 />
               )}
             </div>
@@ -257,9 +259,11 @@ export default function HeroCarouselManager({ onBack }: Props) {
 interface HeroItemEditorProps {
   item: HeroItem;
   onSave: () => void;
+  showPreview: boolean;
+  setShowPreview: (show: boolean) => void;
 }
 
-function HeroItemEditor({ item, onSave }: HeroItemEditorProps) {
+function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemEditorProps) {
   const [formData, setFormData] = useState(item);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
