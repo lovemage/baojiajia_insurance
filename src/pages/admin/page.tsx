@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import ServiceItemEditor from './components/ServiceItemEditor';
 import ServiceDetailEditor from './components/ServiceDetailEditor';
 import HomepageEditor from './components/HomepageEditor';
+import HeroCarouselManager from './components/HeroCarouselManager';
 import FeaturesEditor from './components/FeaturesEditor';
 import TestimonialsEditor from './components/TestimonialsEditor';
 import BlogEditor from './components/BlogEditor';
@@ -31,7 +32,7 @@ interface ServiceItem {
   is_active: boolean;
 }
 
-type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'features' | 'testimonials' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'system-settings' | 'statistics' | 'blog-categories' | 'change-password' | 'pdf-template';
+type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'hero-carousel' | 'features' | 'testimonials' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'system-settings' | 'statistics' | 'blog-categories' | 'change-password' | 'pdf-template';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -65,6 +66,7 @@ export default function AdminPage() {
 
   const menuItems = [
     { id: 'homepage', label: '首頁內容', icon: 'ri-home-4-line' },
+    { id: 'hero-carousel', label: 'Hero 輪播', icon: 'ri-image-carousel-line' },
     { id: 'navigation', label: '導航選單', icon: 'ri-menu-line' },
     { id: 'list', label: '服務項目', icon: 'ri-list-check' },
     { id: 'features', label: '特色優勢', icon: 'ri-star-line' },
@@ -87,6 +89,8 @@ export default function AdminPage() {
         return selectedService ? <ServiceDetailEditor service={selectedService} onBack={handleBack} /> : null;
       case 'homepage':
         return <HomepageEditor onBack={handleBack} />;
+      case 'hero-carousel':
+        return <HeroCarouselManager onBack={handleBack} />;
       case 'features':
         return <FeaturesEditor onBack={handleBack} />;
       case 'testimonials':

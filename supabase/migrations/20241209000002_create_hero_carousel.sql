@@ -1,7 +1,15 @@
--- 創建 Hero 輪播圖片表
+-- 創建 Hero 輪播表 - 每個 Hero 都有完整的內容和圖片
 create table if not exists public.hero_carousel (
   id uuid default gen_random_uuid() primary key,
-  image_url text not null,
+  title text not null,
+  subtitle text,
+  description text,
+  button1_text text,
+  button1_link text,
+  button2_text text,
+  button2_link text,
+  image_url text,
+  cloudinary_public_id text,
   display_order integer default 0,
   is_active boolean default true,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
@@ -55,7 +63,22 @@ insert into public.carousel_settings (setting_key, setting_value, description) v
   ('carousel_auto_play', 'true', '是否自動播放輪播')
 on conflict (setting_key) do nothing;
 
--- 插入預設輪播圖片
-insert into public.hero_carousel (image_url, display_order, is_active) values
-  ('https://readdy.ai/api/search-image?query=Warm%20family%20protection%20concept%20with%20happy%20Asian%20family%20silhouette%20in%20bright%20natural%20setting%2C%20soft%20golden%20lighting%2C%20simple%20clean%20background%20showing%20security%20and%20care%2C%20professional%20lifestyle%20photography%20with%20emotional%20warmth&width=1920&height=1080&seq=hero-baojia-main&orientation=landscape', 1, true)
+-- 插入預設 Hero 輪播項目
+insert into public.hero_carousel (
+  title, subtitle, description,
+  button1_text, button1_link,
+  button2_text, button2_link,
+  image_url, display_order, is_active
+) values (
+  '我們的願景是\n打破傳統保險業務的框架',
+  '',
+  '提供對等、客觀、正確的資訊，\n讓大家在資訊爆炸的環境中有辨別好壞的能力。\n用專業的知識為你在市場中找出最適合的規劃方案！',
+  '需求分析 DIY',
+  '/analysis',
+  '保險知識分享',
+  '/blog',
+  'https://res.cloudinary.com/demo/image/fetch/w_1920,h_1080,c_fill/https://readdy.ai/api/search-image?query=Warm%20family%20protection',
+  1,
+  true
+)
 on conflict do nothing;
