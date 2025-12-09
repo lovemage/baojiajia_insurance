@@ -306,9 +306,34 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
       // 排除 id、created_at、updated_at 欄位，只更新其他欄位
       const { id, created_at, updated_at, ...updateData } = formData;
       console.log('Saving hero with data:', updateData);
+      console.log('Update data keys:', Object.keys(updateData));
+      console.log('Update data values:', Object.values(updateData));
+
+      // 只發送特定的欄位，避免發送不存在的欄位
+      const safeUpdateData = {
+        title: updateData.title,
+        subtitle: updateData.subtitle,
+        description: updateData.description,
+        button1_text: updateData.button1_text,
+        button1_link: updateData.button1_link,
+        button1_bg_color: updateData.button1_bg_color,
+        button1_text_color: updateData.button1_text_color,
+        button2_text: updateData.button2_text,
+        button2_link: updateData.button2_link,
+        button2_bg_color: updateData.button2_bg_color,
+        button2_text_color: updateData.button2_text_color,
+        image_url: updateData.image_url,
+        cloudinary_public_id: updateData.cloudinary_public_id,
+        overlay_opacity: updateData.overlay_opacity,
+        button_position: updateData.button_position,
+        display_order: updateData.display_order,
+        is_active: updateData.is_active
+      };
+
+      console.log('Safe update data:', safeUpdateData);
       const { error, data } = await supabase
         .from('hero_carousel')
-        .update(updateData)
+        .update(safeUpdateData)
         .eq('id', item.id)
         .select();
 
