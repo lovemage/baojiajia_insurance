@@ -199,8 +199,9 @@ export default function HeroCarouselManager({ onBack }: Props) {
             />
             <button
               onClick={handleUpdateCarouselInterval}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+              className="px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer font-medium"
             >
+              <i className="ri-save-line mr-2"></i>
               更新間隔
             </button>
           </div>
@@ -209,9 +210,10 @@ export default function HeroCarouselManager({ onBack }: Props) {
         {/* Add Hero Button */}
         <button
           onClick={handleAddHero}
-          className="mb-6 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer"
+          className="mb-6 px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer font-medium"
         >
-          + 新增 Hero
+          <i className="ri-add-line mr-2"></i>
+          新增 Hero
         </button>
 
         {/* Hero Items List */}
@@ -223,14 +225,16 @@ export default function HeroCarouselManager({ onBack }: Props) {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setEditingId(editingId === item.id ? null : item.id)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
+                    className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer font-medium text-sm"
                   >
+                    <i className={`${editingId === item.id ? 'ri-close-line' : 'ri-edit-line'} mr-1`}></i>
                     {editingId === item.id ? '關閉' : '編輯'}
                   </button>
                   <button
                     onClick={() => handleDeleteHero(item.id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer font-medium text-sm"
                   >
+                    <i className="ri-delete-bin-line mr-1"></i>
                     刪除
                   </button>
                 </div>
@@ -570,7 +574,7 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
               />
               <button
                 type="button"
-                className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer whitespace-nowrap disabled:bg-gray-400 flex items-center gap-2"
+                className="px-4 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
                 disabled={uploading}
               >
                 {uploading ? (
@@ -667,7 +671,7 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
         <button
           type="button"
           onClick={() => setShowPreview(true)}
-          className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer flex items-center justify-center gap-2"
+          className="flex-1 px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer flex items-center justify-center gap-2 font-medium"
         >
           <i className="ri-eye-line"></i>
           預覽效果
@@ -675,8 +679,9 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer disabled:bg-gray-400"
+          className="flex-1 px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
         >
+          <i className={`${saving ? 'ri-loader-4-line animate-spin' : 'ri-save-line'} mr-2`}></i>
           {saving ? '保存中...' : '保存'}
         </button>
       </div>
