@@ -16,7 +16,7 @@ create table public.hero_carousel (
   button1_text_color text default '#ffffff',
   button2_text text,
   button2_link text,
-  button2_bg_color text default 'rgba(255, 255, 255, 0.1)',
+  button2_bg_color text default '#ffffff',
   button2_text_color text default '#ffffff',
   image_url text,
   cloudinary_public_id text,

@@ -119,7 +119,7 @@ export default function HeroCarouselManager({ onBack }: Props) {
           button1_text_color: '#ffffff',
           button2_text: '按鈕 2',
           button2_link: '/',
-          button2_bg_color: 'rgba(255, 255, 255, 0.1)',
+          button2_bg_color: '#ffffff',
           button2_text_color: '#ffffff',
           image_url: '',
           cloudinary_public_id: '',
