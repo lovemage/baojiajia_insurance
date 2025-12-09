@@ -12,6 +12,7 @@ import AboutEditor from './components/AboutEditor';
 import MemberManager from './components/MemberManager';
 import ContactEditor from './components/ContactEditor';
 import NavigationEditor from './components/NavigationEditor';
+import SystemSettingsEditor from './components/SystemSettingsEditor';
 import SiteSettingsEditor from './components/SiteSettingsEditor';
 import StatisticsEditor from './components/StatisticsEditor';
 import CategoryManager from './components/CategoryManager';
@@ -30,7 +31,7 @@ interface ServiceItem {
   is_active: boolean;
 }
 
-type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'features' | 'testimonials' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'statistics' | 'blog-categories' | 'change-password' | 'pdf-template';
+type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'features' | 'testimonials' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'system-settings' | 'statistics' | 'blog-categories' | 'change-password' | 'pdf-template';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -74,6 +75,7 @@ export default function AdminPage() {
     { id: 'member-manager', label: '會員資訊', icon: 'ri-user-search-line' },
     { id: 'pdf-template', label: 'PDF 報告模板', icon: 'ri-file-pdf-line' },
     { id: 'site-settings', label: '網站設定', icon: 'ri-settings-4-line' },
+    { id: 'system-settings', label: '系統設定', icon: 'ri-settings-2-line' },
     { id: 'statistics', label: '統計數據', icon: 'ri-bar-chart-box-line' },
   ];
 
@@ -99,6 +101,8 @@ export default function AdminPage() {
         return <NavigationEditor onBack={handleBack} />;
       case 'site-settings':
         return <SiteSettingsEditor onBack={handleBack} />;
+      case 'system-settings':
+        return <SystemSettingsEditor onBack={handleBack} />;
       case 'statistics':
         return <StatisticsEditor onBack={handleBack} />;
       case 'blog-categories':

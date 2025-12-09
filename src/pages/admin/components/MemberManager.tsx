@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import html2pdf from 'html2pdf.js';
+import { sendTelegramNotification } from '../../../services/telegramService';
 
 interface MemberSubmission {
   id: string;
@@ -305,6 +306,22 @@ export default function MemberManager() {
       const element = container.querySelector('.pdf-wrapper') as HTMLElement;
       await html2pdf().set(opt).from(element).save();
       document.body.removeChild(container);
+
+      // 發送 Telegram 通知 - Admin PDF 下載
+      try {
+        const currentUser = await supabase.auth.getUser();
+        await sendTelegramNotification({
+          type: 'admin_pdf_downloaded',
+          memberName: member.name,
+          memberEmail: member.email,
+          planType: isChildPlan ? 'child' : 'adult',
+          timestamp: new Date(),
+          adminUser: currentUser.data.user?.email || '未知管理員'
+        });
+      } catch (notificationError) {
+        console.error('Error sending admin PDF download notification:', notificationError);
+        // 不影響主要流程，只記錄錯誤
+      }
 
       clearInterval(progressInterval);
       setPdfProgress(100);

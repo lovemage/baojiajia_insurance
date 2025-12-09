@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import html2pdf from 'html2pdf.js';
+import { sendTelegramNotification } from '../../../services/telegramService';
 
 // 預設模板樣式
 const DEFAULT_STYLES = `
@@ -258,6 +259,22 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
 
         if (error) {
           console.error('Error saving member submission:', error);
+        } else {
+          // 發送 Telegram 通知 - 問卷提交
+          try {
+            await sendTelegramNotification({
+              type: 'questionnaire_submitted',
+              memberName: downloadData.name,
+              memberEmail: user.email || '',
+              memberPhone: downloadData.phone,
+              memberCity: downloadData.city,
+              planType: isChildPlan ? 'child' : 'adult',
+              timestamp: new Date()
+            });
+          } catch (notificationError) {
+            console.error('Error sending Telegram notification:', notificationError);
+            // 不影響主要流程，只記錄錯誤
+          }
         }
       }
 
@@ -480,6 +497,24 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       await html2pdf().set(opt).from(element).save();
 
       document.body.removeChild(container);
+
+      // 發送 Telegram 通知 - PDF 下載完成
+      if (user) {
+        try {
+          await sendTelegramNotification({
+            type: 'pdf_downloaded',
+            memberName: downloadData.name,
+            memberEmail: user.email || '',
+            memberPhone: downloadData.phone,
+            memberCity: downloadData.city,
+            planType: isChildPlan ? 'child' : 'adult',
+            timestamp: new Date()
+          });
+        } catch (notificationError) {
+          console.error('Error sending PDF download notification:', notificationError);
+          // 不影響主要流程，只記錄錯誤
+        }
+      }
 
       // 完成進度條
       clearInterval(progressInterval);
