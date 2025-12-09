@@ -137,27 +137,27 @@ export default function Hero() {
         }}
       ></div>
 
-      {/* 按鈕位置容器 */}
+      {/* 內容容器 */}
       <div className="relative z-10 w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className={`${
-            currentHero.button_position === 'center' ? 'mx-auto text-center' :
-            currentHero.button_position === 'right' ? 'ml-auto text-right' :
-            'max-w-2xl'
-          }`}>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight whitespace-pre-line">
-            {currentHero.title}
-            {currentHero.subtitle && (
-              <>
-                <br />
-                <span className="text-2xl sm:text-3xl md:text-4xl mt-2 block">{currentHero.subtitle}</span>
-              </>
-            )}
-          </h1>
-          <div className="text-lg sm:text-xl md:text-2xl text-white/90 mb-6 sm:mb-8 leading-relaxed max-w-3xl whitespace-pre-line">
-            {currentHero.description}
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <div className="max-w-2xl">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight whitespace-pre-line">
+              {currentHero.title}
+              {currentHero.subtitle && (
+                <>
+                  <br />
+                  <span className="text-2xl sm:text-3xl md:text-4xl mt-2 block">{currentHero.subtitle}</span>
+                </>
+              )}
+            </h1>
+            <div className="text-lg sm:text-xl md:text-2xl text-white/90 mb-6 sm:mb-8 leading-relaxed max-w-3xl whitespace-pre-line">
+              {currentHero.description}
+            </div>
+            <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 ${
+              currentHero.button_position === 'center' ? 'justify-center' :
+              currentHero.button_position === 'right' ? 'justify-end' :
+              'justify-start'
+            }`}>
             <Link
               to={currentHero.button1_link}
               className="px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold transition-colors text-center cursor-pointer whitespace-nowrap hover:opacity-80"

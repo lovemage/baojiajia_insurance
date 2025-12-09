@@ -347,11 +347,7 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
           {/* 內容 */}
           <div className="relative z-10 w-full">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-              <div className={`${
-                formData.button_position === 'center' ? 'mx-auto text-center' :
-                formData.button_position === 'right' ? 'ml-auto text-right' :
-                'max-w-2xl'
-              }`}>
+              <div className="max-w-2xl">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight whitespace-pre-line">
                   {formData.title}
                   {formData.subtitle && (
@@ -364,7 +360,11 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
                 <div className="text-lg sm:text-xl md:text-2xl text-white/90 mb-6 sm:mb-8 leading-relaxed max-w-3xl whitespace-pre-line">
                   {formData.description}
                 </div>
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 ${
+                  formData.button_position === 'center' ? 'justify-center' :
+                  formData.button_position === 'right' ? 'justify-end' :
+                  'justify-start'
+                }`}>
                   <button
                     className="px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold transition-colors text-center cursor-pointer whitespace-nowrap"
                     style={{
