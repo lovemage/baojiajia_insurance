@@ -295,6 +295,14 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
   const handleSave = async () => {
     try {
       setSaving(true);
+
+      // 驗證必填欄位
+      if (!formData.title || formData.title.trim() === '') {
+        alert('標題不能為空');
+        setSaving(false);
+        return;
+      }
+
       // 排除 id、created_at、updated_at 欄位，只更新其他欄位
       const { id, created_at, updated_at, ...updateData } = formData;
       console.log('Saving hero with data:', updateData);
