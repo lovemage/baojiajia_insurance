@@ -14,6 +14,8 @@ interface HeroItem {
   button2_link: string;
   image_url: string;
   cloudinary_public_id: string;
+  overlay_opacity: number;
+  button_position: 'left' | 'center' | 'right';
   display_order: number;
   is_active: boolean;
 }
@@ -112,6 +114,8 @@ export default function HeroCarouselManager({ onBack }: Props) {
           button2_link: '/',
           image_url: '',
           cloudinary_public_id: '',
+          overlay_opacity: 90,
+          button_position: 'left',
           display_order: newOrder,
           is_active: true
         });
@@ -420,6 +424,43 @@ function HeroItemEditor({ item, onSave }: HeroItemEditorProps) {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* 遮罩透明度 */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          遮罩透明度: {formData.overlay_opacity}%
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={formData.overlay_opacity}
+          onChange={(e) => setFormData({ ...formData, overlay_opacity: parseInt(e.target.value) })}
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+        />
+        <div className="text-xs text-gray-500 mt-1">0% = 完全透明，100% = 完全不透明</div>
+      </div>
+
+      {/* 按鈕位置 */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">CTA 按鈕位置</label>
+        <div className="grid grid-cols-3 gap-2">
+          {(['left', 'center', 'right'] as const).map((position) => (
+            <button
+              key={position}
+              type="button"
+              onClick={() => setFormData({ ...formData, button_position: position })}
+              className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                formData.button_position === position
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              {position === 'left' ? '左對齊' : position === 'center' ? '居中' : '右對齊'}
+            </button>
+          ))}
         </div>
       </div>
 

@@ -16,6 +16,8 @@ create table public.hero_carousel (
   button2_link text,
   image_url text,
   cloudinary_public_id text,
+  overlay_opacity integer default 90,
+  button_position text default 'left',
   display_order integer default 0,
   is_active boolean default true,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,

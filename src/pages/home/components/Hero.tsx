@@ -13,6 +13,8 @@ interface HeroItem {
   button2_link: string;
   image_url: string;
   cloudinary_public_id: string;
+  overlay_opacity: number;
+  button_position: 'left' | 'center' | 'right';
   display_order: number;
   is_active: boolean;
 }
@@ -123,10 +125,22 @@ export default function Hero() {
         <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-800 to-black z-0"></div>
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40 z-5"></div>
+      {/* 動態遮罩 */}
+      <div
+        className="absolute inset-0 bg-gradient-to-r from-black to-black/30 z-5"
+        style={{
+          opacity: currentHero.overlay_opacity / 100
+        }}
+      ></div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="max-w-2xl">
+      {/* 按鈕位置容器 */}
+      <div className="relative z-10 w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className={`${
+            currentHero.button_position === 'center' ? 'mx-auto text-center' :
+            currentHero.button_position === 'right' ? 'ml-auto text-right' :
+            'max-w-2xl'
+          }`}>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight whitespace-pre-line">
             {currentHero.title}
             {currentHero.subtitle && (
@@ -152,6 +166,7 @@ export default function Hero() {
             >
               {currentHero.button2_text}
             </Link>
+          </div>
           </div>
         </div>
       </div>
