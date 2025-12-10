@@ -75,9 +75,12 @@ export default function PdfTemplateEditor({ onBack }: Props) {
   const currentTemplate = templates.find(t => t.id === currentTemplateId) || null;
 
   // Merge default and custom variables
+  const customVarsArray = currentTemplate?.custom_variables && Array.isArray(currentTemplate.custom_variables) 
+    ? currentTemplate.custom_variables 
+    : [];
   const availableVariables = [
     ...DEFAULT_VARIABLES,
-    ...(currentTemplate?.custom_variables ? (currentTemplate.custom_variables as any) : []).map((v: any) => ({
+    ...customVarsArray.map((v: any) => ({
       var: v.key,
       desc: v.desc + ' (自定義)'
     }))
@@ -234,7 +237,9 @@ export default function PdfTemplateEditor({ onBack }: Props) {
     };
 
     // Merge custom variables for preview
-    const customVars = (template.custom_variables as any) || [];
+    const customVars = template.custom_variables && Array.isArray(template.custom_variables) 
+      ? template.custom_variables 
+      : [];
     customVars.forEach((v: any) => {
       mockData[v.key] = v.value;
     });
