@@ -179,7 +179,7 @@ export default function QuestionnaireStep({ onComplete }: Props) {
         </h2>
 
         <div className="space-y-3">
-          {currentQ.options.map((option) => {
+          {currentQ.options && Array.isArray(currentQ.options) && currentQ.options.map((option) => {
             const isSelected = currentQ.type === 'single'
               ? formData[currentQ.id as keyof AnalysisData] === option.value
               : (formData[currentQ.id as keyof AnalysisData] as string[]).includes(option.value);
