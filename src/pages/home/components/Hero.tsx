@@ -108,7 +108,7 @@ export default function Hero() {
 
   return (
     <section
-      className="relative min-h-screen flex items-center overflow-hidden bg-black"
+      className="relative flex items-center overflow-hidden bg-black h-screen sm:h-screen md:h-screen lg:h-screen"
     >
       {/* Hero 背景圖片 - 響應式縮放 */}
       {currentHero.image_url ? (
@@ -117,12 +117,7 @@ export default function Hero() {
           alt={currentHero.title}
           fetchPriority="high"
           decoding="async"
-          className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 z-0 sm:object-cover md:object-cover"
-          style={{
-            // 移動端縮放優化
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
+          className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 z-0"
           key={currentHero.id}
           onError={(e) => {
             console.error('Image failed to load:', currentHero.image_url);

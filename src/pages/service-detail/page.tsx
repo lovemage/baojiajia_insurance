@@ -137,7 +137,7 @@ export default function ServiceDetailPage() {
               prose-ol:my-6 prose-ol:space-y-3 prose-ol:list-decimal prose-ol:list-inside
               prose-li:text-gray-700 prose-li:leading-relaxed prose-li:text-sm
               prose-strong:text-teal-600 prose-strong:font-semibold"
-            style={{ fontSize: '10px', lineHeight: '1.6', counterReset: 'item' }}
+            style={{ fontSize: '10px', lineHeight: '1.6' }}
             dangerouslySetInnerHTML={{ __html: service.content }}
           />
 
