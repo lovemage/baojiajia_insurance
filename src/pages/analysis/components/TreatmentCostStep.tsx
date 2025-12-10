@@ -15,7 +15,10 @@ export default function TreatmentCostStep({ data, onUpdate, onNext, onBack }: Pr
   const isChildPlan = data.planType === 'child';
 
   const handleNext = () => {
-    onUpdate({ cancerTreatmentCost: treatmentCost });
+    onUpdate({ 
+      treatmentCost: treatmentCost,
+      cancerTreatmentCost: treatmentCost 
+    });
     onNext();
   };
 

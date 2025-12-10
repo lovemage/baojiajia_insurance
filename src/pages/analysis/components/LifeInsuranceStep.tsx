@@ -17,6 +17,8 @@ export default function LifeInsuranceStep({ data, onUpdate, onNext, onBack }: Pr
       setCurrentStep(2);
     } else {
       onUpdate({ 
+        personalDebt: parseInt(debtAmount) || 0,
+        familyCare: parseInt(familyCareAmount) || 0,
         debtAmount: parseInt(debtAmount) || 0, 
         familyCareAmount: parseInt(familyCareAmount) || 0 
       });

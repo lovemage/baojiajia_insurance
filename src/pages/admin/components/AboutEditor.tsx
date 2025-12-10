@@ -58,14 +58,34 @@ export default function AboutEditor({ onBack }: Props) {
   const fetchData = async () => {
     try {
       const [contentRes, teamRes, valuesRes] = await Promise.all([
-        supabase.from('about_content').select('*').single(),
+        supabase.from('about_content').select('*').maybeSingle(),
         supabase.from('team_members').select('*').order('display_order', { ascending: true }),
         supabase.from('core_values').select('*').order('display_order', { ascending: true })
       ]);
 
-      if (contentRes.data) setAboutContent(contentRes.data);
-      if (teamRes.data) setTeamMembers(teamRes.data);
-      if (valuesRes.data) setCoreValues(valuesRes.data);
+      if (contentRes.error) console.warn('About content fetch warning:', contentRes.error);
+      
+      // Handle empty content by using default structure or null
+      if (contentRes.data) {
+        setAboutContent(contentRes.data);
+      } else {
+        // Init empty content if table is empty (prevent crash)
+        setAboutContent({
+          id: '',
+          mission_title: '',
+          mission_content: '',
+          hero_image: '',
+          instagram_followers: '0',
+          clients_served: '0',
+          satisfaction_rate: '0',
+          articles_published: '0',
+          team_visible: false,
+          intro_visible: false
+        });
+      }
+
+      setTeamMembers(teamRes.data || []);
+      setCoreValues(valuesRes.data || []);
     } catch (error) {
       console.error('Error fetching about data:', error);
     } finally {

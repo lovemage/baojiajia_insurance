@@ -11,7 +11,10 @@ export default function LongTermCareStep({ data, onUpdate, onNext, onBack }: Pro
   const [longTermCareCost, setLongTermCareCost] = useState(data.longTermCareCost || 50000);
 
   const handleNext = () => {
-    onUpdate({ longTermCareCost });
+    onUpdate({ 
+      longTermCare: longTermCareCost,
+      longTermCareCost 
+    });
     onNext();
   };
 

@@ -12,7 +12,10 @@ export default function LivingExpenseStep({ data, onUpdate, onNext, onBack }: Pr
   const [livingExpense, setLivingExpense] = useState(data.cancerLivingExpense || 40000);
 
   const handleNext = () => {
-    onUpdate({ cancerLivingExpense: livingExpense });
+    onUpdate({ 
+      livingExpense: livingExpense,
+      cancerLivingExpense: livingExpense 
+    });
     onNext();
   };
 
