@@ -7,15 +7,25 @@ interface TelegramSettings {
 }
 
 interface NotificationData {
-  type: 'questionnaire_submitted' | 'pdf_downloaded' | 'admin_pdf_downloaded';
+  type: 'questionnaire_submitted' | 'pdf_downloaded' | 'admin_pdf_downloaded' | 'contact_form_submitted';
   memberName: string;
-  memberEmail: string;
+  memberEmail?: string;
   memberPhone?: string;
   memberCity?: string;
   planType?: 'adult' | 'child';
   timestamp: Date;
   adminUser?: string;
   questionnaireData?: any; // 新增：詳細問卷資料
+  contactFormData?: { // 新增：聯絡表單資料
+    lineId: string;
+    gender: string;
+    birthDate: string;
+    occupation: string;
+    annualIncome: string;
+    monthlyBudget: string;
+    consultationType: string;
+    additionalMessage: string;
+  };
 }
 
 // 選項映射表 (與前端保持一致)
@@ -186,6 +196,26 @@ ${details}
 ⏰ <b>下載時間：</b>${timestamp}
 
 📊 管理員已從後台下載會員的分析報告。`;
+
+    case 'contact_form_submitted':
+      const contact = data.contactFormData;
+      return `📞 <b>新聯絡諮詢單</b>
+
+👤 <b>姓名：</b>${data.memberName}
+📱 <b>電話：</b>${data.memberPhone}
+💬 <b>Line ID：</b>${contact?.lineId}
+⏰ <b>提交時間：</b>${timestamp}
+
+<b>【諮詢詳情】</b>
+• 性別：${contact?.gender}
+• 生日：${contact?.birthDate}
+• 職業：${contact?.occupation}
+• 年收：${contact?.annualIncome}
+• 預算：${contact?.monthlyBudget}
+• 需求：${contact?.consultationType}
+
+📝 <b>留言內容：</b>
+${contact?.additionalMessage || '無'}`;
 
     default:
       return `📢 <b>系統通知</b>

@@ -98,22 +98,44 @@ export default function AboutEditor({ onBack }: Props) {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('about_content')
-        .update({
-          mission_title: aboutContent.mission_title,
-          mission_content: aboutContent.mission_content,
-          hero_image: aboutContent.hero_image,
-          instagram_followers: aboutContent.instagram_followers,
-          clients_served: aboutContent.clients_served,
-          satisfaction_rate: aboutContent.satisfaction_rate,
-          articles_published: aboutContent.articles_published,
-          intro_visible: aboutContent.intro_visible,
-          team_visible: aboutContent.team_visible
-        })
-        .eq('id', aboutContent.id);
+      if (aboutContent.id) {
+        const { error } = await supabase
+          .from('about_content')
+          .update({
+            mission_title: aboutContent.mission_title,
+            mission_content: aboutContent.mission_content,
+            hero_image: aboutContent.hero_image,
+            instagram_followers: aboutContent.instagram_followers,
+            clients_served: aboutContent.clients_served,
+            satisfaction_rate: aboutContent.satisfaction_rate,
+            articles_published: aboutContent.articles_published,
+            intro_visible: aboutContent.intro_visible,
+            team_visible: aboutContent.team_visible
+          })
+          .eq('id', aboutContent.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('about_content')
+          .insert({
+            mission_title: aboutContent.mission_title,
+            mission_content: aboutContent.mission_content,
+            hero_image: aboutContent.hero_image,
+            instagram_followers: aboutContent.instagram_followers,
+            clients_served: aboutContent.clients_served,
+            satisfaction_rate: aboutContent.satisfaction_rate,
+            articles_published: aboutContent.articles_published,
+            intro_visible: aboutContent.intro_visible,
+            team_visible: aboutContent.team_visible
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) setAboutContent(prev => ({ ...prev!, ...data }));
+      }
+
       alert('儲存成功！');
       setEditMode('list');
     } catch (error) {

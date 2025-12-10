@@ -108,7 +108,7 @@ export default function Hero() {
 
   return (
     <section
-      className="relative w-full overflow-hidden bg-black"
+      className="relative w-full overflow-hidden bg-black flex items-center justify-center"
       style={{
         aspectRatio: '16 / 9',
         maxHeight: '100vh'

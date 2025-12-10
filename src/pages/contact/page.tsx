@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Navigation from '../../components/feature/Navigation';
 import Footer from '../../components/feature/Footer';
+import { sendTelegramNotification } from '../../services/telegramService';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -46,6 +47,28 @@ export default function Contact() {
       });
 
       if (response.ok) {
+        // 發送 Telegram 通知
+        try {
+          await sendTelegramNotification({
+            type: 'contact_form_submitted',
+            memberName: formData.name,
+            memberPhone: formData.phone,
+            timestamp: new Date(),
+            contactFormData: {
+              lineId: formData.lineId,
+              gender: formData.gender === 'male' ? '男' : '女',
+              birthDate: formData.birthDate,
+              occupation: formData.occupation,
+              annualIncome: formData.annualIncome,
+              monthlyBudget: formData.monthlyBudget,
+              consultationType: formData.consultationType === 'other' ? formData.otherConsultation : formData.consultationType,
+              additionalMessage: formData.additionalMessage
+            }
+          });
+        } catch (error) {
+          console.error('Failed to send Telegram notification:', error);
+        }
+
         setSubmitStatus('success');
         setFormData({
           name: '',
