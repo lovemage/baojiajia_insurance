@@ -139,10 +139,19 @@ export default function Hero() {
         }}
       ></div>
 
+      {/* 隱藏式全版連結 (當按鈕文字為空但有連結時使用，例如首頁 Hero 圖片內建按鈕) */}
+      {!currentHero.button1_text && currentHero.button1_link && currentHero.button1_link !== '#' && (
+        <Link 
+          to={currentHero.button1_link} 
+          className="absolute inset-0 z-20 cursor-pointer"
+          aria-label={currentHero.title || "前往詳細內容"}
+        ></Link>
+      )}
+
       {/* 內容容器 */}
-      <div className="relative z-10 w-full">
+      <div className="relative z-10 w-full pointer-events-none">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl pointer-events-auto">
             {currentHero.title && (
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight whitespace-pre-line">
                 {currentHero.title}
