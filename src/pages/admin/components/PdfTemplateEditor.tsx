@@ -605,7 +605,13 @@ function VisualEditor({ htmlContent, styles, onSave }: {
       const dropX = (e.clientX - rect.left) / scale;
       const dropY = (e.clientY - rect.top) / scale;
 
-      const overlay = pageElement.querySelector('.overlay');
+      let overlay = pageElement.querySelector('.overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'overlay';
+        pageElement.appendChild(overlay);
+      }
+
       if (overlay) {
         const newSpan = document.createElement('span');
         newSpan.className = 'field';
@@ -623,6 +629,9 @@ function VisualEditor({ htmlContent, styles, onSave }: {
 
   return (
     <div className="flex-1 flex overflow-hidden relative">
+>>>>>>>
+
+
       {/* Zoom Controls (Overlay) */}
       <div className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-white rounded-lg shadow-md p-1 border border-gray-200">
         <button 

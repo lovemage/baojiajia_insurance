@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import ImageUpload from './ImageUpload';
+import RichTextEditor from '../../../components/RichTextEditor';
 
 interface AboutContent {
   id: string;
   mission_title: string;
   mission_content: string;
+  hero_image?: string;
   instagram_followers: string;
   clients_served: string;
   satisfaction_rate: string;
@@ -81,6 +83,7 @@ export default function AboutEditor({ onBack }: Props) {
         .update({
           mission_title: aboutContent.mission_title,
           mission_content: aboutContent.mission_content,
+          hero_image: aboutContent.hero_image,
           instagram_followers: aboutContent.instagram_followers,
           clients_served: aboutContent.clients_served,
           satisfaction_rate: aboutContent.satisfaction_rate,
@@ -349,6 +352,13 @@ export default function AboutEditor({ onBack }: Props) {
                 </div>
               </div>
 
+              {/* Hero Image Field */}
+              <ImageUpload
+                label="頁首主圖 (Hero Image)"
+                value={aboutContent.hero_image || ''}
+                onChange={(url) => setAboutContent({ ...aboutContent, hero_image: url })}
+              />
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">使命標題</label>
                 <input
@@ -360,11 +370,10 @@ export default function AboutEditor({ onBack }: Props) {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">使命內容</label>
-                <textarea
+                <RichTextEditor
                   value={aboutContent.mission_content}
-                  onChange={(e) => setAboutContent({ ...aboutContent, mission_content: e.target.value })}
-                  rows={8}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                  onChange={(content) => setAboutContent({ ...aboutContent, mission_content: content })}
+                  placeholder="請輸入使命內容..."
                 />
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navigation from '../../components/feature/Navigation';
 import PlanTypeStep from './components/PlanTypeStep';
 import BasicInfoStep from './components/BasicInfoStep';
@@ -23,6 +24,22 @@ export default function AnalysisPage() {
     const saved = localStorage.getItem('analysis_data');
     return saved ? JSON.parse(saved) : {};
   });
+
+  const location = useLocation();
+  const [lastLocationKey, setLastLocationKey] = useState<string | null>(null);
+
+  // 初始化或組件掛載時設置初始 key
+  useEffect(() => {
+    setLastLocationKey(location.key);
+  }, []);
+
+  // 監聽路由變化，如果是點擊導航欄（key 改變且不是第一次掛載），則重置問卷
+  useEffect(() => {
+    if (lastLocationKey && location.key !== lastLocationKey) {
+      resetAnalysis();
+      setLastLocationKey(location.key);
+    }
+  }, [location.key]);
 
   useEffect(() => {
     localStorage.setItem('analysis_step', currentStep.toString());

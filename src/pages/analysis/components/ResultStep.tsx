@@ -269,7 +269,8 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
               memberPhone: downloadData.phone,
               memberCity: downloadData.city,
               planType: isChildPlan ? 'child' : 'adult',
-              timestamp: new Date()
+              timestamp: new Date(),
+              questionnaireData: data
             });
           } catch (notificationError) {
             console.error('Error sending Telegram notification:', notificationError);
@@ -497,24 +498,6 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       await html2pdf().set(opt).from(element).save();
 
       document.body.removeChild(container);
-
-      // 發送 Telegram 通知 - PDF 下載完成
-      if (user) {
-        try {
-          await sendTelegramNotification({
-            type: 'pdf_downloaded',
-            memberName: downloadData.name,
-            memberEmail: user.email || '',
-            memberPhone: downloadData.phone,
-            memberCity: downloadData.city,
-            planType: isChildPlan ? 'child' : 'adult',
-            timestamp: new Date()
-          });
-        } catch (notificationError) {
-          console.error('Error sending PDF download notification:', notificationError);
-          // 不影響主要流程，只記錄錯誤
-        }
-      }
 
       // 完成進度條
       clearInterval(progressInterval);

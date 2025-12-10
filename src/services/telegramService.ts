@@ -15,7 +15,45 @@ interface NotificationData {
   planType?: 'adult' | 'child';
   timestamp: Date;
   adminUser?: string;
+  questionnaireData?: any; // 新增：詳細問卷資料
 }
+
+// 選項映射表 (與前端保持一致)
+const OPTIONS_MAP: any = {
+  insuranceKnowledge: {
+    'A': '完全清楚',
+    'B': '大概知道，但細節不清楚',
+    'C': '不太清楚，別人幫我規劃的',
+    'D': '完全不了解',
+    'E': '沒有規劃過保障'
+  },
+  policyCheckExpectations: {
+    'A': '降低保費，提高保障',
+    'B': '避免買到「地雷保單」',
+    'C': '避免您重複或過度投保',
+    'D': '審視保障內容符合您的個人需求'
+  },
+  monthlyBudget: {
+    'A': '3000 以下',
+    'B': '3000~5000 元',
+    'C': '5000~10000 元',
+    'D': '10000 以上'
+  },
+  gender: {
+    'male': '男',
+    'female': '女'
+  },
+  roomType: {
+    'single': '單人房',
+    'double': '雙人房',
+    'health-insurance': '健保房'
+  },
+  surgerySubsidy: {
+    'full': '全額負擔 (30-40萬)',
+    'recommended': '建議額度 (20-30萬)',
+    'basic': '基本額度 (10-20萬)'
+  }
+};
 
 /**
  * 獲取 Telegram 設定
@@ -49,6 +87,49 @@ async function getTelegramSettings(): Promise<TelegramSettings | null> {
 }
 
 /**
+ * 格式化問卷詳細內容
+ */
+function formatQuestionnaireDetails(data: any): string {
+  if (!data) return '';
+
+  const safeGet = (obj: any, key: string, def = '-') => obj?.[key] || def;
+  const getLabel = (category: string, value: any) => OPTIONS_MAP[category]?.[value] || value || '-';
+  
+  const expectations = (data.policyCheckExpectations || [])
+    .map((v: string) => OPTIONS_MAP.policyCheckExpectations[v] || v)
+    .join('、');
+
+  return `
+📋 <b>問卷詳細內容：</b>
+------------------
+<b>【基本資料】</b>
+• 性別：${getLabel('gender', data.gender)}
+• 生日：${data.birthDate || '-'}
+• 職業：${data.occupation || '-'}
+
+<b>【醫療需求】</b>
+• 病房：${getLabel('roomType', data.roomType)}
+• 日額：${(data.hospitalDaily || 0).toLocaleString()} 元
+• 手術：${getLabel('surgerySubsidy', data.surgerySubsidy)}
+
+<b>【重症與長照】</b>
+• 薪資損失：${Math.round((data.salaryLoss || 0) / 10000)} 萬/月
+• 生活開銷：${Math.round((data.livingExpense || 0) * 12 / 10000)} 萬/年
+• 治療費用：${Math.round((data.treatmentCost || 0) / 10000)} 萬
+• 長照需求：${Math.round((data.longTermCare || 0) / 10000)} 萬/月
+
+<b>【財務狀況】</b>
+• 家人照顧：${(data.familyCare || 0).toLocaleString()} 元
+• 個人負債：${(data.personalDebt || 0).toLocaleString()} 元
+• 月收入：${Math.round((data.monthlyIncome || 0) / 10000)} 萬
+
+<b>【其他評估】</b>
+• 保險了解：${getLabel('insuranceKnowledge', data.insuranceKnowledge)}
+• 健診期望：${expectations}
+• 每月預算：${getLabel('monthlyBudget', data.monthlyBudget)}`;
+}
+
+/**
  * 格式化通知訊息
  */
 function formatNotificationMessage(data: NotificationData): string {
@@ -62,6 +143,7 @@ function formatNotificationMessage(data: NotificationData): string {
   });
 
   const planTypeText = data.planType === 'child' ? '兒童版' : '成人版';
+  const details = data.questionnaireData ? formatQuestionnaireDetails(data.questionnaireData) : '';
 
   switch (data.type) {
     case 'questionnaire_submitted':
@@ -73,8 +155,9 @@ function formatNotificationMessage(data: NotificationData): string {
 🏠 <b>居住地：</b>${data.memberCity || '未提供'}
 📋 <b>方案類型：</b>${planTypeText}
 ⏰ <b>提交時間：</b>${timestamp}
+${details}
 
-💡 會員已完成保障需求分析問卷，可至後台查看詳細資料。`;
+💡 可至後台查看完整資料或下載 CSV。`;
 
     case 'pdf_downloaded':
       return `📄 <b>會員下載分析報告</b>

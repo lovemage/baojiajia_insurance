@@ -73,6 +73,9 @@ export default function MemberManager() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(0);
+  
+  // 多選狀態
+  const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchMembers();
@@ -153,6 +156,107 @@ export default function MemberManager() {
     } finally {
       setDeleting(null);
     }
+  };
+
+  // 全選/取消全選
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const allEmails = new Set(memberGroups.map(g => g.email));
+      setSelectedEmails(allEmails);
+    } else {
+      setSelectedEmails(new Set());
+    }
+  };
+
+  // 單選
+  const handleSelectOne = (email: string, checked: boolean) => {
+    const newSelected = new Set(selectedEmails);
+    if (checked) {
+      newSelected.add(email);
+    } else {
+      newSelected.delete(email);
+    }
+    setSelectedEmails(newSelected);
+  };
+
+  // 匯出 CSV
+  const handleExportCSV = () => {
+    if (selectedEmails.size === 0) {
+      alert('請先選擇要匯出的會員');
+      return;
+    }
+
+    const csvRows: string[] = [];
+    
+    // 定義 CSV 標題
+    const headers = [
+      '姓名', 'Email', '電話', '居住地', 'Line ID', '提交時間',
+      '性別', '出生日期', '職業等級', '規劃對象',
+      '期望病房', '期望住院日額', '手術補貼', '薪資損失(萬/月)', '生活開銷(萬/年)', '治療費用(萬)', '長照需求(萬/月)', '家人照顧金', '個人負債', '月收入(萬)',
+      '保險了解程度', '保單健診期望', '每月預算'
+    ];
+    csvRows.push('\ufeff' + headers.join(',')); // 加入 BOM 確保 Excel 中文顯示正常
+
+    // 收集數據
+    memberGroups.forEach(group => {
+      if (!selectedEmails.has(group.email)) return;
+
+      group.submissions.forEach(sub => {
+        const qData = sub.questionnaire_data || {};
+        
+        // 處理多選欄位
+        const expectations = (safeGet(qData, 'policyCheckExpectations', []) as string[])
+          .map(val => OPTIONS_MAP.policyCheckExpectations[val] || val)
+          .join('; ');
+
+        const row = [
+          sub.name,
+          sub.email,
+          sub.phone,
+          sub.city,
+          sub.line_id,
+          new Date(sub.created_at).toLocaleString('zh-TW'),
+          // 問卷資料
+          qData.gender === 'male' ? '男' : qData.gender === 'female' ? '女' : '-',
+          qData.birthDate || '-',
+          qData.occupation || '-',
+          qData.planType === 'self' ? '本人' : qData.planType === 'child' ? '子女' : '-',
+          qData.roomType === 'single' ? '單人房' : qData.roomType === 'double' ? '雙人房' : qData.roomType === 'health-insurance' ? '健保房' : '-',
+          qData.hospitalDaily || 0,
+          qData.surgerySubsidy === 'full' ? '全額負擔' : qData.surgerySubsidy === 'recommended' ? '建議額度' : '基本額度',
+          Math.round((qData.salaryLoss || 0) / 10000),
+          Math.round((qData.livingExpense || 0) * 12 / 10000),
+          Math.round((qData.treatmentCost || 0) / 10000),
+          Math.round((qData.longTermCare || 0) / 10000),
+          qData.familyCare || 0,
+          qData.personalDebt || 0,
+          Math.round((qData.monthlyIncome || 0) / 10000),
+          OPTIONS_MAP.insuranceKnowledge[qData.insuranceKnowledge] || qData.insuranceKnowledge || '-',
+          expectations,
+          OPTIONS_MAP.monthlyBudget[qData.monthlyBudget] || qData.monthlyBudget || '-'
+        ].map(val => {
+          // 處理包含逗號的內容，用引號包起來
+          const str = String(val);
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        });
+
+        csvRows.push(row.join(','));
+      });
+    });
+
+    // 建立 Blob 並下載
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `會員資料匯出_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // PDF 下載功能
@@ -351,9 +455,25 @@ export default function MemberManager() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">會員資訊管理</h1>
-          <p className="text-gray-600">查看所有註冊會員及問卷資料</p>
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">會員資訊管理</h1>
+            <p className="text-gray-600">查看所有註冊會員及問卷資料</p>
+          </div>
+          <div>
+            <button
+              onClick={handleExportCSV}
+              disabled={selectedEmails.size === 0}
+              className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
+                selectedEmails.size === 0
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-teal-600 text-white hover:bg-teal-700 shadow-sm'
+              }`}
+            >
+              <i className="ri-file-excel-line mr-2"></i>
+              匯出 CSV ({selectedEmails.size})
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -361,7 +481,15 @@ export default function MemberManager() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900"></th>
+                  <th className="px-6 py-4 w-12 text-center">
+                    <input 
+                      type="checkbox"
+                      className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                      onChange={handleSelectAll}
+                      checked={memberGroups.length > 0 && selectedEmails.size === memberGroups.length}
+                    />
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 w-10"></th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">會員資料 (姓名/Email)</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">電話</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">最新下載時間</th>
@@ -373,9 +501,19 @@ export default function MemberManager() {
                   <>
                     <tr 
                       key={group.email} 
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      className={`hover:bg-gray-50 transition-colors cursor-pointer ${
+                        selectedEmails.has(group.email) ? 'bg-teal-50' : ''
+                      }`}
                       onClick={() => setExpandedGroup(expandedGroup === group.email ? null : group.email)}
                     >
+                      <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input 
+                          type="checkbox"
+                          className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                          checked={selectedEmails.has(group.email)}
+                          onChange={(e) => handleSelectOne(group.email, e.target.checked)}
+                        />
+                      </td>
                       <td className="px-6 py-4 w-10 text-center">
                         <i className={`ri-arrow-right-s-line transition-transform duration-200 text-gray-400 text-xl ${
                           expandedGroup === group.email ? 'rotate-90' : ''
@@ -398,7 +536,7 @@ export default function MemberManager() {
                     
                     {expandedGroup === group.email && (
                       <tr>
-                        <td colSpan={5} className="bg-gray-50 p-4">
+                        <td colSpan={6} className="bg-gray-50 p-4">
                           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                             <table className="w-full">
                               <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
@@ -472,7 +610,7 @@ export default function MemberManager() {
                 ))}
                 {memberGroups.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                       尚無會員資料
                     </td>
                   </tr>
