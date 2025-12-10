@@ -285,14 +285,18 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
 
       try {
         // 1. 嘗試獲取指定名稱的模板 (使用 ilike 模糊匹配，支援 "adult" 或 "Adult 保障需求分析報告")
-        let { data: templates } = await supabase
+        const { data: templates, error: templatesError } = await supabase
           .from('pdf_templates')
           .select('*')
           .ilike('name', `%${targetTemplateName}%`)
           .eq('is_active', true)
           .limit(1);
         
-        let data = templates?.[0];
+        if (templatesError) {
+          console.warn('Error fetching specific template:', templatesError);
+        }
+
+        let data = templates && Array.isArray(templates) && templates.length > 0 ? templates[0] : null;
 
         // 2. 如果找不到指定模板，且是 child，嘗試創建預設的 child 模板資料 (僅記憶體中，不寫入DB)
         if (!data && isChildPlan) {
@@ -303,19 +307,33 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
            };
         } else if (!data) {
            // 3. 如果是 adult 且找不到，或者其他情況，嘗試獲取任意 active 模板
-           const { data: anyTemplates } = await supabase
+           const { data: anyTemplates, error: anyError } = await supabase
              .from('pdf_templates')
              .select('*')
              .eq('is_active', true)
              .limit(1);
-           data = anyTemplates?.[0];
+           
+           if (anyError) {
+             console.warn('Error fetching fallback template:', anyError);
+           }
+           
+           data = anyTemplates && Array.isArray(anyTemplates) && anyTemplates.length > 0 ? anyTemplates[0] : null;
         }
 
         if (data) {
           templateData = data;
         } else if (!templateData) {
-          // 4. 最後的 Fallback
-          throw new Error('No template found');
+          // 4. 最後的 Fallback - 使用預設模板
+          console.warn('No template found, using default template');
+          const baseHtml = DEFAULT_HTML_CONTENT;
+          const finalHtml = isChildPlan 
+              ? baseHtml.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
+              : baseHtml;
+
+          templateData = {
+            styles: DEFAULT_STYLES,
+            html_content: finalHtml
+          };
         }
 
       } catch (e) {
@@ -347,11 +365,26 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       if ((templateData as any).custom_variables) {
         try {
           const cv = (templateData as any).custom_variables;
-          const vars = Array.isArray(cv) ? cv : JSON.parse(JSON.stringify(cv));
-            
-          if (Array.isArray(vars)) {
+          let vars: any[] = [];
+          
+          if (Array.isArray(cv)) {
+            vars = cv;
+          } else if (typeof cv === 'string') {
+            // Try to parse if it's a JSON string
+            try {
+              const parsed = JSON.parse(cv);
+              if (Array.isArray(parsed)) {
+                vars = parsed;
+              }
+            } catch {
+              console.warn('Could not parse custom_variables as JSON string');
+            }
+          }
+          
+          // Only process if vars is a valid array
+          if (Array.isArray(vars) && vars.length > 0) {
             vars.forEach((v: any) => {
-              if (v.key && v.value) {
+              if (v && typeof v === 'object' && v.key && v.value) {
                 customVars[v.key] = v.value;
               }
             });

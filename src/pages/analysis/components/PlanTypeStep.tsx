@@ -21,13 +21,23 @@ export default function PlanTypeStep({ onSelect }: Props) {
         .select('setting_key, setting_value')
         .in('setting_key', ['analysis_adult_icon', 'analysis_child_icon']);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        return;
+      }
 
-      data?.forEach(setting => {
-        if (setting.setting_key === 'analysis_adult_icon') {
-          setAdultIcon(setting.setting_value);
-        } else if (setting.setting_key === 'analysis_child_icon') {
-          setChildIcon(setting.setting_value);
+      if (!data || !Array.isArray(data)) {
+        console.warn('No data returned from system_settings');
+        return;
+      }
+
+      data.forEach((setting: any) => {
+        if (setting && setting.setting_key && setting.setting_value) {
+          if (setting.setting_key === 'analysis_adult_icon') {
+            setAdultIcon(setting.setting_value);
+          } else if (setting.setting_key === 'analysis_child_icon') {
+            setChildIcon(setting.setting_value);
+          }
         }
       });
     } catch (error) {

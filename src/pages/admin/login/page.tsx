@@ -15,19 +15,35 @@ export default function AdminLogin() {
     setError('');
 
     try {
+      if (!email || !password) {
+        setError('請輸入電子信箱和密碼');
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // 400 error usually means invalid credentials
+        if (error.status === 400) {
+          setError('帳號或密碼不正確，或帳號尚未啟用');
+        } else if (error.message?.includes('Invalid login credentials')) {
+          setError('帳號或密碼不正確');
+        } else {
+          setError(error.message || '登入失敗，請檢查帳號密碼');
+        }
+        throw error;
+      }
 
       if (data.user) {
-        // 登入成功，導向後台
         navigate('/admin');
       }
     } catch (err: any) {
-      setError(err.message || '登入失敗，請檢查帳號密碼');
+      console.error('Login error:', err);
+      // Error message already set above
     } finally {
       setLoading(false);
     }
