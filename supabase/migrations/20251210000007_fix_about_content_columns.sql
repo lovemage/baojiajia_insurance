@@ -46,13 +46,17 @@ begin
     alter table public.about_content add column hero_image text;
   end if;
 
-  -- Check for and add section and display_order columns if they don't exist
+  -- Check for and add required columns if they don't exist
   if not exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'section') then
     alter table public.about_content add column section text default 'intro';
   end if;
 
   if not exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'display_order') then
     alter table public.about_content add column display_order integer default 0;
+  end if;
+
+  if not exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'content_key') then
+    alter table public.about_content add column content_key text default 'about_intro';
   end if;
 end $$;
 
@@ -81,6 +85,7 @@ begin
     declare
       has_section boolean := false;
       has_order boolean := false;
+      has_key boolean := false;
     begin
       
       -- Check if section column exists
@@ -93,10 +98,16 @@ begin
         has_order := true;
       end if;
       
+      -- Check if content_key column exists  
+      if exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'content_key') then
+        has_key := true;
+      end if;
+      
       -- Build insert statement based on existing columns
-      if has_section and has_order then
-        insert into public.about_content (section, display_order, mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
+      if has_section and has_order and has_key then
+        insert into public.about_content (content_key, section, display_order, mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
         values (
+          'about_intro',
           'intro',
           1,
           '保家佳的成立初衷',
@@ -114,9 +125,10 @@ begin
           false,
           false
         );
-      elsif has_section then
-        insert into public.about_content (section, mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
+      elsif has_section and has_key then
+        insert into public.about_content (content_key, section, mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
         values (
+          'about_intro',
           'intro',
           '保家佳的成立初衷',
           '在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
