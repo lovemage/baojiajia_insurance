@@ -58,6 +58,14 @@ begin
   if not exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'content_key') then
     alter table public.about_content add column content_key text default 'about_intro';
   end if;
+
+  if not exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'content_value') then
+    alter table public.about_content add column content_value text default '' not null;
+  end if;
+
+  if not exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'content_type') then
+    alter table public.about_content add column content_type text default 'text' not null;
+  end if;
 end $$;
 
 -- Enable RLS if not already enabled
@@ -86,6 +94,22 @@ begin
       has_section boolean := false;
       has_order boolean := false;
       has_key boolean := false;
+      has_content_value boolean := false;
+      has_content_type boolean := false;
+      default_mission_title constant text := '保家佳的成立初衷';
+      default_mission_content constant text := '在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
+
+可是，如果想找保險業務了解，每一個業務各說各的好，是真是假難以分辨！又或是怕找了業務會遇到強迫推銷、人情壓力的問題。
+
+保家佳的成立，就是希望能創造一個沒有推銷壓力的知識環境，我們希望用白話文的說明讓保險變得簡單易懂，也陪著您破解那些討人厭的話術！我們相信，唯有真正了解保險，才能做出最適合自己的決策。
+
+我們也希望能陪伴您走過人生每個重要的階段，為您和家人建立最完善的保障。';
+      default_instagram_followers constant text := '1000+';
+      default_clients_served constant text := '500+';
+      default_satisfaction_rate constant text := '98%';
+      default_articles_published constant text := '200+';
+      columns_sql text;
+      values_sql text;
     begin
       
       -- Check if section column exists
@@ -102,68 +126,53 @@ begin
       if exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'content_key') then
         has_key := true;
       end if;
-      
-      -- Build insert statement based on existing columns
-      if has_section and has_order and has_key then
-        insert into public.about_content (content_key, section, display_order, mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
-        values (
-          'about_intro',
-          'intro',
-          1,
-          '保家佳的成立初衷',
-          '在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
 
-可是，如果想找保險業務了解，每一個業務各說各的好，是真是假難以分辨！又或是怕找了業務會遇到強迫推銷、人情壓力的問題。
-
-保家佳的成立，就是希望能創造一個沒有推銷壓力的知識環境，我們希望用白話文的說明讓保險變得簡單易懂，也陪著您破解那些討人厭的話術！我們相信，唯有真正了解保險，才能做出最適合自己的決策。
-
-我們也希望能陪伴您走過人生每個重要的階段，為您和家人建立最完善的保障。',
-          '1000+',
-          '500+',
-          '98%',
-          '200+',
-          false,
-          false
-        );
-      elsif has_section and has_key then
-        insert into public.about_content (content_key, section, mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
-        values (
-          'about_intro',
-          'intro',
-          '保家佳的成立初衷',
-          '在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
-
-可是，如果想找保險業務了解，每一個業務各說各的好，是真是假難以分辨！又或是怕找了業務會遇到強迫推銷、人情壓力的問題。
-
-保家佳的成立，就是希望能創造一個沒有推銷壓力的知識環境，我們希望用白話文的說明讓保險變得簡單易懂，也陪著您破解那些討人厭的話術！我們相信，唯有真正了解保險，才能做出最適合自己的決策。
-
-我們也希望能陪伴您走過人生每個重要的階段，為您和家人建立最完善的保障。',
-          '1000+',
-          '500+',
-          '98%',
-          '200+',
-          false,
-          false
-        );
-      else
-        insert into public.about_content (mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
-        values (
-          '保家佳的成立初衷',
-          '在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
-
-可是，如果想找保險業務了解，每一個業務各說各的好，是真是假難以分辨！又或是怕找了業務會遇到強迫推銷、人情壓力的問題。
-
-保家佳的成立，就是希望能創造一個沒有推銷壓力的知識環境，我們希望用白話文的說明讓保險變得簡單易懂，也陪著您破解那些討人厭的話術！我們相信，唯有真正了解保險，才能做出最適合自己的決策。
-
-我們也希望能陪伴您走過人生每個重要的階段，為您和家人建立最完善的保障。',
-          '1000+',
-          '500+',
-          '98%',
-          '200+',
-          false,
-          false
-        );
+      if exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'content_value') then
+        has_content_value := true;
       end if;
+
+      if exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'content_type') then
+        has_content_type := true;
+      end if;
+      
+      -- Build insert statement dynamically so we only reference existing columns
+      columns_sql := 'mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible';
+      values_sql := concat(
+        quote_literal(default_mission_title), ', ',
+        quote_literal(default_mission_content), ', ',
+        quote_literal(default_instagram_followers), ', ',
+        quote_literal(default_clients_served), ', ',
+        quote_literal(default_satisfaction_rate), ', ',
+        quote_literal(default_articles_published), ', ',
+        'false, false'
+      );
+
+      if has_key then
+        columns_sql := concat(columns_sql, ', content_key');
+        values_sql := concat(values_sql, ', ', quote_literal('about_intro'));
+      end if;
+
+      if has_section then
+        columns_sql := concat(columns_sql, ', section');
+        values_sql := concat(values_sql, ', ', quote_literal('intro'));
+      end if;
+
+      if has_order then
+        columns_sql := concat(columns_sql, ', display_order');
+        values_sql := concat(values_sql, ', 1');
+      end if;
+
+      if has_content_value then
+        columns_sql := concat(columns_sql, ', content_value');
+        values_sql := concat(values_sql, ', ', quote_literal(default_mission_content));
+      end if;
+
+      if has_content_type then
+        columns_sql := concat(columns_sql, ', content_type');
+        values_sql := concat(values_sql, ', ', quote_literal('text'));
+      end if;
+
+      execute format('insert into public.about_content (%s) values (%s);', columns_sql, values_sql);
     end;
   end if;
 end $$;

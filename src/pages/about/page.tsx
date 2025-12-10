@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 interface AboutContent {
   mission_title: string;
   mission_content: string;
+  hero_image?: string;
   intro_visible: boolean;
   team_visible: boolean;
 }
@@ -56,6 +57,30 @@ export default function About() {
     }
   };
 
+  const formatMissionContent = (content?: string) => {
+    if (!content) return '';
+    return content
+      .replace(/<\/p>\s*<p>/gi, '\n\n')
+      .replace(/<br\s*\/?>(\r?\n)?/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .trim();
+  };
+
+  const missionText = formatMissionContent(aboutContent?.mission_content);
+  const missionParagraphs = (missionText || `在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
+
+可是，如果想找保險業務了解，每一個業務各說各的好，是真是假難以分辨！又或是怕找了業務會遇到強迫推銷、人情壓力的問題。
+
+保家佳的成立，就是希望能創造一個沒有推銷壓力的知識環境，我們希望用白話文的說明讓保險變得簡單易懂，也陪著您破解那些討人厭的話術！我們相信，唯有真正了解保險，才能做出最適合自己的決策。
+
+我們也希望能陪伴您走過人生每個重要的階段，為您和家人建立最完善的保障。`).split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+
+  const heroImage = aboutContent?.hero_image?.trim()
+    ? aboutContent.hero_image
+    : 'https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/553b31e20439f8b0fc75c472c1b546a0.png';
+
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
@@ -79,14 +104,12 @@ export default function About() {
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
                   {aboutContent?.mission_title || '保家佳的成立初衷'}
                 </h2>
-                <div className="space-y-4 text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {aboutContent?.mission_content || `在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
-
-可是，如果想找保險業務了解，每一個業務各說各的好，是真是假難以分辨！又或是怕找了業務會遇到強迫推銷、人情壓力的問題。
-
-保家佳的成立，就是希望能創造一個沒有推銷壓力的知識環境，我們希望用白話文的說明讓保險變得簡單易懂，也陪著您破解那些討人厭的話術！我們相信，唯有真正了解保險，才能做出最適合自己的決策。
-
-我們也希望能陪伴您走過人生每個重要的階段，為您和家人建立最完善的保障。`}
+                <div className="space-y-4 text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed">
+                  {missionParagraphs.map((paragraph, index) => (
+                    <p key={index}>
+                      {paragraph}
+                    </p>
+                  ))}
                 </div>
               </div>
 
@@ -94,7 +117,7 @@ export default function About() {
               <div className="relative w-full">
                 <div className="relative w-full" style={{ paddingBottom: '75%' }}>
                   <img
-                    src="https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/553b31e20439f8b0fc75c472c1b546a0.png"
+                    src={heroImage}
                     alt="保家佳團隊"
                     className="absolute inset-0 w-full h-full object-contain"
                   />
