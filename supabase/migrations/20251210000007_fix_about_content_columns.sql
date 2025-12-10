@@ -45,6 +45,15 @@ begin
   if not exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'hero_image') then
     alter table public.about_content add column hero_image text;
   end if;
+
+  -- Check for and add section and display_order columns if they don't exist
+  if not exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'section') then
+    alter table public.about_content add column section text default 'intro';
+  end if;
+
+  if not exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'display_order') then
+    alter table public.about_content add column display_order integer default 0;
+  end if;
 end $$;
 
 -- Enable RLS if not already enabled
@@ -68,22 +77,81 @@ create policy "Admins can insert about content" on public.about_content for inse
 do $$
 begin
   if not exists (select 1 from public.about_content limit 1) then
-    insert into public.about_content (mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
-    values (
-      '保家佳的成立初衷',
-      '在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
+    -- Check what columns actually exist and only insert those
+    declare
+      has_section boolean := false;
+      has_order boolean := false;
+    begin
+      
+      -- Check if section column exists
+      if exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'section') then
+        has_section := true;
+      end if;
+      
+      -- Check if display_order column exists  
+      if exists (select 1 from information_schema.columns where table_name = 'about_content' and column_name = 'display_order') then
+        has_order := true;
+      end if;
+      
+      -- Build insert statement based on existing columns
+      if has_section and has_order then
+        insert into public.about_content (section, display_order, mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
+        values (
+          'intro',
+          1,
+          '保家佳的成立初衷',
+          '在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
 
 可是，如果想找保險業務了解，每一個業務各說各的好，是真是假難以分辨！又或是怕找了業務會遇到強迫推銷、人情壓力的問題。
 
 保家佳的成立，就是希望能創造一個沒有推銷壓力的知識環境，我們希望用白話文的說明讓保險變得簡單易懂，也陪著您破解那些討人厭的話術！我們相信，唯有真正了解保險，才能做出最適合自己的決策。
 
 我們也希望能陪伴您走過人生每個重要的階段，為您和家人建立最完善的保障。',
-      '1000+',
-      '500+',
-      '98%',
-      '200+',
-      false,
-      false
-    );
+          '1000+',
+          '500+',
+          '98%',
+          '200+',
+          false,
+          false
+        );
+      elsif has_section then
+        insert into public.about_content (section, mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
+        values (
+          'intro',
+          '保家佳的成立初衷',
+          '在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
+
+可是，如果想找保險業務了解，每一個業務各說各的好，是真是假難以分辨！又或是怕找了業務會遇到強迫推銷、人情壓力的問題。
+
+保家佳的成立，就是希望能創造一個沒有推銷壓力的知識環境，我們希望用白話文的說明讓保險變得簡單易懂，也陪著您破解那些討人厭的話術！我們相信，唯有真正了解保險，才能做出最適合自己的決策。
+
+我們也希望能陪伴您走過人生每個重要的階段，為您和家人建立最完善的保障。',
+          '1000+',
+          '500+',
+          '98%',
+          '200+',
+          false,
+          false
+        );
+      else
+        insert into public.about_content (mission_title, mission_content, instagram_followers, clients_served, satisfaction_rate, articles_published, team_visible, intro_visible)
+        values (
+          '保家佳的成立初衷',
+          '在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
+
+可是，如果想找保險業務了解，每一個業務各說各的好，是真是假難以分辨！又或是怕找了業務會遇到強迫推銷、人情壓力的問題。
+
+保家佳的成立，就是希望能創造一個沒有推銷壓力的知識環境，我們希望用白話文的說明讓保險變得簡單易懂，也陪著您破解那些討人厭的話術！我們相信，唯有真正了解保險，才能做出最適合自己的決策。
+
+我們也希望能陪伴您走過人生每個重要的階段，為您和家人建立最完善的保障。',
+          '1000+',
+          '500+',
+          '98%',
+          '200+',
+          false,
+          false
+        );
+      end if;
+    end;
   end if;
 end $$;
