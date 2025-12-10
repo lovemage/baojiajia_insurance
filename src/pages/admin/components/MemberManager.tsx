@@ -307,13 +307,26 @@ export default function MemberManager() {
       const customVars: Record<string, string> = {};
       if (templateData.custom_variables) {
         try {
-          const vars = Array.isArray(templateData.custom_variables) 
-            ? templateData.custom_variables 
-            : JSON.parse(JSON.stringify(templateData.custom_variables));
-            
-          if (Array.isArray(vars)) {
+          let vars: any[] = [];
+          
+          if (Array.isArray(templateData.custom_variables)) {
+            vars = templateData.custom_variables;
+          } else if (typeof templateData.custom_variables === 'string') {
+            // Try to parse if it's a JSON string
+            try {
+              const parsed = JSON.parse(templateData.custom_variables);
+              if (Array.isArray(parsed)) {
+                vars = parsed;
+              }
+            } catch {
+              console.warn('Could not parse custom_variables as JSON string');
+            }
+          }
+          
+          // Only process if vars is a valid array
+          if (Array.isArray(vars) && vars.length > 0) {
             vars.forEach((v: any) => {
-              if (v.key && v.value) {
+              if (v && typeof v === 'object' && v.key && v.value) {
                 customVars[v.key] = v.value;
               }
             });

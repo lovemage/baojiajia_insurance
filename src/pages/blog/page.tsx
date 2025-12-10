@@ -38,9 +38,13 @@ export default function Blog() {
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching categories:', error);
+        setCategories(['全部', '保險基礎', '醫療保障', '理財規劃', '理賠實務', '案例分享']);
+        return;
+      }
       
-      const categoryNames = data?.map(c => c.name) || [];
+      const categoryNames = (data && Array.isArray(data)) ? data.map((c: any) => c.name) : [];
       setCategories(['全部', ...categoryNames]);
     } catch (error) {
       console.error('Error fetching categories:', error);

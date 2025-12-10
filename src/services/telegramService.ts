@@ -71,9 +71,14 @@ async function getTelegramSettings(): Promise<TelegramSettings | null> {
     }
 
     const settings: any = {};
-    data?.forEach(item => {
-      settings[item.setting_key] = item.setting_value;
-    });
+    
+    if (data && Array.isArray(data) && data.length > 0) {
+      data.forEach((item: any) => {
+        if (item && item.setting_key && typeof item.setting_value !== 'undefined') {
+          settings[item.setting_key] = item.setting_value;
+        }
+      });
+    }
 
     return {
       botToken: settings.telegram_bot_token || '',

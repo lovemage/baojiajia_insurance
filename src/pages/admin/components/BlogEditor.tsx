@@ -130,8 +130,13 @@ export default function BlogEditor({ onBack }: Props) {
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
-      if (error) throw error;
-      setCategories(data?.map(c => c.name) || []);
+      if (error) {
+        console.error('Error fetching categories:', error);
+        setCategories(['保險基礎', '醫療保障', '理財規劃', '理賠實務', '案例分享']);
+        return;
+      }
+      
+      setCategories((data && Array.isArray(data)) ? data.map((c: any) => c.name) : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
       setCategories(['保險基礎', '醫療保障', '理財規劃', '理賠實務', '案例分享']);
