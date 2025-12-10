@@ -71,7 +71,7 @@ const DEFAULT_HTML_CONTENT = `
 const processImages = async (container: HTMLElement) => {
   const images = Array.from(container.querySelectorAll('img'));
   console.log(`Processing ${images.length} images...`);
-  
+
   await Promise.all(images.map(async (img) => {
     try {
       const src = img.getAttribute('src');
@@ -79,7 +79,7 @@ const processImages = async (container: HTMLElement) => {
 
       const response = await fetch(src);
       const blob = await response.blob();
-      
+
       await new Promise<void>((resolve) => {
         const reader = new FileReader();
         reader.onloadend = async () => {
@@ -174,22 +174,22 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
   // 計算各項保障建議額度
   const calculateCoverage = () => {
     const monthlyIncome = data.monthlyIncome || 0;
-    
+
     return {
       // 醫療保障
       hospitalDaily: data.hospitalDaily || 2000,
       surgerySubsidy: data.surgerySubsidy || 100000,
-      
+
       // 重症保障
       criticalIllness: data.criticalIllnessCoverage || (monthlyIncome * 12 * 5),
       cancerTreatment: data.cancerTreatment || 300000,
-      
+
       // 長照保障
       longTermCare: data.longTermCare || (monthlyIncome * 12 * 10),
-      
+
       // 壽險保障（成人才有）
       lifeInsurance: !isChildPlan ? (data.lifeInsurance || (monthlyIncome * 12 * 10)) : 0,
-      
+
       // 意外保障
       accidentInsurance: data.accidentInsurance || 3000000,
       accidentMedical: data.accidentMedical || 50000
@@ -201,7 +201,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
   // 計算總保費預估（簡化計算）
   const estimatePremium = () => {
     let basePremium = 0;
-    
+
     if (isChildPlan) {
       // 幼兒保險預估
       basePremium = age < 6 ? 15000 : 18000;
@@ -211,11 +211,11 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       else if (age < 40) basePremium = 35000;
       else if (age < 50) basePremium = 50000;
       else basePremium = 70000;
-      
+
       // 性別調整
       if (data.gender === 'female') basePremium *= 0.9;
     }
-    
+
     return Math.round(basePremium);
   };
 
@@ -231,8 +231,48 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
 
   const handleDownloadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 驗證手機號碼
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(downloadData.phone)) {
+      alert('請輸入有效的台灣手機號碼（0開頭的10位數字）');
+      return;
+    }
+
     setIsGeneratingPDF(true);
     setPdfProgress(0);
+
+    // 檢查下載限制
+    if (user && user.email) {
+      try {
+        const { data: limitData } = await supabase
+          .from('user_download_limits')
+          .select('*')
+          .eq('email', user.email)
+          .single();
+
+        if (limitData) {
+          if (limitData.download_limit !== -1 && limitData.download_count >= limitData.download_limit) {
+            alert(`您的下載次數已達上限 (${limitData.download_limit} 次)`);
+            setIsGeneratingPDF(false);
+            setPdfProgress(0);
+            return;
+          }
+
+          // 增加下載次數
+          await supabase
+            .from('user_download_limits')
+            .update({
+              download_count: limitData.download_count + 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq('email', user.email);
+        }
+      } catch (error) {
+        console.error('Error checking download limit:', error);
+        // 發生錯誤時是否阻擋下載？這裡選擇不阻擋，避免系統錯誤影響用戶
+      }
+    }
 
     // 啟動進度條動畫（6秒完成）
     const progressInterval = setInterval(() => {
@@ -291,7 +331,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
           .ilike('name', `%${targetTemplateName}%`)
           .eq('is_active', true)
           .limit(1);
-        
+
         if (templatesError) {
           console.warn('Error fetching specific template:', templatesError);
         }
@@ -300,24 +340,24 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
 
         // 2. 如果找不到指定模板，且是 child，嘗試創建預設的 child 模板資料 (僅記憶體中，不寫入DB)
         if (!data && isChildPlan) {
-           console.warn('Child template not found in DB, generating from default');
-           templateData = {
-             styles: DEFAULT_STYLES,
-             html_content: DEFAULT_HTML_CONTENT.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
-           };
+          console.warn('Child template not found in DB, generating from default');
+          templateData = {
+            styles: DEFAULT_STYLES,
+            html_content: DEFAULT_HTML_CONTENT.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
+          };
         } else if (!data) {
-           // 3. 如果是 adult 且找不到，或者其他情況，嘗試獲取任意 active 模板
-           const { data: anyTemplates, error: anyError } = await supabase
-             .from('pdf_templates')
-             .select('*')
-             .eq('is_active', true)
-             .limit(1);
-           
-           if (anyError) {
-             console.warn('Error fetching fallback template:', anyError);
-           }
-           
-           data = anyTemplates && Array.isArray(anyTemplates) && anyTemplates.length > 0 ? anyTemplates[0] : null;
+          // 3. 如果是 adult 且找不到，或者其他情況，嘗試獲取任意 active 模板
+          const { data: anyTemplates, error: anyError } = await supabase
+            .from('pdf_templates')
+            .select('*')
+            .eq('is_active', true)
+            .limit(1);
+
+          if (anyError) {
+            console.warn('Error fetching fallback template:', anyError);
+          }
+
+          data = anyTemplates && Array.isArray(anyTemplates) && anyTemplates.length > 0 ? anyTemplates[0] : null;
         }
 
         if (data) {
@@ -326,9 +366,9 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
           // 4. 最後的 Fallback - 使用預設模板
           console.warn('No template found, using default template');
           const baseHtml = DEFAULT_HTML_CONTENT;
-          const finalHtml = isChildPlan 
-              ? baseHtml.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
-              : baseHtml;
+          const finalHtml = isChildPlan
+            ? baseHtml.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
+            : baseHtml;
 
           templateData = {
             styles: DEFAULT_STYLES,
@@ -340,9 +380,9 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         console.warn('Using default template due to exception', e);
         // 根據類型選擇預設模板內容
         const baseHtml = DEFAULT_HTML_CONTENT;
-        const finalHtml = isChildPlan 
-            ? baseHtml.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
-            : baseHtml;
+        const finalHtml = isChildPlan
+          ? baseHtml.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
+          : baseHtml;
 
         templateData = {
           styles: DEFAULT_STYLES,
@@ -353,7 +393,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       // 準備 PDF 填寫資料
       const formatNumber = (num: number) => num.toLocaleString('zh-TW');
       const roomTypeText = data.roomType === 'double' ? '雙人房' :
-                          data.roomType === 'single' ? '單人房' : '健保房';
+        data.roomType === 'single' ? '單人房' : '健保房';
 
       // 計算 1~11 級一次金範圍 (月薪 * 50 * 5% ~ 月薪 * 50) 單位：萬
       const monthlyIncome = data.monthlyIncome || 0;
@@ -366,7 +406,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         try {
           const cv = (templateData as any).custom_variables;
           let vars: any[] = [];
-          
+
           if (Array.isArray(cv)) {
             vars = cv;
           } else if (typeof cv === 'string') {
@@ -380,7 +420,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
               console.warn('Could not parse custom_variables as JSON string');
             }
           }
-          
+
           // Only process if vars is a valid array
           if (Array.isArray(vars) && vars.length > 0) {
             vars.forEach((v: any) => {
@@ -404,7 +444,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         '{{roomCost}}': formatNumber(data.roomType === 'double' ? 3000 : data.roomType === 'single' ? 5000 : 0),
         '{{hospitalDaily}}': formatNumber(data.hospitalDaily || 0),
         '{{surgeryRange}}': data.surgerySubsidy === 'full' ? '30~40萬' :
-                           data.surgerySubsidy === 'recommended' ? '20~30萬' : '10~20萬',
+          data.surgerySubsidy === 'recommended' ? '20~30萬' : '10~20萬',
         '{{outpatientSurgeryRange}}': '5~10萬',
         '{{salaryLossInTenThousand}}': String(Math.round((data.salaryLoss || 0) / 10000)),
         '{{livingExpenseInTenThousand}}': String(Math.round((data.livingExpense || 0) * 12 / 10000)),
@@ -445,7 +485,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       }
       // 2. 移除特定的髒字串 (針對用戶反饋)
       htmlContent = htmlContent.replace(/暫時加紅色背景[^<]*/g, '');
-      
+
       // 若 html_content 仍為空（極端情況），嘗試舊欄位
       if (!htmlContent && (templateData as any).header_html) {
         const td = templateData as any;
@@ -472,7 +512,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       container.style.left = '-9999px';
       container.style.top = '0';
       // 注意：這裡不強制設定寬度，讓 CSS 控制
-      
+
       container.innerHTML = `
         <style>
           ${processedStyles}
@@ -535,15 +575,15 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         margin: 0,
         filename: `保障需求分析報告_${downloadData.name}.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { 
+        html2canvas: {
           scale: 1.5, // 稍微降低縮放比例以減少記憶體消耗，避免大文件崩潰導致空白
           useCORS: true,
           letterRendering: true,
           scrollY: 0,
           logging: true // 啟用日誌以便排查
         },
-        jsPDF: { 
-          unit: 'mm' as const, 
+        jsPDF: {
+          unit: 'mm' as const,
           format: 'a4' as const,
           orientation: 'portrait' as const
         }
@@ -575,11 +615,11 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // 這裡可以整合表單提交功能
     console.log('聯絡資料：', downloadData);
     console.log('分析資料：', data);
-    
+
     alert('感謝您的填寫！我們的專員會盡快與您聯繫。');
     setShowContactForm(false);
   };

@@ -74,8 +74,8 @@ export default function ServiceDetailPage() {
           <i className="ri-error-warning-line text-6xl text-gray-400 mb-4"></i>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">找不到此服務項目</h2>
           <p className="text-gray-600 mb-6">抱歉，您要查看的服務項目不存在</p>
-          <Link 
-            to="/services" 
+          <Link
+            to="/services"
             className="inline-flex items-center gap-2 px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors whitespace-nowrap"
           >
             <i className="ri-arrow-left-line"></i>
@@ -134,7 +134,7 @@ export default function ServiceDetailPage() {
               prose-h3:text-xl prose-h3:mb-4 prose-h3:mt-8
               prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-6 prose-p:text-sm
               prose-ul:my-6 prose-ul:space-y-3
-              prose-ol:my-6 prose-ol:space-y-3 prose-ol:list-decimal prose-ol:list-inside
+              prose-ol:my-6 prose-ol:space-y-3 prose-ol:list-none prose-ol:list-inside
               prose-li:text-gray-700 prose-li:leading-relaxed prose-li:text-sm
               prose-strong:text-teal-600 prose-strong:font-semibold"
             style={{ fontSize: '10px', lineHeight: '1.6' }}
@@ -147,15 +147,15 @@ export default function ServiceDetailPage() {
               <h3 className="text-lg font-bold text-gray-900 mb-3">想了解更多？</h3>
               <p className="text-gray-700 mb-6 text-sm">歡迎與我們聯繫，我們將為您提供專業的諮詢服務</p>
               <div className="flex flex-wrap gap-4 justify-center">
-                <Link 
-                  to="/contact" 
+                <Link
+                  to="/contact"
                   className="inline-flex items-center gap-2 px-8 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors shadow-lg hover:shadow-xl whitespace-nowrap"
                 >
                   <i className="ri-mail-line"></i>
                   立即諮詢
                 </Link>
-                <Link 
-                  to="/analysis" 
+                <Link
+                  to="/analysis"
                   className="inline-flex items-center gap-2 px-8 py-3 bg-white text-teal-600 border-2 border-teal-500 rounded-lg hover:bg-teal-50 transition-colors whitespace-nowrap"
                 >
                   <i className="ri-file-list-3-line"></i>

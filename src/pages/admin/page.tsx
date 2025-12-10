@@ -20,6 +20,7 @@ import CategoryManager from './components/CategoryManager';
 import ChangePassword from './components/ChangePassword';
 import ServiceManager from './components/ServiceManager';
 import PdfTemplateEditor from './components/PdfTemplateEditor';
+import DownloadLimitManager from './components/DownloadLimitManager';
 
 interface ServiceItem {
   id: string;
@@ -32,7 +33,7 @@ interface ServiceItem {
   is_active: boolean;
 }
 
-type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'hero-carousel' | 'features' | 'testimonials' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'system-settings' | 'statistics' | 'blog-categories' | 'change-password' | 'pdf-template';
+type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'hero-carousel' | 'features' | 'testimonials' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'system-settings' | 'statistics' | 'blog-categories' | 'change-password' | 'pdf-template' | 'download-limit';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -75,6 +76,7 @@ export default function AdminPage() {
     { id: 'blog-categories', label: '文章分類', icon: 'ri-folder-settings-line' },
     { id: 'about', label: '關於我們', icon: 'ri-team-line' },
     { id: 'member-manager', label: '會員資訊', icon: 'ri-user-search-line' },
+    { id: 'download-limit', label: '下載限制', icon: 'ri-download-cloud-2-line' },
     { id: 'pdf-template', label: 'PDF 報告模板', icon: 'ri-file-pdf-line' },
     { id: 'site-settings', label: '網站設定', icon: 'ri-settings-4-line' },
     { id: 'system-settings', label: '系統設定', icon: 'ri-settings-2-line' },
@@ -113,6 +115,8 @@ export default function AdminPage() {
         return <CategoryManager onBack={handleBack} />;
       case 'pdf-template':
         return <PdfTemplateEditor onBack={handleBack} />;
+      case 'download-limit':
+        return <DownloadLimitManager />;
       case 'change-password':
         return <ChangePassword onBack={handleBack} />;
       case 'list':
@@ -124,10 +128,9 @@ export default function AdminPage() {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Sidebar */}
-      <aside 
-        className={`bg-white shadow-xl z-20 transition-all duration-300 flex flex-col ${
-          isSidebarOpen ? 'w-64' : 'w-20'
-        }`}
+      <aside
+        className={`bg-white shadow-xl z-20 transition-all duration-300 flex flex-col ${isSidebarOpen ? 'w-64' : 'w-20'
+          }`}
       >
         {/* Logo Area */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
@@ -150,18 +153,16 @@ export default function AdminPage() {
                 setEditMode(item.id as EditMode);
                 if (item.id === 'list') setSelectedService(null);
               }}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative ${
-                (editMode === item.id) || (item.id === 'list' && (editMode === 'service-item' || editMode === 'service-detail'))
-                  ? 'bg-teal-50 text-teal-600 shadow-sm' 
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative ${(editMode === item.id) || (item.id === 'list' && (editMode === 'service-item' || editMode === 'service-detail'))
+                  ? 'bg-teal-50 text-teal-600 shadow-sm'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              } ${!isSidebarOpen && 'justify-center'}`}
+                } ${!isSidebarOpen && 'justify-center'}`}
               title={!isSidebarOpen ? item.label : ''}
             >
-              <i className={`${item.icon} text-xl ${
-                (editMode === item.id) || (item.id === 'list' && (editMode === 'service-item' || editMode === 'service-detail'))
-                  ? 'text-teal-600' 
+              <i className={`${item.icon} text-xl ${(editMode === item.id) || (item.id === 'list' && (editMode === 'service-item' || editMode === 'service-detail'))
+                  ? 'text-teal-600'
                   : 'text-gray-400 group-hover:text-gray-600'
-              }`}></i>
+                }`}></i>
               {isSidebarOpen && (
                 <span className="font-medium whitespace-nowrap">{item.label}</span>
               )}
@@ -173,16 +174,14 @@ export default function AdminPage() {
         <div className="p-4 border-t border-gray-100 space-y-2">
           <button
             onClick={() => setEditMode('change-password')}
-            className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group ${
-              editMode === 'change-password'
+            className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group ${editMode === 'change-password'
                 ? 'bg-teal-50 text-teal-600 shadow-sm'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            } ${!isSidebarOpen && 'justify-center'}`}
+              } ${!isSidebarOpen && 'justify-center'}`}
             title={!isSidebarOpen ? '修改密碼' : ''}
           >
-            <i className={`ri-lock-password-line text-xl ${
-              editMode === 'change-password' ? 'text-teal-600' : 'text-gray-400 group-hover:text-gray-600'
-            }`}></i>
+            <i className={`ri-lock-password-line text-xl ${editMode === 'change-password' ? 'text-teal-600' : 'text-gray-400 group-hover:text-gray-600'
+              }`}></i>
             {isSidebarOpen && <span className="font-medium whitespace-nowrap">修改密碼</span>}
           </button>
 

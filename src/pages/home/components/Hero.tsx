@@ -108,9 +108,13 @@ export default function Hero() {
 
   return (
     <section
-      className="relative flex items-center overflow-hidden bg-black h-screen sm:h-screen md:h-screen lg:h-screen"
+      className="relative w-full overflow-hidden bg-black"
+      style={{
+        aspectRatio: '16 / 9',
+        maxHeight: '100vh'
+      }}
     >
-      {/* Hero 背景圖片 - 響應式縮放 */}
+      {/* Hero 背景圖片 - 同比例縮放 */}
       {currentHero.image_url ? (
         <img
           src={currentHero.image_url}

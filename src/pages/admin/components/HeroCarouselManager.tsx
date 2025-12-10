@@ -364,8 +364,14 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
         </div>
 
         {/* 預覽內容 - 模擬 Hero 組件 */}
-        <div className="relative flex items-center overflow-hidden bg-black h-screen sm:h-screen md:h-screen lg:h-screen">
-          {/* 背景圖片 - 響應式縮放 */}
+        <div
+          className="relative w-full overflow-hidden bg-black"
+          style={{
+            aspectRatio: '16 / 9',
+            maxHeight: '100vh'
+          }}
+        >
+          {/* 背景圖片 - 同比例縮放 */}
           {formData.image_url ? (
             <img
               src={formData.image_url}
