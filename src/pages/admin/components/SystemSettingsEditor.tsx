@@ -104,19 +104,35 @@ export default function SystemSettingsEditor({ onBack }: Props) {
     setSaving(true);
     try {
       const updates = [
-        { setting_key: 'telegram_bot_token', setting_value: telegramBotToken },
-        { setting_key: 'telegram_chat_id', setting_value: telegramChatId },
-        { setting_key: 'telegram_notifications_enabled', setting_value: notificationsEnabled.toString() },
-        { setting_key: 'analysis_adult_icon', setting_value: adultIcon },
-        { setting_key: 'analysis_child_icon', setting_value: childIcon }
+        { setting_key: 'telegram_bot_token', setting_value: telegramBotToken, description: 'Telegram Bot API Token' },
+        { setting_key: 'telegram_chat_id', setting_value: telegramChatId, description: 'Telegram Chat ID' },
+        { setting_key: 'telegram_notifications_enabled', setting_value: notificationsEnabled.toString(), description: 'Enable Telegram notifications' },
+        { setting_key: 'analysis_adult_icon', setting_value: adultIcon, description: '成人保險規劃圖示 URL' },
+        { setting_key: 'analysis_child_icon', setting_value: childIcon, description: '幼兒保險規劃圖示 URL' }
       ];
 
       for (const update of updates) {
-        const { error } = await supabase
+        // 先檢查是否存在
+        const { data: existing } = await supabase
           .from('system_settings')
-          .upsert(update, { onConflict: 'setting_key' });
+          .select('id')
+          .eq('setting_key', update.setting_key)
+          .single();
 
-        if (error) throw error;
+        if (existing) {
+          // 存在則更新
+          const { error } = await supabase
+            .from('system_settings')
+            .update({ setting_value: update.setting_value })
+            .eq('setting_key', update.setting_key);
+          if (error) throw error;
+        } else {
+          // 不存在則插入
+          const { error } = await supabase
+            .from('system_settings')
+            .insert(update);
+          if (error) throw error;
+        }
       }
 
       alert('設定已儲存');

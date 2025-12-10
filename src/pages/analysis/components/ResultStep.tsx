@@ -424,6 +424,8 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         '{{homeCareInTenThousand}}': String(Math.round(monthlyIncome / 10000)),
         '{{monthlyIncomeInTenThousand}}': String(Math.round(monthlyIncome / 10000)),
         '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
+        // 幼兒專用變數
+        '{{childDeathBenefit}}': '69',
       };
 
       // 替換變數

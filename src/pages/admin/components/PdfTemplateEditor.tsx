@@ -57,6 +57,8 @@ const DEFAULT_VARIABLES = [
   { var: '{{accidentReimbursementRange}}', desc: '意外實支實付(固定)' },
   { var: '{{majorBurnRange}}', desc: '重大燒燙傷(固定)' },
   { var: '{{homeCareInTenThousand}}', desc: '居家休養費用(萬)' },
+  // 幼兒專用
+  { var: '{{childDeathBenefit}}', desc: '幼兒身故理賠金(固定69萬)' },
 ];
 
 export default function PdfTemplateEditor({ onBack }: Props) {

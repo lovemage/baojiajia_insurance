@@ -360,6 +360,8 @@ export default function MemberManager() {
         '{{familyCare}}': formatNumber(data.familyCare || 0),
         '{{monthlyIncomeInTenThousand}}': String(Math.round((data.monthlyIncome || 0) / 10000)),
         '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
+        // 幼兒專用變數
+        '{{childDeathBenefit}}': '69',
       };
 
       // 替換變數
