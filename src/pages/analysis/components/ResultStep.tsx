@@ -342,7 +342,27 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       const disabilityMin = Math.round((monthlyIncome * 50 * 0.05) / 10000);
       const disabilityMax = Math.round((monthlyIncome * 50) / 10000);
 
+      // 處理自定義變數
+      const customVars: Record<string, string> = {};
+      if ((templateData as any).custom_variables) {
+        try {
+          const cv = (templateData as any).custom_variables;
+          const vars = Array.isArray(cv) ? cv : JSON.parse(JSON.stringify(cv));
+            
+          if (Array.isArray(vars)) {
+            vars.forEach((v: any) => {
+              if (v.key && v.value) {
+                customVars[v.key] = v.value;
+              }
+            });
+          }
+        } catch (e) {
+          console.error('Error parsing custom variables:', e);
+        }
+      }
+
       const pdfVariables: Record<string, string> = {
+        ...customVars,
         '{{name}}': downloadData.name,
         '{{phone}}': downloadData.phone,
         '{{lineId}}': downloadData.lineId || '-',

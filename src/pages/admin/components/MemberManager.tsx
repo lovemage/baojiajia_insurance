@@ -303,7 +303,28 @@ export default function MemberManager() {
       const disabilityMin = Math.round((monthlyIncome * 50 * 0.05) / 10000);
       const disabilityMax = Math.round((monthlyIncome * 50) / 10000);
 
+      // 處理自定義變數
+      const customVars: Record<string, string> = {};
+      if (templateData.custom_variables) {
+        try {
+          const vars = Array.isArray(templateData.custom_variables) 
+            ? templateData.custom_variables 
+            : JSON.parse(JSON.stringify(templateData.custom_variables));
+            
+          if (Array.isArray(vars)) {
+            vars.forEach((v: any) => {
+              if (v.key && v.value) {
+                customVars[v.key] = v.value;
+              }
+            });
+          }
+        } catch (e) {
+          console.error('Error parsing custom variables:', e);
+        }
+      }
+
       const pdfVariables: Record<string, string> = {
+        ...customVars,
         '{{name}}': member.name || '-',
         '{{phone}}': member.phone || '-',
         '{{lineId}}': member.line_id || '-',

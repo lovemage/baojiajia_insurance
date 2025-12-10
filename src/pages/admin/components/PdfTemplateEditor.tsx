@@ -8,13 +8,27 @@ interface PdfTemplate {
   html_content: string;
   styles: string;
   is_active: boolean;
+  custom_variables?: Record<string, string>; // key: description
+  // Since we need value too, maybe we should store as array or object with value?
+  // User request: "variable section add admin custom fixed variables"
+  // It implies these are static values.
+  // I will store as { key: { desc: string, value: string } }
+  // But JSONB in Supabase is flexible.
+  // Let's use a simpler array of objects in JSONB:
+  // custom_variables: { key: string, desc: string, value: string }[]
+}
+
+interface CustomVariable {
+  key: string;
+  desc: string;
+  value: string;
 }
 
 interface Props {
   onBack?: () => void;
 }
 
-const AVAILABLE_VARIABLES = [
+const DEFAULT_VARIABLES = [
   // 基本資料
   { var: '{{name}}', desc: '客戶姓名' },
   { var: '{{phone}}', desc: '電話' },
@@ -53,8 +67,21 @@ export default function PdfTemplateEditor({ onBack }: Props) {
   const [previewHtml, setPreviewHtml] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [viewMode, setViewMode] = useState<'visual' | 'code'>('visual');
+  
+  // Custom Variables State
+  const [showVarModal, setShowVarModal] = useState(false);
+  const [newVar, setNewVar] = useState<CustomVariable>({ key: '', desc: '', value: '' });
 
   const currentTemplate = templates.find(t => t.id === currentTemplateId) || null;
+
+  // Merge default and custom variables
+  const availableVariables = [
+    ...DEFAULT_VARIABLES,
+    ...(currentTemplate?.custom_variables ? (currentTemplate.custom_variables as any) : []).map((v: any) => ({
+      var: v.key,
+      desc: v.desc + ' (自定義)'
+    }))
+  ];
 
   useEffect(() => {
     fetchTemplates();
@@ -96,6 +123,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
           description: '兒童版保障需求分析報告',
           html_content: childHtml,
           styles: currentTemplate.styles,
+          custom_variables: currentTemplate.custom_variables,
           is_active: true
         })
         .select()
@@ -126,6 +154,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
           description: currentTemplate.description,
           html_content: currentTemplate.html_content,
           styles: currentTemplate.styles,
+          custom_variables: currentTemplate.custom_variables
         })
         .eq('id', currentTemplate.id);
 
@@ -141,10 +170,37 @@ export default function PdfTemplateEditor({ onBack }: Props) {
     }
   };
 
-  const handleFieldChange = (key: string, value: string) => {
+  const handleFieldChange = (key: string, value: any) => {
     if (!currentTemplate) return;
     const updated = { ...currentTemplate, [key]: value };
     setTemplates(templates.map(t => t.id === currentTemplate.id ? updated : t));
+  };
+
+  const handleAddCustomVariable = () => {
+    if (!currentTemplate) return;
+    if (!newVar.key || !newVar.value) {
+      alert('請填寫變數名稱和數值');
+      return;
+    }
+    
+    // Ensure key has braces
+    let key = newVar.key;
+    if (!key.startsWith('{{')) key = '{{' + key;
+    if (!key.endsWith('}}')) key = key + '}}';
+
+    const currentVars = (currentTemplate.custom_variables as any) || [];
+    const updatedVars = [...currentVars, { ...newVar, key }];
+    
+    handleFieldChange('custom_variables', updatedVars);
+    setNewVar({ key: '', desc: '', value: '' });
+    setShowVarModal(false);
+  };
+
+  const handleDeleteCustomVariable = (key: string) => {
+    if (!currentTemplate) return;
+    const currentVars = (currentTemplate.custom_variables as any) || [];
+    const updatedVars = currentVars.filter((v: any) => v.key !== key);
+    handleFieldChange('custom_variables', updatedVars);
   };
 
   const generatePreview = () => {
@@ -176,6 +232,12 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       '{{monthlyIncomeInTenThousand}}': '5',
       '{{generatedDate}}': new Date().toLocaleDateString('zh-TW'),
     };
+
+    // Merge custom variables for preview
+    const customVars = (template.custom_variables as any) || [];
+    customVars.forEach((v: any) => {
+      mockData[v.key] = v.value;
+    });
 
     let html = `
       <style>
@@ -344,24 +406,44 @@ export default function PdfTemplateEditor({ onBack }: Props) {
 
               <div className="lg:col-span-1 h-full overflow-hidden flex flex-col">
                 <div className="bg-gray-50 rounded-xl p-4 h-full overflow-y-auto">
-                  <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                    <i className="ri-code-s-slash-line"></i>
-                    可用變數
-                  </h3>
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                      <i className="ri-code-s-slash-line"></i>
+                      可用變數
+                    </h3>
+                    <button
+                      onClick={() => setShowVarModal(true)}
+                      className="text-xs bg-teal-50 text-teal-700 px-2 py-1 rounded hover:bg-teal-100"
+                    >
+                      <i className="ri-add-line mr-1"></i>
+                      新增變數
+                    </button>
+                  </div>
                   <div className="space-y-2">
-                    {AVAILABLE_VARIABLES.map((v) => (
+                    {availableVariables.map((v) => (
                       <div
                         key={v.var}
                         className="group p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:border-teal-500 transition-all"
-                        onClick={() => {
-                          navigator.clipboard.writeText(v.var);
-                        }}
                       >
-                        <div className="flex justify-between items-start mb-1">
+                        <div 
+                          className="flex justify-between items-start mb-1"
+                          onClick={() => navigator.clipboard.writeText(v.var)}
+                        >
                           <code className="text-teal-700 font-mono text-xs font-bold bg-teal-50 px-1.5 py-0.5 rounded">
                             {v.var}
                           </code>
-                          <i className="ri-file-copy-line text-gray-400 group-hover:text-teal-500 text-xs"></i>
+                          <div className="flex gap-2">
+                            {v.desc.includes('(自定義)') && (
+                              <i 
+                                className="ri-delete-bin-line text-red-400 hover:text-red-600 text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if(confirm('確定刪除此變數？')) handleDeleteCustomVariable(v.var);
+                                }}
+                              ></i>
+                            )}
+                            <i className="ri-file-copy-line text-gray-400 group-hover:text-teal-500 text-xs"></i>
+                          </div>
                         </div>
                         <p className="text-xs text-gray-600">{v.desc}</p>
                       </div>
@@ -377,6 +459,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
               key={currentTemplate.id}
               htmlContent={currentTemplate.html_content}
               styles={currentTemplate.styles}
+              availableVariables={availableVariables}
               onSave={(newHtml, newStyles) => {
                 setTemplates(prev => prev.map(t => 
                   t.id === currentTemplate.id 
@@ -416,14 +499,71 @@ export default function PdfTemplateEditor({ onBack }: Props) {
           </div>
         </div>
       )}
+
+      {/* Add Variable Modal */}
+      {showVarModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold mb-4">新增自定義固定變數</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">變數名稱 (例如: companyName)</label>
+                <input
+                  type="text"
+                  value={newVar.key}
+                  onChange={(e) => setNewVar({ ...newVar, key: e.target.value })}
+                  placeholder="companyName"
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+                <p className="text-xs text-gray-500 mt-1">系統將自動加上 {'{{ }}'}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                <input
+                  type="text"
+                  value={newVar.desc}
+                  onChange={(e) => setNewVar({ ...newVar, desc: e.target.value })}
+                  placeholder="例如：公司名稱"
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">固定數值</label>
+                <input
+                  type="text"
+                  value={newVar.value}
+                  onChange={(e) => setNewVar({ ...newVar, value: e.target.value })}
+                  placeholder="例如：保家佳保險經紀人"
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowVarModal(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleAddCustomVariable}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              >
+                新增
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // 可視化編輯器組件
-function VisualEditor({ htmlContent, styles, onSave }: {
+function VisualEditor({ htmlContent, styles, availableVariables, onSave }: {
   htmlContent: string;
   styles: string;
+  availableVariables: any[];
   onSave: (newHtml: string, newStyles: string) => void;
 }) {
   const [scale, setScale] = useState(0.8);
@@ -629,9 +769,6 @@ function VisualEditor({ htmlContent, styles, onSave }: {
 
   return (
     <div className="flex-1 flex overflow-hidden relative">
->>>>>>>
-
-
       {/* Zoom Controls (Overlay) */}
       <div className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-white rounded-lg shadow-md p-1 border border-gray-200">
         <button 
@@ -682,7 +819,7 @@ function VisualEditor({ htmlContent, styles, onSave }: {
         </div>
         
         <div className="flex-1 p-4 space-y-2">
-          {AVAILABLE_VARIABLES.map((v) => (
+          {availableVariables.map((v) => (
             <div
               key={v.var}
               draggable
