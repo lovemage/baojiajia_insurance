@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幼兒版問卷變數對照表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+            color: #000;
+            border-bottom: 3px solid #000;
+            padding-bottom: 15px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        h2 {
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #000;
+            border-left: 4px solid #000;
+            padding-left: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: white;
+        }
+        
+        th {
+            background-color: #000;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #000;
+        }
+        
+        td {
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            vertical-align: top;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .section-note {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+        
+        code {
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .highlight {
+            background-color: #fffacd;
+            padding: 2px 4px;
+        }
+        
+        .warning-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning-box strong {
+            color: #856404;
+        }
+        
+        ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>幼兒版問卷變數對照表</h1>
+        <p class="subtitle">適用於 0-17 歲兒童的保險規劃方案</p>
+        
+        <div class="warning-box">
+            <strong>⚠️ 重要提示：</strong> 幼兒版本<span class="highlight">不詢問月薪</span>，因此與月薪相關的計算邏輯不適用。
+        </div>
+        
+        <!-- Section 1: 基本資料 -->
+        <h2>1. 基本資料 (Basic Info)</h2>
+        <p class="section-note">幼兒版本不詢問婚姻狀況，只需出生年月日和性別</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>問卷題目/來源</th>
+                    <th>程式碼變數 (Data Key)</th>
+                    <th>PDF 變數 (Variable)</th>
+                    <th>邏輯/備註</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>姓名</strong></td>
+                    <td><code>name</code></td>
+                    <td><code>{{name}}</code></td>
+                    <td>下載前輸入，顯示於 P1 需求分析報告、P2 基本資料。</td>
+                </tr>
+                <tr>
+                    <td><strong>手機號碼</strong></td>
+                    <td><code>phone</code></td>
+                    <td><code>{{phone}}</code></td>
+                    <td>下載前輸入，顯示於 P2。</td>
+                </tr>
+                <tr>
+                    <td><strong>居住縣市</strong></td>
+                    <td><code>city</code></td>
+                    <td><code>{{city}}</code></td>
+                    <td>下載前輸入，顯示於 P2。</td>
+                </tr>
+                <tr>
+                    <td><strong>Line ID</strong></td>
+                    <td><code>lineId</code></td>
+                    <td><code>{{lineId}}</code></td>
+                    <td>下載前輸入，顯示於 P2。</td>
+                </tr>
+                <tr>
+                    <td><strong>產出日期</strong></td>
+                    <td>(系統自動生成)</td>
+                    <td><code>{{generatedDate}}</code></td>
+                    <td>格式：YYYY/MM/DD，顯示於 P1。</td>
+                </tr>
+                <tr>
+                    <td><strong>出生年月日</strong></td>
+                    <td><code>birthDate</code></td>
+                    <td>-</td>
+                    <td>幼兒版必填。用於計算年齡。</td>
+                </tr>
+                <tr>
+                    <td><strong>性別</strong></td>
+                    <td><code>gender</code></td>
+                    <td>-</td>
+                    <td>幼兒版必填。值: <code>male</code>, <code>female</code></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Section 2: 醫療需求 -->
+        <h2>2. 醫療需求 (Medical Needs)</h2>
+        <p class="section-note">對應 PDF 第三頁 (Page 3)</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>問卷題目</th>
+                    <th>選項/輸入</th>
+                    <th>程式碼變數 (Data Key)</th>
+                    <th>PDF 變數 (Variable)</th>
+                    <th>顯示邏輯</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>病房選擇</strong></td>
+                    <td>4-6人健保病房<br>雙人病房<br>單人病房</td>
+                    <td><code>roomType</code><br>值: <code>normal</code>, <code>double</code>, <code>single</code></td>
+                    <td><code>{{roomType}}</code><br><code>{{roomCost}}</code></td>
+                    <td><strong>房型名稱</strong>: 顯示「健保房」、「雙人房」或「單人房」<br><strong>每日病房限額</strong>: 健保房 → 0 | 雙人房 → 3,000 | 單人房 → 5,000</td>
+                </tr>
+                <tr>
+                    <td><strong>住院日額補償</strong></td>
+                    <td>輸入金額 (例如 3000)</td>
+                    <td><code>hospitalDaily</code></td>
+                    <td><code>{{hospitalDaily}}</code></td>
+                    <td>每日醫療補償。直接顯示輸入金額 (千分位)，例如 3,000。</td>
+                </tr>
+                <tr>
+                    <td><strong>手術醫療補貼</strong></td>
+                    <td>部分補貼 (10~20萬)<br>建議補貼 (20~30萬)<br>完整補貼 (30~40萬)</td>
+                    <td><code>surgerySubsidy</code><br>值: <code>partial</code>, <code>recommended</code>, <code>full</code></td>
+                    <td><code>{{surgeryRange}}</code></td>
+                    <td>住院雜費開銷。部分 → 10～20萬 | 建議 → 20～30萬 | 完整 → 30～40萬</td>
+                </tr>
+                <tr>
+                    <td><strong>門診雜費</strong></td>
+                    <td>(固定值)</td>
+                    <td>-</td>
+                    <td><code>{{outpatientSurgeryRange}}</code></td>
+                    <td>門診雜費開銷。一律顯示 5～10萬。</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Section 3: 意外保障 -->
+        <h2>3. 意外保障 (Accident Coverage)</h2>
+        <p class="section-note">對應 PDF 第四頁 (Page 4) - 幼兒版無壽險需求，直接為意外保障</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>項目</th>
+                    <th>來源</th>
+                    <th>PDF 變數 (Variable)</th>
+                    <th>顯示邏輯</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>意外住院日額</strong></td>
+                    <td>(固定值)</td>
+                    <td><code>{{accidentDailyRange}}</code></td>
+                    <td>一律顯示 1,000～2,000。</td>
+                </tr>
+                <tr>
+                    <td><strong>意外實支實付</strong></td>
+                    <td>(固定值)</td>
+                    <td><code>{{accidentReimbursementRange}}</code></td>
+                    <td>一律顯示 5～10 (單位：萬)。</td>
+                </tr>
+                <tr>
+                    <td><strong>重大燒燙傷</strong></td>
+                    <td>(固定值)</td>
+                    <td><code>{{majorBurnRange}}</code></td>
+                    <td>一律顯示 50～100 (單位：萬)。</td>
+                </tr>
+                <tr>
+                    <td><strong>幼兒身故理賠金</strong></td>
+                    <td>(固定值)</td>
+                    <td><code>{{childDeathBenefit}}</code></td>
+                    <td>固定值 69 (萬)。</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Section 4: 重症需求 -->
+        <h2>4. 重症需求 (Critical Illness)</h2>
+        <p class="section-note">對應 PDF 第五頁 (Page 5)、第六頁 (Page 6)</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>問卷題目</th>
+                    <th>輸入</th>
+                    <th>程式碼變數 (Data Key)</th>
+                    <th>PDF 變數 (Variable)</th>
+                    <th>顯示邏輯</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>薪資損失補償</strong></td>
+                    <td>輸入金額</td>
+                    <td><code>salaryLoss</code></td>
+                    <td><code>{{salaryLossInTenThousand}}</code></td>
+                    <td>休養時薪資損失(年)。輸入金額除以 10000。例如輸入 600,000 → 顯示 60 (萬)。</td>
+                </tr>
+                <tr>
+                    <td><strong>每月生活開銷</strong></td>
+                    <td>輸入金額</td>
+                    <td><code>livingExpense</code></td>
+                    <td><code>{{livingExpenseInTenThousand}}</code></td>
+                    <td>休養時日常開銷(年)。<span class="highlight">需乘以 12</span>。輸入 40,000 → 40000*12/10000 → 顯示 48 (萬)。</td>
+                </tr>
+                <tr>
+                    <td><strong>治療費用補償</strong></td>
+                    <td>輸入金額</td>
+                    <td><code>treatmentCost</code></td>
+                    <td><code>{{treatmentCostInTenThousand}}</code></td>
+                    <td>罹癌給付一次金。輸入金額除以 10000。例如輸入 600,000 → 顯示 60 (萬)。</td>
+                </tr>
+                <tr>
+                    <td><strong>一次性理賠金</strong></td>
+                    <td>(固定值)</td>
+                    <td>-</td>
+                    <td><code>{{fixedOneTimeBenefit}}</code></td>
+                    <td>(P6) 一律顯示 100。</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Section 5: 長照需求 -->
+        <h2>5. 長照需求 (Long Term Care)</h2>
+        <p class="section-note">對應 PDF 第七頁 (Page 7)</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>問卷題目</th>
+                    <th>輸入</th>
+                    <th>程式碼變數 (Data Key)</th>
+                    <th>PDF 變數 (Variable)</th>
+                    <th>顯示邏輯</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>長照費用需求</strong></td>
+                    <td>輸入金額</td>
+                    <td><code>longTermCare</code></td>
+                    <td><code>{{longTermCare1to6Disease}}</code><br><code>{{longTermCare1to6Accident}}</code></td>
+                    <td>1~6級扶助金(疾病/意外)。輸入金額除以 10000。例如輸入 50,000 → 顯示 5 (萬)。</td>
+                </tr>
+                <tr>
+                    <td><strong>1~11級一次金</strong></td>
+                    <td><span class="highlight">無法計算</span></td>
+                    <td>-</td>
+                    <td><code>{{longTermCare1to11Disease}}</code><br><code>{{longTermCare1to11Accident}}</code></td>
+                    <td><span class="highlight">幼兒版無月薪輸入，此項無法計算</span>。成人版邏輯為：月薪 × 50 × 5% ～ 月薪 × 50</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Section 6: 幼兒版特別說明 -->
+        <h2>6. 幼兒版特別說明 (Child Plan)</h2>
+        
+        <h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 16px;">與成人版本的主要差異</h3>
+        <ul>
+            <li><strong>基本資料</strong>：不詢問婚姻狀況，只需出生年月日和性別</li>
+            <li><strong>月薪輸入</strong>：<span class="highlight">完全不詢問月薪</span>，因此無法計算與月薪相關的保額</li>
+            <li><strong>壽險需求</strong>：無此頁面/需求，跳過壽險部分</li>
+            <li><strong>意外保障</strong>：保留，並新增「幼兒身故理賠金」固定值 69 萬</li>
+            <li><strong>長照需求</strong>：1~11級一次金無法計算（因無月薪）</li>
+            <li><strong>文字描述</strong>：問卷中的引導文字會針對「父母照顧孩子」的情境調整</li>
+        </ul>
+        
+        <h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 16px;">幼兒版專用變數</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>項目</th>
+                    <th>程式碼變數</th>
+                    <th>PDF 變數 (Variable)</th>
+                    <th>顯示邏輯</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>幼兒身故理賠金</strong></td>
+                    <td>-</td>
+                    <td><code>{{childDeathBenefit}}</code></td>
+                    <td>固定值 69 (萬)。</td>
+                </tr>
+                <tr>
+                    <td><strong>出生年月日</strong></td>
+                    <td><code>birthDate</code></td>
+                    <td>-</td>
+                    <td>必填項，用於計算年齡。</td>
+                </tr>
+                <tr>
+                    <td><strong>性別</strong></td>
+                    <td><code>gender</code></td>
+                    <td>-</td>
+                    <td>必填項。值: <code>male</code> (男), <code>female</code> (女)</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="warning-box" style="margin-top: 30px;">
+            <strong>📌 開發提示：</strong> 在計算長照需求的「1~11級一次金」時，幼兒版應該：
+            <ul style="margin-top: 10px;">
+                <li>不顯示此項，或</li>
+                <li>顯示為「N/A」或「不適用」，或</li>
+                <li>使用預設值（需與產品團隊確認）</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+

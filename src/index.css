@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hero 圖片響應式縮放 (RWD) */
+@media (max-width: 640px) {
+  /* 超小屏幕 (手機) */
+  section[class*="relative min-h-screen"] img[alt] {
+    object-fit: cover;
+    object-position: center;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* 平板 */
+  section[class*="relative min-h-screen"] img[alt] {
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+@media (min-width: 1025px) {
+  /* 桌面 */
+  section[class*="relative min-h-screen"] img[alt] {
+    object-fit: cover;
+    object-position: center;
+  }
+}

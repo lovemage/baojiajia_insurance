@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import Navigation from '../../components/feature/Navigation';
 
 interface ServiceDetail {
   id: string;
@@ -87,15 +88,18 @@ export default function ServiceDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 頂部導航 */}
+      <Navigation />
+
       {/* Hero Section */}
-      <div 
+      <div
         className="relative h-96 bg-cover bg-center"
         style={{ backgroundImage: `url(${service.hero_image_url || service.image_url})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/50"></div>
         <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
-          <Link 
-            to="/services" 
+          <Link
+            to="/services"
             className="inline-flex items-center gap-2 text-white/90 hover:text-white mb-6 w-fit transition-colors whitespace-nowrap"
           >
             <i className="ri-arrow-left-line"></i>
@@ -111,27 +115,28 @@ export default function ServiceDetailPage() {
         </div>
       </div>
 
-      {/* Content Section */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      {/* Content Section - 調整容器寬度為 850px，字體縮小為 10px */}
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-16" style={{ maxWidth: '850px' }}>
         <div className="bg-white rounded-2xl shadow-lg p-8 lg:p-12">
-          <div 
-            className="prose prose-lg max-w-none
+          <div
+            className="prose prose-sm max-w-none
               prose-headings:text-gray-900 prose-headings:font-bold
-              prose-h2:text-3xl prose-h2:mb-6 prose-h2:mt-12 prose-h2:first:mt-0
-              prose-h3:text-2xl prose-h3:mb-4 prose-h3:mt-8
-              prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-6
+              prose-h2:text-2xl prose-h2:mb-6 prose-h2:mt-12 prose-h2:first:mt-0
+              prose-h3:text-xl prose-h3:mb-4 prose-h3:mt-8
+              prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-6 prose-p:text-sm
               prose-ul:my-6 prose-ul:space-y-3
               prose-ol:my-6 prose-ol:space-y-3
-              prose-li:text-gray-700 prose-li:leading-relaxed
+              prose-li:text-gray-700 prose-li:leading-relaxed prose-li:text-sm
               prose-strong:text-teal-600 prose-strong:font-semibold"
+            style={{ fontSize: '10px', lineHeight: '1.6' }}
             dangerouslySetInnerHTML={{ __html: service.content }}
           />
 
           {/* CTA Section */}
           <div className="mt-12 pt-8 border-t border-gray-200">
             <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl p-8 text-center">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">想了解更多？</h3>
-              <p className="text-gray-700 mb-6">歡迎與我們聯繫，我們將為您提供專業的諮詢服務</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">想了解更多？</h3>
+              <p className="text-gray-700 mb-6 text-sm">歡迎與我們聯繫，我們將為您提供專業的諮詢服務</p>
               <div className="flex flex-wrap gap-4 justify-center">
                 <Link 
                   to="/contact" 

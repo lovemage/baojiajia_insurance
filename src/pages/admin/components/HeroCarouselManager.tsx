@@ -364,13 +364,13 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
         </div>
 
         {/* 預覽內容 - 模擬 Hero 組件 */}
-        <div className="relative min-h-screen flex items-center bg-cover bg-center overflow-hidden bg-black">
-          {/* 背景圖片 */}
+        <div className="relative min-h-screen flex items-center overflow-hidden bg-black">
+          {/* 背景圖片 - 響應式縮放 */}
           {formData.image_url ? (
             <img
               src={formData.image_url}
               alt={formData.title}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 z-0 sm:object-cover md:object-cover"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
