@@ -98,19 +98,32 @@ export default function AboutEditor({ onBack }: Props) {
 
     setSaving(true);
     try {
-      // Construct payload dynamically to avoid sending fields that might not exist in DB yet
-      const payload: any = {
-        mission_title: aboutContent.mission_title,
-        mission_content: aboutContent.mission_content,
-        instagram_followers: aboutContent.instagram_followers,
-        clients_served: aboutContent.clients_served,
-        satisfaction_rate: aboutContent.satisfaction_rate,
-        articles_published: aboutContent.articles_published,
-        intro_visible: aboutContent.intro_visible,
-        team_visible: aboutContent.team_visible
-      };
+      // Construct payload dynamically, checking which columns exist
+      const payload: any = {};
+      
+      // Basic fields that should exist
+      const basicFields = [
+        'mission_title', 'mission_content', 'team_visible', 'intro_visible',
+        'instagram_followers', 'clients_served', 'satisfaction_rate', 'articles_published'
+      ];
 
-      // Test if hero_image column exists by attempting a small query first
+      // Test which basic fields exist and add them to payload
+      for (const field of basicFields) {
+        try {
+          const { data: columnTest, error: columnError } = await supabase
+            .from('about_content')
+            .select(field)
+            .limit(1);
+          
+          if (!columnError && columnTest !== null) {
+            payload[field] = aboutContent[field as keyof AboutContent];
+          }
+        } catch (e) {
+          console.log(`Column ${field} does not exist, skipping...`);
+        }
+      }
+
+      // Special handling for hero_image
       try {
         const { data: columnTest, error: columnError } = await supabase
           .from('about_content')
@@ -122,7 +135,6 @@ export default function AboutEditor({ onBack }: Props) {
           payload.hero_image = aboutContent.hero_image;
         }
       } catch (e) {
-        // hero_image column doesn't exist, skip it
         console.log('hero_image column does not exist, skipping...');
       }
 
