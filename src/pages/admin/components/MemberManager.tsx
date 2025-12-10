@@ -15,14 +15,7 @@ interface MemberSubmission {
   created_at: string;
 }
 
-interface MemberGroup {
-  email: string;
-  user_id: string;
-  name: string;
-  phone: string;
-  submissions: MemberSubmission[];
-  last_submission_at: string;
-}
+
 
 // 安全讀取數據的輔助函數 - 加強版
 const safeGet = (obj: any, path: string, defaultValue: any = '-') => {
@@ -65,17 +58,16 @@ const OPTIONS_MAP = {
 };
 
 export default function MemberManager() {
-  const [memberGroups, setMemberGroups] = useState<MemberGroup[]>([]);
+  const [submissions, setSubmissions] = useState<MemberSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<MemberSubmission | null>(null);
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(0);
-  
+
   // 多選狀態
-  const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchMembers();
@@ -89,42 +81,9 @@ export default function MemberManager() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Group by email
-      const groups: Record<string, MemberGroup> = {};
-      
-      (data || []).forEach((submission: MemberSubmission) => {
-        const key = submission.email;
-        if (!groups[key]) {
-          groups[key] = {
-            email: submission.email,
-            user_id: submission.user_id,
-            name: submission.name,
-            phone: submission.phone,
-            submissions: [],
-            last_submission_at: submission.created_at
-          };
-        }
-        groups[key].submissions.push(submission);
-        // Keep latest info
-        if (new Date(submission.created_at) > new Date(groups[key].last_submission_at)) {
-           groups[key].last_submission_at = submission.created_at;
-           groups[key].name = submission.name;
-           groups[key].phone = submission.phone;
-        }
-      });
 
-      // Sort submissions within groups
-      Object.values(groups).forEach(g => {
-        g.submissions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      });
-
-      // Convert to array and sort by last submission date
-      const sortedGroups = Object.values(groups).sort((a, b) => 
-        new Date(b.last_submission_at).getTime() - new Date(a.last_submission_at).getTime()
-      );
-
-      setMemberGroups(sortedGroups);
+      // 直接使用所有提交記錄，按下載時間排序
+      setSubmissions(data || []);
     } catch (error) {
       console.error('Error fetching members:', error);
     } finally {
@@ -161,36 +120,36 @@ export default function MemberManager() {
   // 全選/取消全選
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      const allEmails = new Set(memberGroups.map(g => g.email));
-      setSelectedEmails(allEmails);
+      const allIds = new Set(submissions.map(s => s.id));
+      setSelectedIds(allIds);
     } else {
-      setSelectedEmails(new Set());
+      setSelectedIds(new Set());
     }
   };
 
   // 單選
-  const handleSelectOne = (email: string, checked: boolean) => {
-    const newSelected = new Set(selectedEmails);
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSelected = new Set(selectedIds);
     if (checked) {
-      newSelected.add(email);
+      newSelected.add(id);
     } else {
-      newSelected.delete(email);
+      newSelected.delete(id);
     }
-    setSelectedEmails(newSelected);
+    setSelectedIds(newSelected);
   };
 
   // 匯出 CSV
   const handleExportCSV = () => {
-    if (selectedEmails.size === 0) {
-      alert('請先選擇要匯出的會員');
+    if (selectedIds.size === 0) {
+      alert('請先選擇要匯出的記錄');
       return;
     }
 
     const csvRows: string[] = [];
-    
+
     // 定義 CSV 標題
     const headers = [
-      '姓名', 'Email', '電話', '居住地', 'Line ID', '提交時間',
+      '姓名', 'Email', '電話', '居住地', 'Line ID', '下載時間',
       '性別', '出生日期', '職業等級', '規劃對象',
       '期望病房', '期望住院日額', '手術補貼', '薪資損失(萬/月)', '生活開銷(萬/年)', '治療費用(萬)', '長照需求(萬/月)', '家人照顧金', '個人負債', '月收入(萬)',
       '保險了解程度', '保單健診期望', '每月預算'
@@ -198,53 +157,51 @@ export default function MemberManager() {
     csvRows.push('\ufeff' + headers.join(',')); // 加入 BOM 確保 Excel 中文顯示正常
 
     // 收集數據
-    memberGroups.forEach(group => {
-      if (!selectedEmails.has(group.email)) return;
+    submissions.forEach(sub => {
+      if (!selectedIds.has(sub.id)) return;
 
-      group.submissions.forEach(sub => {
-        const qData = sub.questionnaire_data || {};
-        
-        // 處理多選欄位
-        const expectations = (safeGet(qData, 'policyCheckExpectations', []) as string[])
-          .map(val => OPTIONS_MAP.policyCheckExpectations[val] || val)
-          .join('; ');
+      const qData = sub.questionnaire_data || {};
 
-        const row = [
-          sub.name,
-          sub.email,
-          sub.phone,
-          sub.city,
-          sub.line_id,
-          new Date(sub.created_at).toLocaleString('zh-TW'),
-          // 問卷資料
-          qData.gender === 'male' ? '男' : qData.gender === 'female' ? '女' : '-',
-          qData.birthDate || '-',
-          qData.occupation || '-',
-          qData.planType === 'self' ? '本人' : qData.planType === 'child' ? '子女' : '-',
-          qData.roomType === 'single' ? '單人房' : qData.roomType === 'double' ? '雙人房' : qData.roomType === 'health-insurance' ? '健保房' : '-',
-          qData.hospitalDaily || 0,
-          qData.surgerySubsidy === 'full' ? '全額負擔' : qData.surgerySubsidy === 'recommended' ? '建議額度' : '基本額度',
-          Math.round((qData.salaryLoss || 0) / 10000),
-          Math.round((qData.livingExpense || 0) * 12 / 10000),
-          Math.round((qData.treatmentCost || 0) / 10000),
-          Math.round((qData.longTermCare || 0) / 10000),
-          qData.familyCare || 0,
-          qData.personalDebt || 0,
-          Math.round((qData.monthlyIncome || 0) / 10000),
-          OPTIONS_MAP.insuranceKnowledge[qData.insuranceKnowledge] || qData.insuranceKnowledge || '-',
-          expectations,
-          OPTIONS_MAP.monthlyBudget[qData.monthlyBudget] || qData.monthlyBudget || '-'
-        ].map(val => {
-          // 處理包含逗號的內容，用引號包起來
-          const str = String(val);
-          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-            return `"${str.replace(/"/g, '""')}"`;
-          }
-          return str;
-        });
+      // 處理多選欄位
+      const expectations = (safeGet(qData, 'policyCheckExpectations', []) as string[])
+        .map(val => OPTIONS_MAP.policyCheckExpectations[val] || val)
+        .join('; ');
 
-        csvRows.push(row.join(','));
+      const row = [
+        sub.name,
+        sub.email,
+        sub.phone,
+        sub.city,
+        sub.line_id,
+        new Date(sub.created_at).toLocaleString('zh-TW'),
+        // 問卷資料
+        qData.gender === 'male' ? '男' : qData.gender === 'female' ? '女' : '-',
+        qData.birthDate || '-',
+        qData.occupation || '-',
+        qData.planType === 'self' ? '本人' : qData.planType === 'child' ? '子女' : '-',
+        qData.roomType === 'single' ? '單人房' : qData.roomType === 'double' ? '雙人房' : qData.roomType === 'health-insurance' ? '健保房' : '-',
+        qData.hospitalDaily || 0,
+        qData.surgerySubsidy === 'full' ? '全額負擔' : qData.surgerySubsidy === 'recommended' ? '建議額度' : '基本額度',
+        Math.round((qData.salaryLoss || 0) / 10000),
+        Math.round((qData.livingExpense || 0) * 12 / 10000),
+        Math.round((qData.treatmentCost || 0) / 10000),
+        Math.round((qData.longTermCare || 0) / 10000),
+        qData.familyCare || 0,
+        qData.personalDebt || 0,
+        Math.round((qData.monthlyIncome || 0) / 10000),
+        OPTIONS_MAP.insuranceKnowledge[qData.insuranceKnowledge] || qData.insuranceKnowledge || '-',
+        expectations,
+        OPTIONS_MAP.monthlyBudget[qData.monthlyBudget] || qData.monthlyBudget || '-'
+      ].map(val => {
+        // 處理包含逗號的內容，用引號包起來
+        const str = String(val);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
       });
+
+      csvRows.push(row.join(','));
     });
 
     // 建立 Blob 並下載
@@ -499,15 +456,15 @@ export default function MemberManager() {
           <div>
             <button
               onClick={handleExportCSV}
-              disabled={selectedEmails.size === 0}
+              disabled={selectedIds.size === 0}
               className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                selectedEmails.size === 0
+                selectedIds.size === 0
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : 'bg-teal-600 text-white hover:bg-teal-700 shadow-sm'
               }`}
             >
               <i className="ri-file-excel-line mr-2"></i>
-              匯出 CSV ({selectedEmails.size})
+              匯出 CSV ({selectedIds.size})
             </button>
           </div>
         </div>
@@ -518,136 +475,83 @@ export default function MemberManager() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-4 w-12 text-center">
-                    <input 
+                    <input
                       type="checkbox"
                       className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                       onChange={handleSelectAll}
-                      checked={memberGroups.length > 0 && selectedEmails.size === memberGroups.length}
+                      checked={submissions.length > 0 && selectedIds.size === submissions.length}
                     />
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 w-10"></th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">會員資料 (姓名/Email)</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">姓名</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Email</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">電話</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">最新下載時間</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">下載次數</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">居住地</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Line ID</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">下載時間</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {memberGroups.map((group) => (
-                  <>
-                    <tr 
-                      key={group.email} 
-                      className={`hover:bg-gray-50 transition-colors cursor-pointer ${
-                        selectedEmails.has(group.email) ? 'bg-teal-50' : ''
-                      }`}
-                      onClick={() => setExpandedGroup(expandedGroup === group.email ? null : group.email)}
-                    >
-                      <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                        <input 
-                          type="checkbox"
-                          className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
-                          checked={selectedEmails.has(group.email)}
-                          onChange={(e) => handleSelectOne(group.email, e.target.checked)}
-                        />
-                      </td>
-                      <td className="px-6 py-4 w-10 text-center">
-                        <i className={`ri-arrow-right-s-line transition-transform duration-200 text-gray-400 text-xl ${
-                          expandedGroup === group.email ? 'rotate-90' : ''
-                        }`}></i>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-gray-900">{group.name || '未填寫'}</div>
-                        <div className="text-sm text-gray-500">{group.email}</div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{group.phone || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {new Date(group.last_submission_at).toLocaleString('zh-TW')}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-                          {group.submissions.length} 次
-                        </span>
-                      </td>
-                    </tr>
-                    
-                    {expandedGroup === group.email && (
-                      <tr>
-                        <td colSpan={6} className="bg-gray-50 p-4">
-                          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                            <table className="w-full">
-                              <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
-                                <tr>
-                                  <th className="px-4 py-2 text-left">下載時間</th>
-                                  <th className="px-4 py-2 text-left">居住地</th>
-                                  <th className="px-4 py-2 text-left">Line ID</th>
-                                  <th className="px-4 py-2 text-right">操作</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-100">
-                                {group.submissions.map((submission) => (
-                                  <tr key={submission.id} className="text-sm hover:bg-gray-50">
-                                    <td className="px-4 py-3 text-gray-600">
-                                      {new Date(submission.created_at).toLocaleString('zh-TW')}
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-900">{submission.city}</td>
-                                    <td className="px-4 py-3 text-gray-900">{submission.line_id}</td>
-                                    <td className="px-4 py-3 text-right space-x-2">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setSelectedMember(submission);
-                                        }}
-                                        className="text-teal-600 hover:text-teal-900 font-medium"
-                                      >
-                                        詳情
-                                      </button>
-                                      {showDeleteConfirm === submission.id ? (
-                                        <>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleDeleteSubmission(submission.id);
-                                            }}
-                                            className="text-red-600 hover:text-red-900 font-medium"
-                                          >
-                                            確認
-                                          </button>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setShowDeleteConfirm(null);
-                                            }}
-                                            className="text-gray-500 hover:text-gray-700"
-                                          >
-                                            取消
-                                          </button>
-                                        </>
-                                      ) : (
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setShowDeleteConfirm(submission.id);
-                                          }}
-                                          className="text-red-600 hover:text-red-900 font-medium"
-                                        >
-                                          刪除
-                                        </button>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </>
+                {submissions.map((submission) => (
+                  <tr
+                    key={submission.id}
+                    className={`hover:bg-gray-50 transition-colors ${
+                      selectedIds.has(submission.id) ? 'bg-teal-50' : ''
+                    }`}
+                  >
+                    <td className="px-6 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                        checked={selectedIds.has(submission.id)}
+                        onChange={(e) => handleSelectOne(submission.id, e.target.checked)}
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{submission.name || '未填寫'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{submission.email}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{submission.phone || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{submission.city || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{submission.line_id || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(submission.created_at).toLocaleString('zh-TW')}
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() => setSelectedMember(submission)}
+                        className="text-teal-600 hover:text-teal-900 font-medium"
+                      >
+                        詳情
+                      </button>
+                      {showDeleteConfirm === submission.id ? (
+                        <>
+                          <button
+                            onClick={() => handleDeleteSubmission(submission.id)}
+                            className="text-red-600 hover:text-red-900 font-medium"
+                          >
+                            確認
+                          </button>
+                          <button
+                            onClick={() => setShowDeleteConfirm(null)}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            取消
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setShowDeleteConfirm(submission.id)}
+                          className="text-red-600 hover:text-red-900 font-medium"
+                        >
+                          刪除
+                        </button>
+                      )}
+                    </td>
+                  </tr>
                 ))}
-                {memberGroups.length === 0 && (
+                {submissions.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                      尚無會員資料
+                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                      尚無下載記錄
                     </td>
                   </tr>
                 )}

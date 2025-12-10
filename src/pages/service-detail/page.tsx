@@ -91,32 +91,41 @@ export default function ServiceDetailPage() {
       {/* 頂部導航 */}
       <Navigation />
 
-      {/* Hero Section */}
-      <div
-        className="relative h-96 bg-cover bg-center"
-        style={{ backgroundImage: `url(${service.hero_image_url || service.image_url})` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/50"></div>
-        <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
-          <Link
-            to="/services"
-            className="inline-flex items-center gap-2 text-white/90 hover:text-white mb-6 w-fit transition-colors whitespace-nowrap"
-          >
-            <i className="ri-arrow-left-line"></i>
-            返回服務項目
-          </Link>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center">
-              <i className={`${service.icon} text-3xl text-white`}></i>
+      {/* Hero Section - 響應式縮放，PC端寬度1000px，圓角20px */}
+      <div className="flex justify-center px-4 sm:px-6 lg:px-8 py-8">
+        <div
+          className="relative h-96 sm:h-80 md:h-96 lg:h-96 w-full bg-cover bg-center overflow-hidden"
+          style={{
+            backgroundImage: `url(${service.hero_image_url || service.image_url})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+            maxWidth: '1000px',
+            borderRadius: '20px'
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/50"></div>
+          <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-white/90 hover:text-white mb-6 w-fit transition-colors whitespace-nowrap"
+            >
+              <i className="ri-arrow-left-line"></i>
+              返回首頁
+            </Link>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center">
+                <i className={`${service.icon} text-3xl text-white`}></i>
+              </div>
+              <h1 className="text-5xl font-bold text-white">{service.title}</h1>
             </div>
-            <h1 className="text-5xl font-bold text-white">{service.title}</h1>
+            <p className="text-xl text-white/90 max-w-3xl">{service.description}</p>
           </div>
-          <p className="text-xl text-white/90 max-w-3xl">{service.description}</p>
         </div>
       </div>
 
-      {/* Content Section - 調整容器寬度為 850px，字體縮小為 10px */}
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-16" style={{ maxWidth: '850px' }}>
+      {/* Content Section - 調整容器寬度為 1000px，字體縮小為 10px */}
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-16" style={{ maxWidth: '1000px' }}>
         <div className="bg-white rounded-2xl shadow-lg p-8 lg:p-12">
           <div
             className="prose prose-sm max-w-none
@@ -125,10 +134,10 @@ export default function ServiceDetailPage() {
               prose-h3:text-xl prose-h3:mb-4 prose-h3:mt-8
               prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-6 prose-p:text-sm
               prose-ul:my-6 prose-ul:space-y-3
-              prose-ol:my-6 prose-ol:space-y-3
+              prose-ol:my-6 prose-ol:space-y-3 prose-ol:list-decimal prose-ol:list-inside
               prose-li:text-gray-700 prose-li:leading-relaxed prose-li:text-sm
               prose-strong:text-teal-600 prose-strong:font-semibold"
-            style={{ fontSize: '10px', lineHeight: '1.6' }}
+            style={{ fontSize: '10px', lineHeight: '1.6', counterReset: 'item' }}
             dangerouslySetInnerHTML={{ __html: service.content }}
           />
 
