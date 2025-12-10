@@ -297,11 +297,13 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
       setSaving(true);
 
       // 驗證必填欄位
+      /* 
       if (!formData.title || formData.title.trim() === '') {
         alert('標題不能為空');
         setSaving(false);
         return;
       }
+      */
 
       // 只發送特定的欄位，避免發送系統欄位
       const updateData = {
@@ -726,4 +728,3 @@ function HeroItemEditor({ item, onSave, showPreview, setShowPreview }: HeroItemE
     </>
   );
 }
-

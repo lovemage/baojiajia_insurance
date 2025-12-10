@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../../../lib/supabase';
 
 type Props = {
   onSelect: (planType: 'adult' | 'child') => void;
@@ -6,6 +7,33 @@ type Props = {
 
 export default function PlanTypeStep({ onSelect }: Props) {
   const [selectedType, setSelectedType] = useState<'adult' | 'child' | ''>('');
+  const [adultIcon, setAdultIcon] = useState('');
+  const [childIcon, setChildIcon] = useState('');
+
+  useEffect(() => {
+    fetchIcons();
+  }, []);
+
+  const fetchIcons = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['analysis_adult_icon', 'analysis_child_icon']);
+
+      if (error) throw error;
+
+      data?.forEach(setting => {
+        if (setting.setting_key === 'analysis_adult_icon') {
+          setAdultIcon(setting.setting_value);
+        } else if (setting.setting_key === 'analysis_child_icon') {
+          setChildIcon(setting.setting_value);
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching icons:', error);
+    }
+  };
 
   const handleSubmit = () => {
     if (selectedType) {
@@ -31,12 +59,16 @@ export default function PlanTypeStep({ onSelect }: Props) {
           }`}
         >
           <div className="flex flex-col items-center text-center">
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 ${
+            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 overflow-hidden ${
               selectedType === 'adult' ? 'bg-teal-100' : 'bg-gray-100'
             }`}>
-              <i className={`ri-user-line text-5xl ${
-                selectedType === 'adult' ? 'text-teal-600' : 'text-gray-400'
-              }`}></i>
+              {adultIcon ? (
+                <img src={adultIcon} alt="成人保險" className="w-full h-full object-cover" />
+              ) : (
+                <i className={`ri-user-line text-5xl ${
+                  selectedType === 'adult' ? 'text-teal-600' : 'text-gray-400'
+                }`}></i>
+              )}
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-3">成人保險規劃</h3>
             <p className="text-gray-600 mb-4">
@@ -59,12 +91,16 @@ export default function PlanTypeStep({ onSelect }: Props) {
           }`}
         >
           <div className="flex flex-col items-center text-center">
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 ${
+            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 overflow-hidden ${
               selectedType === 'child' ? 'bg-teal-100' : 'bg-gray-100'
             }`}>
-              <i className={`ri-parent-line text-5xl ${
-                selectedType === 'child' ? 'text-teal-600' : 'text-gray-400'
-              }`}></i>
+              {childIcon ? (
+                <img src={childIcon} alt="幼兒保險" className="w-full h-full object-cover" />
+              ) : (
+                <i className={`ri-parent-line text-5xl ${
+                  selectedType === 'child' ? 'text-teal-600' : 'text-gray-400'
+                }`}></i>
+              )}
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-3">幼兒保險規劃</h3>
             <p className="text-gray-600 mb-4">

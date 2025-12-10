@@ -27,8 +27,10 @@ interface Props {
 
 export default function ServiceDetailEditor({ service, onBack }: Props) {
   const [content, setContent] = useState('');
+  const [heroImageUrl, setHeroImageUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
   const contentEditableRef = useRef<HTMLDivElement>(null);
   const isInitialized = useRef(false);
 
@@ -56,11 +58,30 @@ export default function ServiceDetailEditor({ service, onBack }: Props) {
       
       if (data) {
         setContent(data.content || '');
+        setHeroImageUrl(data.hero_image_url || '');
       }
     } catch (error) {
       console.error('Error fetching service detail:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingHero(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      setHeroImageUrl(url);
+      alert('首圖上傳成功！');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('上傳失敗');
+    } finally {
+      setUploadingHero(false);
+      e.target.value = '';
     }
   };
 
@@ -73,16 +94,22 @@ export default function ServiceDetailEditor({ service, onBack }: Props) {
         .eq('service_id', service.id)
         .single();
 
+      const updateData = {
+        content,
+        hero_image_url: heroImageUrl,
+        updated_at: new Date().toISOString()
+      };
+
       if (existing) {
         const { error } = await supabase
           .from('service_details')
-          .update({ content, updated_at: new Date().toISOString() })
+          .update(updateData)
           .eq('service_id', service.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('service_details')
-          .insert({ service_id: service.id, content });
+          .insert({ service_id: service.id, ...updateData });
         if (error) throw error;
       }
 
@@ -170,7 +197,65 @@ export default function ServiceDetailEditor({ service, onBack }: Props) {
           <p className="text-gray-600">編輯服務項目的詳細內容</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white rounded-xl shadow-md p-6 space-y-6">
+          {/* Hero Image Section */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">詳情頁首圖 (Hero Image)</label>
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <input
+                  type="url"
+                  value={heroImageUrl}
+                  onChange={(e) => setHeroImageUrl(e.target.value)}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  placeholder="圖片 URL 或上傳圖片"
+                />
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleHeroImageUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={uploadingHero}
+                  />
+                  <button
+                    type="button"
+                    className="px-4 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
+                    disabled={uploadingHero}
+                  >
+                    {uploadingHero ? (
+                      <>
+                        <i className="ri-loader-4-line animate-spin"></i>
+                        上傳中...
+                      </>
+                    ) : (
+                      <>
+                        <i className="ri-upload-cloud-2-line"></i>
+                        上傳圖片
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+              
+              {/* Image Preview */}
+              {heroImageUrl && (
+                <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50 relative h-48">
+                  <img
+                    src={heroImageUrl}
+                    alt="Hero Preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">詳細內容</label>
           {/* Rich Text Editor Toolbar */}
           <div className="border border-gray-300 rounded-t-lg bg-gray-50 p-3 flex flex-wrap gap-2">
             {/* Font Size */}
@@ -351,6 +436,7 @@ export default function ServiceDetailEditor({ service, onBack }: Props) {
             <i className="ri-information-line mr-1"></i>
             提示：點擊「插入圖片」按鈕可以上傳圖片或影片
           </p>
+          </div>
 
           <div className="flex justify-end gap-4 mt-6">
             <button

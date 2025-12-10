@@ -9,6 +9,7 @@ interface ServiceDetail {
   icon: string;
   image_url: string;
   content: string;
+  hero_image_url?: string;
 }
 
 export default function ServiceDetailPage() {
@@ -24,7 +25,8 @@ export default function ServiceDetailPage() {
           .select(`
             *,
             service_details (
-              content
+              content,
+              hero_image_url
             )
           `)
           .eq('slug', slug)
@@ -39,7 +41,8 @@ export default function ServiceDetailPage() {
             description: data[0].description,
             icon: data[0].icon,
             image_url: data[0].image_url,
-            content: data[0].service_details?.[0]?.content || ''
+            content: data[0].service_details?.[0]?.content || '',
+            hero_image_url: data[0].service_details?.[0]?.hero_image_url
           });
         }
       } catch (error) {
@@ -87,7 +90,7 @@ export default function ServiceDetailPage() {
       {/* Hero Section */}
       <div 
         className="relative h-96 bg-cover bg-center"
-        style={{ backgroundImage: `url(${service.image_url})` }}
+        style={{ backgroundImage: `url(${service.hero_image_url || service.image_url})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/50"></div>
         <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center">

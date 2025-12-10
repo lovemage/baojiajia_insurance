@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { uploadToCloudinary } from '../../../lib/cloudinary';
 
 interface Props {
   onBack: () => void;
@@ -17,11 +18,16 @@ export default function SystemSettingsEditor({ onBack }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testingBot, setTestingBot] = useState(false);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
   
-  // 表單狀態
+  // Telegram 表單狀態
   const [telegramBotToken, setTelegramBotToken] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  // Analysis Icon 表單狀態
+  const [adultIcon, setAdultIcon] = useState('');
+  const [childIcon, setChildIcon] = useState('');
 
   useEffect(() => {
     fetchSettings();
@@ -32,7 +38,13 @@ export default function SystemSettingsEditor({ onBack }: Props) {
       const { data, error } = await supabase
         .from('system_settings')
         .select('*')
-        .in('setting_key', ['telegram_bot_token', 'telegram_chat_id', 'telegram_notifications_enabled']);
+        .in('setting_key', [
+          'telegram_bot_token', 
+          'telegram_chat_id', 
+          'telegram_notifications_enabled',
+          'analysis_adult_icon',
+          'analysis_child_icon'
+        ]);
 
       if (error) throw error;
 
@@ -50,6 +62,12 @@ export default function SystemSettingsEditor({ onBack }: Props) {
           case 'telegram_notifications_enabled':
             setNotificationsEnabled(setting.setting_value === 'true');
             break;
+          case 'analysis_adult_icon':
+            setAdultIcon(setting.setting_value || '');
+            break;
+          case 'analysis_child_icon':
+            setChildIcon(setting.setting_value || '');
+            break;
         }
       });
     } catch (error) {
@@ -60,13 +78,37 @@ export default function SystemSettingsEditor({ onBack }: Props) {
     }
   };
 
+  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'adult' | 'child') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingIcon(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      if (type === 'adult') {
+        setAdultIcon(url);
+      } else {
+        setChildIcon(url);
+      }
+      alert('圖示上傳成功！');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('上傳失敗');
+    } finally {
+      setUploadingIcon(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
       const updates = [
         { setting_key: 'telegram_bot_token', setting_value: telegramBotToken },
         { setting_key: 'telegram_chat_id', setting_value: telegramChatId },
-        { setting_key: 'telegram_notifications_enabled', setting_value: notificationsEnabled.toString() }
+        { setting_key: 'telegram_notifications_enabled', setting_value: notificationsEnabled.toString() },
+        { setting_key: 'analysis_adult_icon', setting_value: adultIcon },
+        { setting_key: 'analysis_child_icon', setting_value: childIcon }
       ];
 
       for (const update of updates) {
@@ -131,7 +173,7 @@ export default function SystemSettingsEditor({ onBack }: Props) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">系統設定</h1>
         <button
@@ -142,6 +184,95 @@ export default function SystemSettingsEditor({ onBack }: Props) {
         </button>
       </div>
 
+      {/* Analysis Icons Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <span className="mr-2">🎨</span>
+          分析頁面圖示設定
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Adult Icon */}
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700">成人保險規劃圖示</label>
+            <div className="flex items-center gap-4">
+              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
+                {adultIcon ? (
+                  <img src={adultIcon} alt="Adult Icon" className="w-full h-full object-cover" />
+                ) : (
+                  <i className="ri-user-line text-4xl text-gray-400"></i>
+                )}
+              </div>
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={adultIcon}
+                  onChange={(e) => setAdultIcon(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-2"
+                  placeholder="輸入圖片 URL"
+                />
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleIconUpload(e, 'adult')}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={uploadingIcon}
+                  />
+                  <button
+                    type="button"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition-colors disabled:opacity-50"
+                    disabled={uploadingIcon}
+                  >
+                    {uploadingIcon ? '上傳中...' : '上傳圖片'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Child Icon */}
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700">幼兒保險規劃圖示</label>
+            <div className="flex items-center gap-4">
+              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
+                {childIcon ? (
+                  <img src={childIcon} alt="Child Icon" className="w-full h-full object-cover" />
+                ) : (
+                  <i className="ri-parent-line text-4xl text-gray-400"></i>
+                )}
+              </div>
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={childIcon}
+                  onChange={(e) => setChildIcon(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-2"
+                  placeholder="輸入圖片 URL"
+                />
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleIconUpload(e, 'child')}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={uploadingIcon}
+                  />
+                  <button
+                    type="button"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition-colors disabled:opacity-50"
+                    disabled={uploadingIcon}
+                  >
+                    {uploadingIcon ? '上傳中...' : '上傳圖片'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Telegram Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <span className="mr-2">📱</span>
