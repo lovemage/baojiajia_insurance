@@ -10,6 +10,8 @@ interface AboutContent {
   clients_served: string;
   satisfaction_rate: string;
   articles_published: string;
+  team_visible: boolean;
+  intro_visible: boolean;
 }
 
 interface TeamMember {
@@ -76,7 +78,16 @@ export default function AboutEditor({ onBack }: Props) {
     try {
       const { error } = await supabase
         .from('about_content')
-        .update(aboutContent)
+        .update({
+          mission_title: aboutContent.mission_title,
+          mission_content: aboutContent.mission_content,
+          instagram_followers: aboutContent.instagram_followers,
+          clients_served: aboutContent.clients_served,
+          satisfaction_rate: aboutContent.satisfaction_rate,
+          articles_published: aboutContent.articles_published,
+          intro_visible: aboutContent.intro_visible,
+          team_visible: aboutContent.team_visible
+        })
         .eq('id', aboutContent.id);
 
       if (error) throw error;
@@ -312,6 +323,32 @@ export default function AboutEditor({ onBack }: Props) {
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">編輯關於我們內容</h2>
             <div className="space-y-6">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">區塊顯示設定</h3>
+                    <p className="text-xs text-gray-500">控制此區塊在前台是否顯示</p>
+                  </div>
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => setAboutContent({ ...aboutContent, intro_visible: !aboutContent.intro_visible })}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
+                        aboutContent.intro_visible ? 'bg-teal-600' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          aboutContent.intro_visible ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                    <span className="ml-3 text-sm font-medium text-gray-900">
+                      {aboutContent.intro_visible ? '顯示中' : '已隱藏'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">使命標題</label>
                 <input
@@ -396,7 +433,7 @@ export default function AboutEditor({ onBack }: Props) {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-6">
               <h1 className="text-3xl font-bold text-gray-900">團隊成員管理</h1>
               <button
                 onClick={() => setEditMode('list')}
@@ -406,6 +443,46 @@ export default function AboutEditor({ onBack }: Props) {
                 返回
               </button>
             </div>
+
+            {aboutContent && (
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">團隊區塊顯示設定</h3>
+                  <p className="text-xs text-gray-500">控制整個團隊區塊在前台是否顯示</p>
+                </div>
+                <div className="flex items-center">
+                  <button
+                    onClick={async () => {
+                      const newValue = !aboutContent.team_visible;
+                      setAboutContent({ ...aboutContent, team_visible: newValue });
+                      // Save immediately for better UX
+                      try {
+                        await supabase
+                          .from('about_content')
+                          .update({ team_visible: newValue })
+                          .eq('id', aboutContent.id);
+                      } catch (e) {
+                        console.error('Error updating team visibility', e);
+                        setAboutContent({ ...aboutContent, team_visible: !newValue }); // Revert
+                        alert('更新失敗');
+                      }
+                    }}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
+                      aboutContent.team_visible ? 'bg-teal-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        aboutContent.team_visible ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {aboutContent.team_visible ? '顯示中' : '已隱藏'}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {teamMembers.map((member) => (
