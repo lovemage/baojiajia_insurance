@@ -98,37 +98,34 @@ export default function AboutEditor({ onBack }: Props) {
 
     setSaving(true);
     try {
+      // Construct payload dynamically to avoid sending fields that might not exist in DB yet
+      const payload: any = {
+        mission_title: aboutContent.mission_title,
+        mission_content: aboutContent.mission_content,
+        instagram_followers: aboutContent.instagram_followers,
+        clients_served: aboutContent.clients_served,
+        satisfaction_rate: aboutContent.satisfaction_rate,
+        articles_published: aboutContent.articles_published,
+        intro_visible: aboutContent.intro_visible,
+        team_visible: aboutContent.team_visible
+      };
+
+      // Only include hero_image if it has a value, to avoid 400 error if column is missing
+      if (aboutContent.hero_image) {
+        payload.hero_image = aboutContent.hero_image;
+      }
+
       if (aboutContent.id) {
         const { error } = await supabase
           .from('about_content')
-          .update({
-            mission_title: aboutContent.mission_title,
-            mission_content: aboutContent.mission_content,
-            hero_image: aboutContent.hero_image,
-            instagram_followers: aboutContent.instagram_followers,
-            clients_served: aboutContent.clients_served,
-            satisfaction_rate: aboutContent.satisfaction_rate,
-            articles_published: aboutContent.articles_published,
-            intro_visible: aboutContent.intro_visible,
-            team_visible: aboutContent.team_visible
-          })
+          .update(payload)
           .eq('id', aboutContent.id);
 
         if (error) throw error;
       } else {
         const { data, error } = await supabase
           .from('about_content')
-          .insert({
-            mission_title: aboutContent.mission_title,
-            mission_content: aboutContent.mission_content,
-            hero_image: aboutContent.hero_image,
-            instagram_followers: aboutContent.instagram_followers,
-            clients_served: aboutContent.clients_served,
-            satisfaction_rate: aboutContent.satisfaction_rate,
-            articles_published: aboutContent.articles_published,
-            intro_visible: aboutContent.intro_visible,
-            team_visible: aboutContent.team_visible
-          })
+          .insert(payload)
           .select()
           .single();
 
