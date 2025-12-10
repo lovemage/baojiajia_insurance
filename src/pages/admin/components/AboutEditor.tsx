@@ -110,10 +110,23 @@ export default function AboutEditor({ onBack }: Props) {
         team_visible: aboutContent.team_visible
       };
 
-      // Only include hero_image if it has a value, to avoid 400 error if column is missing
-      if (aboutContent.hero_image) {
-        payload.hero_image = aboutContent.hero_image;
+      // Test if hero_image column exists by attempting a small query first
+      try {
+        const { data: columnTest, error: columnError } = await supabase
+          .from('about_content')
+          .select('hero_image')
+          .limit(1);
+        
+        // Only include hero_image if column exists and has a value
+        if (!columnError && columnTest !== null && aboutContent.hero_image) {
+          payload.hero_image = aboutContent.hero_image;
+        }
+      } catch (e) {
+        // hero_image column doesn't exist, skip it
+        console.log('hero_image column does not exist, skipping...');
       }
+
+      console.log('Sending payload:', payload);
 
       if (aboutContent.id) {
         const { error } = await supabase
@@ -121,7 +134,10 @@ export default function AboutEditor({ onBack }: Props) {
           .update(payload)
           .eq('id', aboutContent.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
       } else {
         const { data, error } = await supabase
           .from('about_content')
@@ -129,7 +145,10 @@ export default function AboutEditor({ onBack }: Props) {
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
         if (data) setAboutContent(prev => ({ ...prev!, ...data }));
       }
 
@@ -137,7 +156,7 @@ export default function AboutEditor({ onBack }: Props) {
       setEditMode('list');
     } catch (error) {
       console.error('Error saving about content:', error);
-      alert('儲存失敗，請稍後再試');
+      alert('儲存失敗，請稍後再試: ' + (error as any).message);
     } finally {
       setSaving(false);
     }
