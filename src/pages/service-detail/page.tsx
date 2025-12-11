@@ -128,15 +128,17 @@ export default function ServiceDetailPage() {
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-16" style={{ maxWidth: '1000px' }}>
         <div className="bg-white rounded-2xl shadow-lg p-8 lg:p-12">
           <div
-            className="prose prose-sm max-w-none
+            className={`prose prose-sm max-w-none
               prose-headings:text-gray-900 prose-headings:font-bold
               prose-h2:text-2xl prose-h2:mb-6 prose-h2:mt-12 prose-h2:first:mt-0
               prose-h3:text-xl prose-h3:mb-4 prose-h3:mt-8
               prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-6 prose-p:text-sm
               prose-ul:my-6 prose-ul:space-y-3
-              prose-ol:my-6 prose-ol:space-y-3 prose-ol:list-none prose-ol:list-inside
+              prose-ol:my-6 prose-ol:space-y-3 prose-ol:list-inside
               prose-li:text-gray-700 prose-li:leading-relaxed prose-li:text-sm
-              prose-strong:text-teal-600 prose-strong:font-semibold"
+              prose-strong:text-teal-600 prose-strong:font-semibold
+              ${slug === 'policy-checkup' ? 'prose-ol:list-none' : 'prose-ol:list-decimal'}
+            `}
             style={{ fontSize: '10px', lineHeight: '1.6' }}
             dangerouslySetInnerHTML={{ __html: service.content }}
           />

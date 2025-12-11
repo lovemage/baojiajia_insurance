@@ -395,10 +395,12 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       const roomTypeText = data.roomType === 'double' ? '雙人房' :
         data.roomType === 'single' ? '單人房' : '健保房';
 
-      // 計算 1~11 級一次金範圍 (月薪 * 50 * 5% ~ 月薪 * 50) 單位：萬
+      // 計算 1~11 級一次金範圍 (長照費用需求 * 50 * 5% ~ 長照費用需求 * 50) 單位：萬
+      // 修正：統一使用長照費用需求 (data.longTermCare) 作為計算基準，取代原有的月薪 (monthlyIncome)
       const monthlyIncome = data.monthlyIncome || 0;
-      const disabilityMin = Math.round((monthlyIncome * 50 * 0.05) / 10000);
-      const disabilityMax = Math.round((monthlyIncome * 50) / 10000);
+      const longTermCareBase = data.longTermCare || 0;
+      const disabilityMin = Math.round((longTermCareBase * 50 * 0.05) / 10000);
+      const disabilityMax = Math.round((longTermCareBase * 50) / 10000);
 
       // 處理自定義變數
       const customVars: Record<string, string> = {};

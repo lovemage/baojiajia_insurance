@@ -66,6 +66,10 @@ export default function MemberManager() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(0);
 
+  // 下載限制編輯狀態
+  const [editingLimit, setEditingLimit] = useState<{ email: string; name: string; limit: number } | null>(null);
+  const [isSavingLimit, setIsSavingLimit] = useState(false);
+
   // 多選狀態
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -88,6 +92,60 @@ export default function MemberManager() {
       console.error('Error fetching members:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditLimitClick = async (member: MemberSubmission) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_download_limits')
+        .select('download_limit')
+        .eq('email', member.email)
+        .single();
+
+      let currentLimit = -1;
+      if (data) {
+        currentLimit = data.download_limit;
+      } else if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching limit:', error);
+      }
+
+      setEditingLimit({
+        email: member.email,
+        name: member.name,
+        limit: currentLimit
+      });
+    } catch (e) {
+      console.error(e);
+      setEditingLimit({
+        email: member.email,
+        name: member.name,
+        limit: -1
+      });
+    }
+  };
+
+  const handleSaveLimit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLimit) return;
+    setIsSavingLimit(true);
+    try {
+      const { error } = await supabase
+        .from('user_download_limits')
+        .upsert({
+          email: editingLimit.email,
+          download_limit: editingLimit.limit,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'email' });
+
+      if (error) throw error;
+      alert('設定成功');
+      setEditingLimit(null);
+    } catch (error) {
+      console.error('Error saving limit:', error);
+      alert('設定失敗');
+    } finally {
+      setIsSavingLimit(false);
     }
   };
 
@@ -516,6 +574,18 @@ export default function MemberManager() {
                       {new Date(submission.created_at).toLocaleString('zh-TW')}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() => handleEditLimitClick(submission)}
+                        className="text-indigo-600 hover:text-indigo-900 font-medium"
+                      >
+                        設定限制
+                      </button>
+                      <button
+                        onClick={() => handleEditLimitClick(submission)}
+                        className="text-indigo-600 hover:text-indigo-900 font-medium"
+                      >
+                        設定限制
+                      </button>
                       <button
                         onClick={() => setSelectedMember(submission)}
                         className="text-teal-600 hover:text-teal-900 font-medium"
