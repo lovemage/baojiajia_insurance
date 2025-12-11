@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Navigation from '../../components/feature/Navigation';
 import Footer from '../../components/feature/Footer';
 import { sendTelegramNotification } from '../../services/telegramService';
+import { supabase } from '../../lib/supabase';
 
 const CONSULTATION_OPTIONS = [
   { value: 'first-time', label: '首購族諮詢（過去不曾規劃保險）' },
@@ -65,6 +66,24 @@ export default function Contact() {
       });
 
       if (response.ok) {
+        // 同時保存到 Supabase
+        try {
+          await supabase.from('contact_submissions').insert({
+            name: formData.name,
+            phone: formData.phone,
+            line_id: formData.lineId,
+            gender: formData.gender === 'male' ? '男' : '女',
+            birth_date: formData.birthDate || null,
+            occupation: formData.occupation,
+            annual_income: formData.annualIncome,
+            monthly_budget: formData.monthlyBudget,
+            consultation_type: consultationDisplayValue || '未指定',
+            additional_message: formData.additionalMessage
+          });
+        } catch (dbError) {
+          console.error('Failed to save to database:', dbError);
+        }
+
         // 發送 Telegram 通知
         try {
           await sendTelegramNotification({

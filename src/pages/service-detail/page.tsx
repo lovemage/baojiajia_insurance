@@ -156,13 +156,6 @@ export default function ServiceDetailPage() {
                   <i className="ri-mail-line"></i>
                   立即諮詢
                 </Link>
-                <Link
-                  to="/analysis"
-                  className="inline-flex items-center gap-2 px-8 py-3 bg-white text-teal-600 border-2 border-teal-500 rounded-lg hover:bg-teal-50 transition-colors whitespace-nowrap"
-                >
-                  <i className="ri-file-list-3-line"></i>
-                  免費保單健診
-                </Link>
               </div>
             </div>
           </div>

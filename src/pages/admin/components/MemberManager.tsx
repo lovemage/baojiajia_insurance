@@ -15,6 +15,21 @@ interface MemberSubmission {
   created_at: string;
 }
 
+interface ContactSubmission {
+  id: string;
+  name: string;
+  phone: string;
+  line_id: string;
+  gender: string;
+  birth_date: string;
+  occupation: string;
+  annual_income: string;
+  monthly_budget: string;
+  consultation_type: string;
+  additional_message: string;
+  created_at: string;
+}
+
 
 
 // 安全讀取數據的輔助函數 - 加強版
@@ -59,12 +74,15 @@ const OPTIONS_MAP = {
 
 export default function MemberManager() {
   const [submissions, setSubmissions] = useState<MemberSubmission[]>([]);
+  const [contactSubmissions, setContactSubmissions] = useState<ContactSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<MemberSubmission | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(0);
+
+  // Tab 狀態
+  const [activeTab, setActiveTab] = useState<'downloads' | 'contacts'>('downloads');
 
   // 下載限制編輯狀態
   const [editingLimit, setEditingLimit] = useState<{
@@ -77,9 +95,14 @@ export default function MemberManager() {
 
   // 多選狀態
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
+
+  // 諮詢表單刪除確認
+  const [showContactDeleteConfirm, setShowContactDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMembers();
+    fetchContactSubmissions();
   }, []);
 
   const fetchMembers = async () => {
@@ -98,6 +121,94 @@ export default function MemberManager() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchContactSubmissions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contact_submissions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setContactSubmissions(data || []);
+    } catch (error) {
+      console.error('Error fetching contact submissions:', error);
+    }
+  };
+
+  const handleDeleteContact = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('contact_submissions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      setContactSubmissions(prev => prev.filter(c => c.id !== id));
+      setShowContactDeleteConfirm(null);
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+    }
+  };
+
+  const handleSelectAllContacts = () => {
+    if (selectedContactIds.size === contactSubmissions.length) {
+      setSelectedContactIds(new Set());
+    } else {
+      setSelectedContactIds(new Set(contactSubmissions.map(c => c.id)));
+    }
+  };
+
+  const handleSelectOneContact = (id: string, checked: boolean) => {
+    const newSelected = new Set(selectedContactIds);
+    if (checked) {
+      newSelected.add(id);
+    } else {
+      newSelected.delete(id);
+    }
+    setSelectedContactIds(newSelected);
+  };
+
+  const handleExportContactCSV = () => {
+    const selectedContacts = contactSubmissions.filter(c => selectedContactIds.has(c.id));
+    if (selectedContacts.length === 0) return;
+
+    const headers = ['姓名', '電話', 'Line ID', '性別', '生日', '職等', '年收入', '月預算', '諮詢需求', '補充說明', '提交時間'];
+    const csvRows = [headers.join(',')];
+
+    selectedContacts.forEach(contact => {
+      const row = [
+        contact.name,
+        contact.phone,
+        contact.line_id || '-',
+        contact.gender || '-',
+        contact.birth_date || '-',
+        contact.occupation || '-',
+        contact.annual_income || '-',
+        contact.monthly_budget || '-',
+        contact.consultation_type || '-',
+        contact.additional_message || '-',
+        new Date(contact.created_at).toLocaleString('zh-TW')
+      ].map(val => {
+        const str = String(val);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      });
+      csvRows.push(row.join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `諮詢表單匯出_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleEditLimitClick = async (member: MemberSubmission) => {
@@ -160,7 +271,6 @@ export default function MemberManager() {
   };
 
   const handleDeleteSubmission = async (id: string) => {
-    setDeleting(id);
     try {
       const { error } = await supabase
         .from('member_submissions')
@@ -173,7 +283,7 @@ export default function MemberManager() {
       if (selectedMember?.id === id) {
         setSelectedMember(null);
       }
-      
+
       await fetchMembers();
       setShowDeleteConfirm(null);
       alert('刪除成功');
@@ -181,7 +291,6 @@ export default function MemberManager() {
       console.error('Error deleting submission:', error);
       alert('刪除失敗，請確認您有權限執行此操作');
     } finally {
-      setDeleting(null);
     }
   };
 
@@ -523,27 +632,72 @@ export default function MemberManager() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">下載管理中心</h1>
-            <p className="text-gray-600">查看下載記錄並設定各會員的下載限制</p>
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">下載管理中心</h1>
+              <p className="text-gray-600">查看下載記錄與諮詢表單</p>
+            </div>
+            <div>
+              {activeTab === 'downloads' ? (
+                <button
+                  onClick={handleExportCSV}
+                  disabled={selectedIds.size === 0}
+                  className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
+                    selectedIds.size === 0
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-teal-600 text-white hover:bg-teal-700 shadow-sm'
+                  }`}
+                >
+                  <i className="ri-file-excel-line mr-2"></i>
+                  匯出 CSV ({selectedIds.size})
+                </button>
+              ) : (
+                <button
+                  onClick={handleExportContactCSV}
+                  disabled={selectedContactIds.size === 0}
+                  className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
+                    selectedContactIds.size === 0
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-teal-600 text-white hover:bg-teal-700 shadow-sm'
+                  }`}
+                >
+                  <i className="ri-file-excel-line mr-2"></i>
+                  匯出 CSV ({selectedContactIds.size})
+                </button>
+              )}
+            </div>
           </div>
-          <div>
+
+          {/* Tab 切換 */}
+          <div className="flex border-b border-gray-200">
             <button
-              onClick={handleExportCSV}
-              disabled={selectedIds.size === 0}
-              className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                selectedIds.size === 0
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-teal-600 text-white hover:bg-teal-700 shadow-sm'
+              onClick={() => setActiveTab('downloads')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'downloads'
+                  ? 'text-teal-600 border-b-2 border-teal-600'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              <i className="ri-file-excel-line mr-2"></i>
-              匯出 CSV ({selectedIds.size})
+              <i className="ri-download-line mr-2"></i>
+              下載記錄 ({submissions.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('contacts')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'contacts'
+                  ? 'text-teal-600 border-b-2 border-teal-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <i className="ri-customer-service-line mr-2"></i>
+              諮詢表單 ({contactSubmissions.length})
             </button>
           </div>
         </div>
 
+        {/* 下載記錄 Tab */}
+        {activeTab === 'downloads' && (
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -640,6 +794,93 @@ export default function MemberManager() {
             </table>
           </div>
         </div>
+        )}
+
+        {/* 諮詢表單 Tab */}
+        {activeTab === 'contacts' && (
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-4 w-12 text-center">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                      onChange={handleSelectAllContacts}
+                      checked={contactSubmissions.length > 0 && selectedContactIds.size === contactSubmissions.length}
+                    />
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">姓名</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">電話</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Line ID</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">諮詢需求</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">提交時間</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {contactSubmissions.map((contact) => (
+                  <tr
+                    key={contact.id}
+                    className={`hover:bg-gray-50 transition-colors ${
+                      selectedContactIds.has(contact.id) ? 'bg-teal-50' : ''
+                    }`}
+                  >
+                    <td className="px-6 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                        checked={selectedContactIds.has(contact.id)}
+                        onChange={(e) => handleSelectOneContact(contact.id, e.target.checked)}
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{contact.name || '未填寫'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{contact.phone || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{contact.line_id || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{contact.consultation_type || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(contact.created_at).toLocaleString('zh-TW')}
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      {showContactDeleteConfirm === contact.id ? (
+                        <>
+                          <button
+                            onClick={() => handleDeleteContact(contact.id)}
+                            className="text-red-600 hover:text-red-900 font-medium"
+                          >
+                            確認
+                          </button>
+                          <button
+                            onClick={() => setShowContactDeleteConfirm(null)}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            取消
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setShowContactDeleteConfirm(contact.id)}
+                          className="text-red-600 hover:text-red-900 font-medium"
+                        >
+                          刪除
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {contactSubmissions.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                      尚無諮詢表單
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        )}
       </div>
 
       {/* 下載限制設定彈窗 */}
