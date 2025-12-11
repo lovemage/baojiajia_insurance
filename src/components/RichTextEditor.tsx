@@ -3,6 +3,8 @@ import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 const isBrowser = typeof window !== 'undefined';
 
+let StyledImage: any = null;
+
 class ImageResizeModule {
   private quill: any;
   private overlay: HTMLDivElement | null = null;
@@ -144,9 +146,42 @@ class ImageResizeModule {
 
 if (isBrowser && typeof Quill !== 'undefined') {
   const QuillWithImports = Quill as typeof Quill & { imports?: Record<string, any> };
-  const registered = QuillWithImports.imports?.['modules/imageResizeSimple'];
-  if (!registered) {
+  if (!StyledImage) {
+    const BaseImage = QuillWithImports.import('formats/image');
+    StyledImage = class extends BaseImage {
+      static formats(domNode: HTMLElement) {
+        const formats: Record<string, string> = {};
+        if (domNode.getAttribute('alt')) {
+          formats.alt = domNode.getAttribute('alt') as string;
+        }
+        if (domNode.style.width) {
+          formats.width = domNode.style.width;
+        }
+        if (domNode.style.height) {
+          formats.height = domNode.style.height;
+        }
+        return formats;
+      }
+
+      format(name: string, value: string) {
+        if (name === 'width' || name === 'height') {
+          if (value) {
+            this.domNode.style[name as 'width' | 'height'] = value;
+          } else {
+            this.domNode.style[name as 'width' | 'height'] = '';
+          }
+        } else {
+          super.format(name, value);
+        }
+      }
+    };
+  }
+  if (!QuillWithImports.imports?.['modules/imageResizeSimple']) {
     QuillWithImports.register('modules/imageResizeSimple', ImageResizeModule);
+  }
+  const ImageBlot = QuillWithImports.imports?.['formats/image'];
+  if (ImageBlot && ImageBlot !== StyledImage) {
+    QuillWithImports.register(StyledImage, true);
   }
 }
 import { uploadToCloudinary } from '../lib/cloudinary';
@@ -216,7 +251,8 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
     'header',
     'bold', 'italic', 'underline', 'strike', 'blockquote',
     'list', 'bullet', 'indent',
-    'link', 'image', 'video', 'color', 'background', 'align'
+    'link', 'image', 'video', 'color', 'background', 'align',
+    'width', 'height'
   ];
 
   return (
