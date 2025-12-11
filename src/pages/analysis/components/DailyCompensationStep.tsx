@@ -41,7 +41,7 @@ export default function DailyCompensationStep({ data, onUpdate, onNext, onBack }
             <div className="mb-6">
               <img
                 src={isChildPlan
-                  ? 'https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/a97382e6e8942e374a4e8ba32ee8f123.png'
+                  ? '/images/analysis/daily-comp-child.png'
                   : '/images/analysis/2-2.png'}
                 alt="住院日額補償說明"
                 className="w-full rounded-lg shadow-md"

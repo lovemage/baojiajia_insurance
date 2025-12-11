@@ -31,8 +31,8 @@ export default function TreatmentCostStep({ data, onUpdate, onNext, onBack }: Pr
             <div className="mb-8">
               <img
                 src={isChildPlan 
-                  ? "https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/121735580940326dc7bef8ce56ae2110.png"
-                  : "https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/c86bbf9fbac462517f8f5817f699fd3b.png"
+                  ? "/images/analysis/treatment-cost-child.png"
+                  : "/images/analysis/treatment-cost-adult.png"
                 }
                 alt="治療費用說明"
                 className="w-full rounded-xl shadow-md"

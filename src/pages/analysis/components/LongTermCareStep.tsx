@@ -26,7 +26,7 @@ export default function LongTermCareStep({ data, onUpdate, onNext, onBack }: Pro
           <div className="w-full space-y-6">
             <div className="mb-8">
               <img
-                src="https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/f5bf2f6e7f11c90415e1f166b76f4b89.png"
+                src="/images/analysis/long-term-care.png"
                 alt="長照費用說明"
                 className="w-full rounded-xl shadow-md"
               />

@@ -41,8 +41,8 @@ export default function SalaryLossStep({ data, onUpdate, onNext, onBack }: Props
             <div className="mb-8">
               <img
                 src={isChildPlan 
-                  ? "https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/301e43cfd890b3f6b120cc1a9553894d.png"
-                  : "https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/0f6d55fb06d3368e2db435c598391710.png"
+                  ? "/images/analysis/salary-loss-child.png"
+                  : "/images/analysis/salary-loss-adult.png"
                 }
                 alt="薪資損失說明"
                 className="w-full rounded-xl shadow-md"

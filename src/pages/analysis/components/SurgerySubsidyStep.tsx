@@ -50,7 +50,7 @@ export default function SurgerySubsidyStep({ data, onUpdate, onNext, onBack }: P
           <div className="w-full space-y-6">
             <div className="mb-6">
               <img
-                src="https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/213a0f7073052fddefb23a34e868eb46.png"
+                src="/images/analysis/surgery-subsidy.png"
                 alt="自費醫療項目說明"
                 className="w-full rounded-lg shadow-md"
               />

@@ -1034,7 +1034,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
                 onClick={handleLogin}
                 className="inline-flex items-center justify-center px-8 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all shadow-md cursor-pointer gap-3 w-full"
               >
-                <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+                <img src="/images/analysis/google-favicon.ico" alt="Google" className="w-5 h-5" />
                 使用 Google 帳號登入
               </button>
             </div>

@@ -23,21 +23,21 @@ export default function MedicalNeedsStep({ data, onUpdate, onNext, onBack }: Pro
     {
       value: 'health-insurance',
       title: '4-6人健保病房',
-      image: 'https://readdy.ai/api/search-image?query=A%20spacious%20hospital%20ward%20with%204%20to%206%20beds%20arranged%20in%20rows%20with%20medical%20privacy%20curtains%20between%20them%20showing%20a%20typical%20multi-patient%20room%20setup%20with%20shared%20medical%20equipment%20and%20basic%20healthcare%20facilities%20in%20a%20clean%20modern%20hospital%20environment&width=800&height=600&seq=health-ward-multi&orientation=landscape',
+      image: '/images/analysis/medical-room-health.png',
       features: ['健保給付'],
       drawbacks: ['可能遇到其他病人吵雜', '交互感染風險較高', '隱私性較低', '休息品質受影響']
     },
     {
       value: 'double',
       title: '雙人病房',
-      image: 'https://readdy.ai/api/search-image?query=A%20modern%20hospital%20semi-private%20room%20with%20two%20beds%20separated%20by%20a%20privacy%20curtain%20featuring%20comfortable%20medical%20beds%20individual%20medical%20equipment%20for%20each%20patient%20and%20a%20peaceful%20healing%20environment%20with%20natural%20lighting&width=800&height=600&seq=double-room&orientation=landscape',
+      image: '/images/analysis/medical-room-double.png',
       features: ['較佳隱私性', '安靜舒適', '獨立空間'],
       drawbacks: ['需自費差額']
     },
     {
       value: 'single',
       title: '單人病房',
-      image: 'https://readdy.ai/api/search-image?query=A%20luxurious%20private%20hospital%20room%20with%20a%20single%20bed%20featuring%20premium%20medical%20equipment%20comfortable%20furniture%20for%20family%20visitors%20private%20bathroom%20and%20a%20peaceful%20healing%20environment%20with%20large%20windows%20and%20modern%20amenities&width=800&height=600&seq=single-room&orientation=landscape',
+      image: '/images/analysis/medical-room-single.png',
       features: ['完全隱私', '最佳休養環境', '家屬陪伴方便', '獨立衛浴'],
       drawbacks: ['自費金額較高']
     }

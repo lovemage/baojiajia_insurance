@@ -46,7 +46,7 @@ export default function LifeInsuranceStep({ data, onUpdate, onNext, onBack }: Pr
             {/* 參考圖片 */}
             <div className="bg-white rounded-xl overflow-hidden shadow-sm">
               <img 
-                src="https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/cdcb7ab9aba9613ba36c4c807e3b9b9e.png"
+                src="/images/analysis/life-insurance.png"
                 alt="壽險保障說明"
                 className="w-full h-auto object-cover"
               />
