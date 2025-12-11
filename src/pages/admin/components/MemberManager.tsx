@@ -211,10 +211,11 @@ export default function MemberManager() {
     const selectedContacts = contactSubmissions.filter(c => selectedContactIds.has(c.id));
     if (selectedContacts.length === 0) return;
 
-    const headers = ['姓名', '電話', 'Line ID', '性別', '生日', '職等', '年收入', '月預算', '諮詢需求', '補充說明', '提交時間'];
+    const headers = ['姓名', '電話', 'Line ID', '性別', '生日', '職等', '年收入', '月預算', '諮詢需求', '補充說明', '狀態', '提交時間'];
     const csvRows = [headers.join(',')];
 
     selectedContacts.forEach(contact => {
+      const statusInfo = getStatusInfo(contact.contact_status);
       const row = [
         contact.name,
         contact.phone,
@@ -226,6 +227,7 @@ export default function MemberManager() {
         contact.monthly_budget || '-',
         contact.consultation_type || '-',
         contact.additional_message || '-',
+        statusInfo.label,
         new Date(contact.created_at).toLocaleString('zh-TW')
       ].map(val => {
         const str = String(val);
@@ -238,7 +240,11 @@ export default function MemberManager() {
     });
 
     const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // 使用 UTF-8 with BOM 編碼
+    const BOM = '\uFEFF';
+    const encoder = new TextEncoder();
+    const uint8array = encoder.encode(BOM + csvContent);
+    const blob = new Blob([uint8array], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
@@ -424,7 +430,10 @@ export default function MemberManager() {
 
     // 建立 Blob 並下載
     const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // 使用 UTF-8 with BOM 編碼
+    const encoder = new TextEncoder();
+    const uint8array = encoder.encode(csvContent);
+    const blob = new Blob([uint8array], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);

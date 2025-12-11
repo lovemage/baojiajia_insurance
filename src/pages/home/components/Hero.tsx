@@ -209,44 +209,7 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* 輪播控制 - 只在有多個 Hero 時顯示 */}
-      {heroItems.length > 1 && (
-        <>
-          {/* 上一個按鈕 */}
-          <button
-            onClick={handlePrevHero}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
-            aria-label="Previous hero"
-          >
-            <i className="ri-arrow-left-s-line text-2xl"></i>
-          </button>
 
-          {/* 下一個按鈕 */}
-          <button
-            onClick={handleNextHero}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
-            aria-label="Next hero"
-          >
-            <i className="ri-arrow-right-s-line text-2xl"></i>
-          </button>
-
-          {/* 指示點 */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-            {heroItems.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentIndex
-                    ? 'bg-white w-8'
-                    : 'bg-white/50 hover:bg-white/75'
-                }`}
-                aria-label={`Go to hero ${index + 1}`}
-              />
-            ))}
-          </div>
-        </>
-      )}
     </section>
   );
 }
