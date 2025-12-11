@@ -52,39 +52,39 @@ export default function PlanTypeStep({ onSelect }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
-      <div className="mb-12 text-center">
-        <h2 className="text-4xl font-bold text-gray-900 mb-4">選擇保險規劃類型</h2>
-        <p className="text-xl text-gray-600">請選擇您需要的保險規劃方案</p>
+    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 md:p-12">
+      <div className="mb-6 sm:mb-12 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">選擇保險規劃類型</h2>
+        <p className="text-base sm:text-lg md:text-xl text-gray-600">請選擇您需要的保險規劃方案</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 max-w-4xl mx-auto mb-6 sm:mb-12">
         {/* 成人保險規劃 */}
         <button
           onClick={() => setSelectedType('adult')}
-          className={`p-8 rounded-2xl border-2 transition-all cursor-pointer ${
+          className={`p-4 sm:p-8 rounded-2xl border-2 transition-all cursor-pointer ${
             selectedType === 'adult'
               ? 'border-teal-600 bg-teal-50 shadow-lg'
               : 'border-gray-200 hover:border-teal-300 hover:shadow-md'
           }`}
         >
           <div className="flex flex-col items-center text-center">
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 overflow-hidden ${
+            <div className={`w-16 h-16 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mb-3 sm:mb-6 overflow-hidden ${
               selectedType === 'adult' ? 'bg-teal-100' : 'bg-gray-100'
             }`}>
               {adultIcon ? (
                 <img src={adultIcon} alt="成人保險" className="w-full h-full object-cover" />
               ) : (
-                <i className={`ri-user-line text-5xl ${
+                <i className={`ri-user-line text-3xl sm:text-5xl ${
                   selectedType === 'adult' ? 'text-teal-600' : 'text-gray-400'
                 }`}></i>
               )}
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">成人保險規劃</h3>
-            <p className="text-gray-600 mb-4">
+            <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">成人保險規劃</h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-2 sm:mb-4">
               為成年人量身打造的保險方案，涵蓋醫療、癌症、意外等全方位保障
             </p>
-            <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+            <div className="flex items-center justify-center space-x-2 text-xs sm:text-sm text-gray-500">
               <i className="ri-check-line text-teal-600"></i>
               <span>適合 18 歲以上成年人</span>
             </div>
@@ -94,29 +94,29 @@ export default function PlanTypeStep({ onSelect }: Props) {
         {/* 幼兒保險規劃 */}
         <button
           onClick={() => setSelectedType('child')}
-          className={`p-8 rounded-2xl border-2 transition-all cursor-pointer ${
+          className={`p-4 sm:p-8 rounded-2xl border-2 transition-all cursor-pointer ${
             selectedType === 'child'
               ? 'border-teal-600 bg-teal-50 shadow-lg'
               : 'border-gray-200 hover:border-teal-300 hover:shadow-md'
           }`}
         >
           <div className="flex flex-col items-center text-center">
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 overflow-hidden ${
+            <div className={`w-16 h-16 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mb-3 sm:mb-6 overflow-hidden ${
               selectedType === 'child' ? 'bg-teal-100' : 'bg-gray-100'
             }`}>
               {childIcon ? (
                 <img src={childIcon} alt="幼兒保險" className="w-full h-full object-cover" />
               ) : (
-                <i className={`ri-parent-line text-5xl ${
+                <i className={`ri-parent-line text-3xl sm:text-5xl ${
                   selectedType === 'child' ? 'text-teal-600' : 'text-gray-400'
                 }`}></i>
               )}
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">幼兒保險規劃</h3>
-            <p className="text-gray-600 mb-4">
+            <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">幼兒保險規劃</h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-2 sm:mb-4">
               專為兒童設計的保險方案，提供成長階段所需的醫療與意外保障
             </p>
-            <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+            <div className="flex items-center justify-center space-x-2 text-xs sm:text-sm text-gray-500">
               <i className="ri-check-line text-teal-600"></i>
               <span>適合 0-17 歲兒童</span>
             </div>
@@ -128,7 +128,7 @@ export default function PlanTypeStep({ onSelect }: Props) {
         <button
           onClick={handleSubmit}
           disabled={!selectedType}
-          className={`px-12 py-4 rounded-lg font-semibold text-lg transition-colors cursor-pointer whitespace-nowrap ${
+          className={`px-8 sm:px-12 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg transition-colors cursor-pointer whitespace-nowrap ${
             !selectedType
               ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
               : 'bg-teal-600 text-white hover:bg-teal-700'

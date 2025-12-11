@@ -152,28 +152,28 @@ export default function Hero() {
         ></Link>
       )}
 
-      {/* 內容容器 */}
-      <div className="relative z-10 w-full pointer-events-none">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      {/* 內容容器 - 移動端絕對定位在底部 */}
+      <div className="absolute bottom-4 sm:bottom-auto sm:relative z-10 w-full pointer-events-none">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
           <div className="max-w-2xl pointer-events-auto">
             {currentHero.title && (
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight whitespace-pre-line">
+              <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-1 sm:mb-3 md:mb-4 leading-tight whitespace-pre-line drop-shadow-lg">
                 {currentHero.title}
                 {currentHero.subtitle && (
                   <>
                     <br />
-                    <span className="text-2xl sm:text-3xl md:text-4xl mt-2 block">{currentHero.subtitle}</span>
+                    <span className="text-sm sm:text-lg md:text-xl lg:text-2xl xl:text-3xl mt-1 block">{currentHero.subtitle}</span>
                   </>
                 )}
               </h1>
             )}
             {currentHero.description && (
-              <div className="text-lg sm:text-xl md:text-2xl text-white/90 mb-6 sm:mb-8 leading-relaxed max-w-3xl whitespace-pre-line">
+              <div className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-white/90 mb-2 sm:mb-4 md:mb-6 leading-relaxed max-w-3xl whitespace-pre-line drop-shadow-md hidden sm:block">
                 {currentHero.description}
               </div>
             )}
             {(currentHero.button1_text || currentHero.button2_text) && (
-              <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 ${
+              <div className={`flex flex-row gap-2 sm:gap-3 md:gap-4 ${
                 currentHero.button_position === 'center' ? 'justify-center' :
                 currentHero.button_position === 'right' ? 'justify-end' :
                 'justify-start'
@@ -181,7 +181,7 @@ export default function Hero() {
                 {currentHero.button1_text && (
                   <Link
                     to={currentHero.button1_link}
-                    className="px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold transition-colors text-center cursor-pointer whitespace-nowrap hover:opacity-80"
+                    className="px-3 sm:px-5 md:px-6 lg:px-8 py-1.5 sm:py-2 md:py-3 rounded-full text-xs sm:text-sm md:text-base font-semibold transition-colors text-center cursor-pointer whitespace-nowrap hover:opacity-80 shadow-lg"
                     style={{
                       backgroundColor: currentHero.button1_bg_color,
                       color: currentHero.button1_text_color
@@ -193,7 +193,7 @@ export default function Hero() {
                 {currentHero.button2_text && (
                   <Link
                     to={currentHero.button2_link}
-                    className="px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold transition-colors text-center cursor-pointer whitespace-nowrap border-2 hover:opacity-80"
+                    className="px-3 sm:px-5 md:px-6 lg:px-8 py-1.5 sm:py-2 md:py-3 rounded-full text-xs sm:text-sm md:text-base font-semibold transition-colors text-center cursor-pointer whitespace-nowrap border sm:border-2 hover:opacity-80 shadow-lg"
                     style={{
                       backgroundColor: currentHero.button2_bg_color,
                       color: currentHero.button2_text_color,

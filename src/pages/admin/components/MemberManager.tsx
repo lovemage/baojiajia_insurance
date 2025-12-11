@@ -27,8 +27,16 @@ interface ContactSubmission {
   monthly_budget: string;
   consultation_type: string;
   additional_message: string;
+  contact_status: 'pending' | 'failed' | 'success';
   created_at: string;
 }
+
+// 諮詢表單狀態選項
+const CONTACT_STATUS_OPTIONS = [
+  { value: 'pending', label: '尚未聯繫', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'failed', label: '聯繫未成功', color: 'bg-red-100 text-red-800' },
+  { value: 'success', label: '聯繫成功', color: 'bg-green-100 text-green-800' }
+];
 
 
 
@@ -100,6 +108,9 @@ export default function MemberManager() {
   // 諮詢表單刪除確認
   const [showContactDeleteConfirm, setShowContactDeleteConfirm] = useState<string | null>(null);
 
+  // 諮詢表單詳情彈窗
+  const [selectedContact, setSelectedContact] = useState<ContactSubmission | null>(null);
+
   useEffect(() => {
     fetchMembers();
     fetchContactSubmissions();
@@ -150,6 +161,32 @@ export default function MemberManager() {
     } catch (error) {
       console.error('Error deleting contact:', error);
     }
+  };
+
+  const handleUpdateContactStatus = async (id: string, status: 'pending' | 'failed' | 'success') => {
+    try {
+      const { error } = await supabase
+        .from('contact_submissions')
+        .update({ contact_status: status })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setContactSubmissions(prev =>
+        prev.map(c => c.id === id ? { ...c, contact_status: status } : c)
+      );
+
+      if (selectedContact?.id === id) {
+        setSelectedContact(prev => prev ? { ...prev, contact_status: status } : null);
+      }
+    } catch (error) {
+      console.error('Error updating contact status:', error);
+      alert('更新狀態失敗');
+    }
+  };
+
+  const getStatusInfo = (status: string) => {
+    return CONTACT_STATUS_OPTIONS.find(opt => opt.value === status) || CONTACT_STATUS_OPTIONS[0];
   };
 
   const handleSelectAllContacts = () => {
@@ -815,12 +852,15 @@ export default function MemberManager() {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">電話</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Line ID</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">諮詢需求</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">狀態</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">提交時間</th>
                   <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {contactSubmissions.map((contact) => (
+                {contactSubmissions.map((contact) => {
+                  const statusInfo = getStatusInfo(contact.contact_status);
+                  return (
                   <tr
                     key={contact.id}
                     className={`hover:bg-gray-50 transition-colors ${
@@ -839,10 +879,21 @@ export default function MemberManager() {
                     <td className="px-6 py-4 text-sm text-gray-600">{contact.phone || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{contact.line_id || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{contact.consultation_type || '-'}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusInfo.color}`}>
+                        {statusInfo.label}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {new Date(contact.created_at).toLocaleString('zh-TW')}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() => setSelectedContact(contact)}
+                        className="text-teal-600 hover:text-teal-900 font-medium"
+                      >
+                        詳情
+                      </button>
                       {showContactDeleteConfirm === contact.id ? (
                         <>
                           <button
@@ -868,10 +919,11 @@ export default function MemberManager() {
                       )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
                 {contactSubmissions.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                       尚無諮詢表單
                     </td>
                   </tr>
@@ -882,6 +934,107 @@ export default function MemberManager() {
         </div>
         )}
       </div>
+
+      {/* 諮詢表單詳情彈窗 */}
+      {selectedContact && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">諮詢表單詳情</h3>
+                <p className="text-gray-600 mt-1">{selectedContact.name || '未填寫姓名'}</p>
+              </div>
+              <button
+                onClick={() => setSelectedContact(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <i className="ri-close-line text-3xl"></i>
+              </button>
+            </div>
+
+            <div className="px-6 py-6 overflow-y-auto max-h-[60vh]">
+              {/* 狀態選擇 */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">聯繫狀態</label>
+                <div className="flex gap-2 flex-wrap">
+                  {CONTACT_STATUS_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleUpdateContactStatus(selectedContact.id, opt.value as 'pending' | 'failed' | 'success')}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        selectedContact.contact_status === opt.value
+                          ? opt.color + ' ring-2 ring-offset-2 ring-gray-400'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 詳細資料 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500 mb-1">姓名</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedContact.name || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500 mb-1">電話</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedContact.phone || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500 mb-1">Line ID</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedContact.line_id || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500 mb-1">性別</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedContact.gender || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500 mb-1">生日</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedContact.birth_date || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500 mb-1">職等</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedContact.occupation || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500 mb-1">年收入</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedContact.annual_income || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500 mb-1">月預算</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedContact.monthly_budget || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4 sm:col-span-2">
+                  <p className="text-sm text-gray-500 mb-1">諮詢需求</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedContact.consultation_type || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4 sm:col-span-2">
+                  <p className="text-sm text-gray-500 mb-1">補充說明</p>
+                  <p className="text-lg font-semibold text-gray-900 whitespace-pre-wrap">{selectedContact.additional_message || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4 sm:col-span-2">
+                  <p className="text-sm text-gray-500 mb-1">提交時間</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {new Date(selectedContact.created_at).toLocaleString('zh-TW')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 flex justify-end">
+              <button
+                onClick={() => setSelectedContact(null)}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
+              >
+                關閉
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 下載限制設定彈窗 */}
       {editingLimit && (
