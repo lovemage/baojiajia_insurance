@@ -10,6 +10,7 @@ type Props = {
 export default function DailyCompensationStep({ data, onUpdate, onNext, onBack }: Props) {
   const [amount, setAmount] = useState(data.hospitalDaily || 1000);
   const [inputValue, setInputValue] = useState(data.hospitalDaily?.toString() || '1000');
+  const isChildPlan = data.planType === 'child';
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
@@ -39,7 +40,9 @@ export default function DailyCompensationStep({ data, onUpdate, onNext, onBack }
           <div className="w-full space-y-6">
             <div className="mb-6">
               <img
-                src="https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/a97382e6e8942e374a4e8ba32ee8f123.png"
+                src={isChildPlan
+                  ? 'https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/a97382e6e8942e374a4e8ba32ee8f123.png'
+                  : 'https://static.readdy.ai/image/84ccad05498cbded7957a6723736d89e/b4e6d87ce260ac961f9757956dcf6915.png'}
                 alt="住院日額補償說明"
                 className="w-full rounded-lg shadow-md"
               />
@@ -51,18 +54,22 @@ export default function DailyCompensationStep({ data, onUpdate, onNext, onBack }
                 為什麼需要住院日額？
               </h4>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-start">
-                  <i className="ri-check-line text-teal-600 mr-2 mt-1"></i>
-                  <span>補償住院期間的薪資損失</span>
-                </li>
-                <li className="flex items-start">
-                  <i className="ri-check-line text-teal-600 mr-2 mt-1"></i>
-                  <span>支付看護費用或家人照顧的機會成本</span>
-                </li>
-                <li className="flex items-start">
-                  <i className="ri-check-line text-teal-600 mr-2 mt-1"></i>
-                  <span>負擔住院期間的額外開銷</span>
-                </li>
+                {(isChildPlan
+                  ? [
+                      '父母請假陪同時的薪資損失',
+                      '支付看護或托育的額外費用',
+                      '補貼住院期間的交通與生活成本'
+                    ]
+                  : [
+                      '彌補自己住院時的薪資停損',
+                      '支應看護、照顧與家人支援的成本',
+                      '讓療養期間依然有充足現金流'
+                    ]).map((text, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <i className="ri-check-line text-teal-600 mr-2 mt-1"></i>
+                        <span>{text}</span>
+                      </li>
+                    ))}
               </ul>
             </div>
           </div>
@@ -82,7 +89,9 @@ export default function DailyCompensationStep({ data, onUpdate, onNext, onBack }
               住院日額補償
             </h2>
             <p className="text-lg text-gray-600">
-              孩子住院時，往往是父母陪同住院伴隨薪資損失，您希望住院時獲得多少的薪資補償？
+              {isChildPlan
+                ? '孩子住院時往往需要家長請假照顧，您希望每天能補償多少金額？'
+                : '您住院期間可能無法工作、收入減少，理想的每日補償金額是多少？'}
             </p>
           </div>
 

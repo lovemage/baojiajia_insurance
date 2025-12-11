@@ -2,10 +2,12 @@ import { useState } from 'react';
 
 type Props = {
   data: {
+    planType?: 'adult' | 'child';
     roomType: string;
     hospitalDaily?: number;
   };
   onUpdate: (data: {
+    planType?: 'adult' | 'child';
     roomType: string;
     hospitalDaily?: number;
   }) => void;
@@ -15,6 +17,7 @@ type Props = {
 
 export default function MedicalNeedsStep({ data, onUpdate, onNext, onBack }: Props) {
   const [selectedRoom, setSelectedRoom] = useState(data.roomType || '');
+  const isChildPlan = data.planType === 'child';
 
   const roomOptions = [
     {
@@ -46,14 +49,13 @@ export default function MedicalNeedsStep({ data, onUpdate, onNext, onBack }: Pro
 
   const handleNext = () => {
     if (selectedRoom) {
-      // 根據選擇的房型設定預設住院日額
-      let hospitalDaily = 2000;
-      if (selectedRoom === 'double') hospitalDaily = 3000;
-      if (selectedRoom === 'single') hospitalDaily = 5000;
+      const existingDaily = typeof data.hospitalDaily === 'number' ? data.hospitalDaily : undefined;
+      const normalizedDaily = existingDaily ?? 1000;
 
       onUpdate({ 
+        planType: data.planType,
         roomType: selectedRoom,
-        hospitalDaily: hospitalDaily
+        hospitalDaily: normalizedDaily
       });
       onNext();
     }
@@ -73,7 +75,9 @@ export default function MedicalNeedsStep({ data, onUpdate, onNext, onBack }: Pro
           病房選擇
         </h2>
         <p className="text-lg text-gray-600">
-          假設孩子因疾病或意外需要住院，您希望是哪一種格局的病房呢？
+          {isChildPlan
+            ? '假設孩子因疾病或意外需要住院，您希望是哪一種格局的病房呢？'
+            : '若您因疾病或意外需要住院，哪一種病房格局最符合您的期待？'}
         </p>
       </div>
 

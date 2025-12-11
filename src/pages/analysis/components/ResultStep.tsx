@@ -185,7 +185,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
 
     return {
       // 醫療保障
-      hospitalDaily: data.hospitalDaily || 2000,
+      hospitalDaily: data.hospitalDaily || 1000,
       surgerySubsidy: data.surgerySubsidy || 100000,
 
       // 重症保障
