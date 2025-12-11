@@ -3,6 +3,16 @@ import Navigation from '../../components/feature/Navigation';
 import Footer from '../../components/feature/Footer';
 import { sendTelegramNotification } from '../../services/telegramService';
 
+const CONSULTATION_OPTIONS = [
+  { value: 'first-time', label: '首購族諮詢（過去不曾規劃保險）' },
+  { value: 'policy-review', label: '舊保單健診（檢視既有保障缺口）' },
+  { value: 'budget-adjust', label: '調整保費預算（覺得目前保費負擔太重）' },
+  { value: 'specific-coverage', label: '補強特定保障（例如：癌症/醫療/失能/意外）' },
+  { value: 'newborn', label: '新生兒/兒童保單規劃' }
+];
+
+const sanitizeReaddyValue = (value: string) => value.replaceAll('/', '／');
+
 export default function Contact() {
   const [formData, setFormData] = useState({
     name: '',
@@ -27,16 +37,24 @@ export default function Contact() {
 
     try {
       const formBody = new URLSearchParams();
-      formBody.append('name', formData.name);
-      formBody.append('phone', formData.phone);
-      formBody.append('lineId', formData.lineId);
-      formBody.append('gender', formData.gender === 'male' ? '男' : '女');
-      formBody.append('birthDate', formData.birthDate);
-      formBody.append('occupation', formData.occupation);
-      formBody.append('annualIncome', formData.annualIncome);
-      formBody.append('monthlyBudget', formData.monthlyBudget);
-      formBody.append('consultationType', formData.consultationType === 'other' ? formData.otherConsultation : formData.consultationType);
-      formBody.append('additionalMessage', formData.additionalMessage);
+      const sanitizeField = (value: string) => sanitizeReaddyValue(value.trim());
+
+      formBody.append('name', sanitizeField(formData.name));
+      formBody.append('phone', sanitizeField(formData.phone));
+      formBody.append('lineId', sanitizeField(formData.lineId));
+      formBody.append('gender', sanitizeReaddyValue(formData.gender === 'male' ? '男' : '女'));
+      formBody.append('birthDate', sanitizeField(formData.birthDate));
+      formBody.append('occupation', sanitizeField(formData.occupation));
+      formBody.append('annualIncome', sanitizeField(formData.annualIncome));
+      formBody.append('monthlyBudget', sanitizeField(formData.monthlyBudget));
+      const selectedOption = CONSULTATION_OPTIONS.find(option => option.value === formData.consultationType);
+      const consultationDisplayValue = formData.consultationType === 'other'
+        ? formData.otherConsultation.trim()
+        : selectedOption?.label || '';
+      const sanitizedConsultation = sanitizeReaddyValue(consultationDisplayValue || '其他');
+
+      formBody.append('consultationType', sanitizedConsultation);
+      formBody.append('additionalMessage', sanitizeField(formData.additionalMessage));
 
       const response = await fetch('https://readdy.ai/api/form/d4hkeu3amli27834ghq0', {
         method: 'POST',
@@ -61,7 +79,7 @@ export default function Contact() {
               occupation: formData.occupation,
               annualIncome: formData.annualIncome,
               monthlyBudget: formData.monthlyBudget,
-              consultationType: formData.consultationType === 'other' ? formData.otherConsultation : formData.consultationType,
+              consultationType: consultationDisplayValue || '未指定',
               additionalMessage: formData.additionalMessage
             }
           });
@@ -314,11 +332,11 @@ export default function Contact() {
                     className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm pr-8 cursor-pointer appearance-none"
                   >
                     <option value="">請選擇</option>
-                    <option value="首購族諮詢（過去不曾規劃保險）">首購族諮詢（過去不曾規劃保險）</option>
-                    <option value="舊保單健診（檢視既有保障缺口）">舊保單健診（檢視既有保障缺口）</option>
-                    <option value="調整保費預算（覺得目前保費負擔太重）">調整保費預算（覺得目前保費負擔太重）</option>
-                    <option value="補強特定保障（例如：癌症/醫療/失能/意外）">補強特定保障（例如：癌症/醫療/失能/意外）</option>
-                    <option value="新生兒/兒童保單規劃">新生兒/兒童保單規劃</option>
+                    {CONSULTATION_OPTIONS.map((option) => (
+                      <option value={option.value} key={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                     <option value="other">其他</option>
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5 flex items-center justify-center">

@@ -245,11 +245,15 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
     // 檢查下載限制
     if (user && user.email) {
       try {
-        const { data: limitData } = await supabase
+        const { data: limitData, error: limitError } = await supabase
           .from('user_download_limits')
           .select('*')
           .eq('email', user.email)
-          .single();
+          .maybeSingle();
+
+        if (limitError) {
+          throw limitError;
+        }
 
         if (limitData) {
           if (limitData.download_limit !== -1 && limitData.download_count >= limitData.download_limit) {

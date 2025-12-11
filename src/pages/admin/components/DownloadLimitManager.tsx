@@ -43,11 +43,13 @@ export default function DownloadLimitManager() {
         setIsSubmitting(true);
         try {
             // Check if exists
-            const { data: existing } = await supabase
+            const { data: existing, error: fetchError } = await supabase
                 .from('user_download_limits')
                 .select('email')
                 .eq('email', email)
-                .single();
+                .maybeSingle();
+
+            if (fetchError) throw fetchError;
 
             if (existing) {
                 const { error } = await supabase

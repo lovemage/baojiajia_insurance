@@ -67,7 +67,12 @@ export default function MemberManager() {
   const [pdfProgress, setPdfProgress] = useState(0);
 
   // 下載限制編輯狀態
-  const [editingLimit, setEditingLimit] = useState<{ email: string; name: string; limit: number } | null>(null);
+  const [editingLimit, setEditingLimit] = useState<{
+    email: string;
+    name: string;
+    limit: number;
+    downloadCount: number;
+  } | null>(null);
   const [isSavingLimit, setIsSavingLimit] = useState(false);
 
   // 多選狀態
@@ -96,32 +101,36 @@ export default function MemberManager() {
   };
 
   const handleEditLimitClick = async (member: MemberSubmission) => {
+    setEditingLimit({
+      email: member.email,
+      name: member.name,
+      limit: -1,
+      downloadCount: 0
+    });
+
     try {
       const { data, error } = await supabase
         .from('user_download_limits')
-        .select('download_limit')
+        .select('download_limit, download_count')
         .eq('email', member.email)
-        .limit(1);
+        .maybeSingle();
 
-      let currentLimit = -1;
       if (error) {
         console.error('Error fetching limit:', error);
-      } else if (data && data.length > 0) {
-        currentLimit = data[0].download_limit;
       }
 
-      setEditingLimit({
-        email: member.email,
-        name: member.name,
-        limit: currentLimit
-      });
+      if (data) {
+        setEditingLimit((prev) => {
+          if (!prev || prev.email !== member.email) return prev;
+          return {
+            ...prev,
+            limit: data.download_limit ?? -1,
+            downloadCount: data.download_count ?? 0
+          };
+        });
+      }
     } catch (e) {
       console.error(e);
-      setEditingLimit({
-        email: member.email,
-        name: member.name,
-        limit: -1
-      });
     }
   };
 
@@ -130,11 +139,12 @@ export default function MemberManager() {
     if (!editingLimit) return;
     setIsSavingLimit(true);
     try {
+      const normalizedLimit = Number.isNaN(Number(editingLimit.limit)) ? -1 : editingLimit.limit;
       const { error } = await supabase
         .from('user_download_limits')
         .upsert({
           email: editingLimit.email,
-          download_limit: editingLimit.limit,
+          download_limit: normalizedLimit,
           updated_at: new Date().toISOString()
         }, { onConflict: 'email' });
 
@@ -508,8 +518,8 @@ export default function MemberManager() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-md p-6 mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">會員資訊管理</h1>
-            <p className="text-gray-600">查看所有註冊會員及問卷資料</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">下載管理中心</h1>
+            <p className="text-gray-600">查看下載記錄並設定各會員的下載限制</p>
           </div>
           <div>
             <button
@@ -624,6 +634,90 @@ export default function MemberManager() {
           </div>
         </div>
       </div>
+
+      {/* 下載限制設定彈窗 */}
+      {editingLimit && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div>
+                <p className="text-sm text-gray-500">{editingLimit.email}</p>
+                <h3 className="text-2xl font-bold text-gray-900">設定下載限制</h3>
+                <p className="text-gray-600 mt-1">{editingLimit.name || '未填寫姓名'}</p>
+              </div>
+              <button
+                onClick={() => setEditingLimit(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                type="button"
+              >
+                <i className="ri-close-line text-3xl"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLimit} className="px-6 py-6 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500 mb-1">已下載次數</p>
+                  <p className="text-3xl font-bold text-gray-900">{editingLimit.downloadCount}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500 mb-1">目前限制</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {editingLimit.limit === -1 ? '無限制' : `${editingLimit.limit} 次`}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  下載次數限制 (輸入 -1 代表無限制)
+                </label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="number"
+                    required
+                    value={editingLimit.limit}
+                    onChange={(e) => {
+                      const parsed = parseInt(e.target.value, 10);
+                      setEditingLimit((prev) => prev ? {
+                        ...prev,
+                        limit: Number.isNaN(parsed) ? -1 : parsed
+                      } : prev);
+                    }}
+                    disabled={isSavingLimit}
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 disabled:bg-gray-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditingLimit((prev) => prev ? { ...prev, limit: -1 } : prev)}
+                    disabled={isSavingLimit}
+                    className="px-4 py-3 border border-teal-200 text-teal-600 rounded-xl hover:bg-teal-50 transition-colors disabled:opacity-50"
+                  >
+                    設為無限制
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingLimit(null)}
+                  className="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingLimit}
+                  className="px-6 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-xl font-semibold hover:from-teal-600 hover:to-emerald-600 transition-all disabled:opacity-50"
+                >
+                  {isSavingLimit ? '儲存中...' : '儲存設定'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* 詳細資料彈窗 */}
       {selectedMember && (

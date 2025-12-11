@@ -74,7 +74,7 @@ export default function AdminPage() {
     { id: 'blog', label: '知識專區', icon: 'ri-article-line' },
     { id: 'blog-categories', label: '文章分類', icon: 'ri-folder-settings-line' },
     { id: 'about', label: '關於我們', icon: 'ri-team-line' },
-    { id: 'member-manager', label: '會員資訊', icon: 'ri-user-search-line' },
+    { id: 'member-manager', label: '下載管理', icon: 'ri-user-search-line' },
     { id: 'pdf-template', label: 'PDF 報告模板', icon: 'ri-file-pdf-line' },
     { id: 'site-settings', label: '網站設定', icon: 'ri-settings-4-line' },
     { id: 'system-settings', label: '系統設定', icon: 'ri-settings-2-line' },
