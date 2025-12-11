@@ -1,6 +1,7 @@
-import { useRef, useMemo } from 'react';
-import ReactQuill from 'react-quill-new';
+import { useRef, useMemo, useCallback } from 'react';
+import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import ImageResize from 'quill-image-resize-module-react';
 import { uploadToCloudinary } from '../lib/cloudinary';
 
 interface Props {
@@ -9,10 +10,21 @@ interface Props {
   placeholder?: string;
 }
 
+const isBrowser = typeof window !== 'undefined';
+
+if (isBrowser && typeof Quill !== 'undefined') {
+  (window as unknown as { Quill?: typeof Quill }).Quill = Quill;
+  const QuillWithImports = Quill as typeof Quill & { imports?: Record<string, any> };
+  const hasRegisteredResize = QuillWithImports.imports?.['modules/imageResize'];
+  if (!hasRegisteredResize) {
+    QuillWithImports.register('modules/imageResize', ImageResize);
+  }
+}
+
 export default function RichTextEditor({ value, onChange, placeholder }: Props) {
   const quillRef = useRef<ReactQuill>(null);
 
-  const imageHandler = () => {
+  const imageHandler = useCallback(() => {
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
     input.setAttribute('accept', 'image/*');
@@ -24,9 +36,11 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
         try {
           const url = await uploadToCloudinary(file);
           const quill = quillRef.current?.getEditor();
-          const range = quill?.getSelection(true);
-          if (quill && range) {
-             quill.insertEmbed(range.index, 'image', url);
+          if (quill) {
+            const range = quill.getSelection(true);
+            const insertIndex = range ? range.index : quill.getLength();
+            quill.insertEmbed(insertIndex, 'image', url, 'user');
+            quill.setSelection(insertIndex + 1, 0, 'silent');
           }
         } catch (error) {
           console.error('Image upload failed:', error);
@@ -34,24 +48,35 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
         }
       }
     };
-  };
+  }, []);
 
-  const modules = useMemo(() => ({
-    toolbar: {
-      container: [
-        [{ 'header': [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1'}, { 'indent': '+1' }],
-        [{ 'color': [] }, { 'background': [] }],
-        [{ 'align': [] }],
-        ['link', 'image', 'video'],
-        ['clean']
-      ],
-      handlers: {
-        image: imageHandler
+  const modules = useMemo(() => {
+    const base: any = {
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+          [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+          [{ color: [] }, { background: [] }],
+          [{ align: [] }],
+          ['link', 'image', 'video'],
+          ['clean']
+        ],
+        handlers: {
+          image: imageHandler
+        }
       }
+    };
+
+    if (isBrowser) {
+      base.imageResize = {
+        parchment: Quill.import('parchment'),
+        modules: ['Resize', 'DisplaySize', 'Toolbar']
+      };
     }
-  }), []);
+
+    return base;
+  }, [imageHandler]);
 
   const formats = [
     'header',
@@ -87,6 +112,17 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
         }
         .ql-editor {
           min-height: 400px;
+        }
+        .ql-editor img {
+          max-width: 100%;
+          height: auto;
+        }
+        .ql-container .ql-image-resize-overlay {
+          border: 1px dashed #0f766e !important;
+        }
+        .ql-container .ql-image-resize-handle {
+          border: 1px solid #0f766e !important;
+          background: #ffffff !important;
         }
       `}</style>
     </div>
