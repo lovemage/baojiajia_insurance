@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { uploadToCloudinary } from '../../../lib/cloudinary';
+import RichTextEditor from '../../../components/RichTextEditor';
 
 interface ServiceDetail {
   id: string;
@@ -31,20 +32,9 @@ export default function ServiceDetailEditor({ service, onBack }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
-  const contentEditableRef = useRef<HTMLDivElement>(null);
-  const isInitialized = useRef(false);
-
   useEffect(() => {
     fetchContent();
   }, [service.id]);
-
-  // 初始化編輯器內容
-  useEffect(() => {
-    if (content && contentEditableRef.current && !isInitialized.current) {
-      contentEditableRef.current.innerHTML = content;
-      isInitialized.current = true;
-    }
-  }, [content]);
 
   const fetchContent = async () => {
     try {
@@ -124,53 +114,6 @@ export default function ServiceDetailEditor({ service, onBack }: Props) {
   };
 
   // Rich text editor functions
-  const execCommand = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
-    contentEditableRef.current?.focus();
-  };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const url = await uploadToCloudinary(file);
-        if (file.type.startsWith('video/')) {
-          const videoHtml = `<video src="${url}" controls style="max-width: 100%; display: block; margin: 10px 0;"></video><br/>`;
-          execCommand('insertHTML', videoHtml);
-        } else {
-          execCommand('insertImage', url);
-        }
-      } catch (error) {
-        console.error('Upload failed:', error);
-        alert('上傳失敗');
-      }
-    }
-    e.target.value = '';
-  };
-
-  const insertImage = () => {
-    fileInputRef.current?.click();
-  };
-
-  const changeFontSize = (size: string) => {
-    execCommand('fontSize', size);
-  };
-
-  const changeTextColor = () => {
-    const color = prompt('請輸入顏色代碼（例如：#FF0000）：');
-    if (color) {
-      execCommand('foreColor', color);
-    }
-  };
-
-  const handleContentChange = () => {
-    if (contentEditableRef.current) {
-      setContent(contentEditableRef.current.innerHTML);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -255,187 +198,16 @@ export default function ServiceDetailEditor({ service, onBack }: Props) {
           </div>
 
           <div className="border-t border-gray-200 pt-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">詳細內容</label>
-          {/* Rich Text Editor Toolbar */}
-          <div className="border border-gray-300 rounded-t-lg bg-gray-50 p-3 flex flex-wrap gap-2">
-            {/* Font Size */}
-            <select
-              onChange={(e) => changeFontSize(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded cursor-pointer text-sm"
-              defaultValue=""
-            >
-              <option value="" disabled>字體大小</option>
-              <option value="1">極小</option>
-              <option value="2">小</option>
-              <option value="3">正常</option>
-              <option value="4">中</option>
-              <option value="5">大</option>
-              <option value="6">極大</option>
-              <option value="7">超大</option>
-            </select>
-
-            <div className="w-px h-8 bg-gray-300"></div>
-
-            {/* Text Formatting */}
-            <button
-              type="button"
-              onClick={() => execCommand('bold')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="粗體"
-            >
-              <i className="ri-bold"></i>
-            </button>
-            <button
-              type="button"
-              onClick={() => execCommand('italic')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="斜體"
-            >
-              <i className="ri-italic"></i>
-            </button>
-            <button
-              type="button"
-              onClick={() => execCommand('underline')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="底線"
-            >
-              <i className="ri-underline"></i>
-            </button>
-            <button
-              type="button"
-              onClick={changeTextColor}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="文字顏色"
-            >
-              <i className="ri-font-color"></i>
-            </button>
-
-            <div className="w-px h-8 bg-gray-300"></div>
-
-            {/* Alignment */}
-            <button
-              type="button"
-              onClick={() => execCommand('justifyLeft')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="靠左對齊"
-            >
-              <i className="ri-align-left"></i>
-            </button>
-            <button
-              type="button"
-              onClick={() => execCommand('justifyCenter')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="置中對齊"
-            >
-              <i className="ri-align-center"></i>
-            </button>
-            <button
-              type="button"
-              onClick={() => execCommand('justifyRight')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="靠右對齊"
-            >
-              <i className="ri-align-right"></i>
-            </button>
-
-            <div className="w-px h-8 bg-gray-300"></div>
-
-            {/* Lists */}
-            <button
-              type="button"
-              onClick={() => execCommand('insertUnorderedList')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="項目符號"
-            >
-              <i className="ri-list-unordered"></i>
-            </button>
-            <button
-              type="button"
-              onClick={() => execCommand('insertOrderedList')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="編號清單"
-            >
-              <i className="ri-list-ordered"></i>
-            </button>
-
-            <div className="w-px h-8 bg-gray-300"></div>
-
-            {/* Heading */}
-            <button
-              type="button"
-              onClick={() => execCommand('formatBlock', '<h2>')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer text-sm font-semibold"
-              title="大標題"
-            >
-              H2
-            </button>
-            <button
-              type="button"
-              onClick={() => execCommand('formatBlock', '<h3>')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer text-sm font-semibold"
-              title="小標題"
-            >
-              H3
-            </button>
-            <button
-              type="button"
-              onClick={() => execCommand('formatBlock', '<p>')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer text-sm"
-              title="段落"
-            >
-              P
-            </button>
-
-            <div className="w-px h-8 bg-gray-300"></div>
-
-            {/* Image */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              hidden
-              onChange={handleImageUpload}
-              accept="image/*,video/*"
+            <label className="block text-sm font-semibold text-gray-700 mb-2">詳細內容</label>
+            <RichTextEditor
+              value={content}
+              onChange={setContent}
+              placeholder="請輸入服務詳細內容..."
             />
-            <button
-              type="button"
-              onClick={insertImage}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="插入圖片/影片"
-            >
-              <i className="ri-image-add-line"></i>
-            </button>
-
-            <div className="w-px h-8 bg-gray-300"></div>
-
-            {/* Clear Formatting */}
-            <button
-              type="button"
-              onClick={() => execCommand('removeFormat')}
-              className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-200 transition-colors cursor-pointer"
-              title="清除格式"
-            >
-              <i className="ri-format-clear"></i>
-            </button>
-          </div>
-
-          {/* Content Editable Area */}
-          <div
-            ref={contentEditableRef}
-            contentEditable
-            onInput={handleContentChange}
-            dir="ltr"
-            className="w-full min-h-[500px] px-4 py-3 border border-gray-300 border-t-0 rounded-b-lg focus:ring-2 focus:ring-teal-500 focus:outline-none text-left"
-            style={{
-              maxWidth: '100%',
-              overflowWrap: 'break-word',
-              direction: 'ltr',
-              textAlign: 'left'
-            }}
-          />
-          <p className="text-xs text-gray-500 mt-2">
-            <i className="ri-information-line mr-1"></i>
-            提示：點擊「插入圖片」按鈕可以上傳圖片或影片
-          </p>
+            <p className="text-xs text-gray-500 mt-3">
+              <i className="ri-information-line mr-1"></i>
+              使用編輯器工具列中的圖片按鈕即可上傳圖片，插入後可直接拖曳調整大小並永久保存。
+            </p>
           </div>
 
           <div className="flex justify-end gap-4 mt-6">
