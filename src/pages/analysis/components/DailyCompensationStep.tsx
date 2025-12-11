@@ -8,8 +8,8 @@ type Props = {
 };
 
 export default function DailyCompensationStep({ data, onUpdate, onNext, onBack }: Props) {
-  const [amount, setAmount] = useState(data.dailyCompensation || 1000);
-  const [inputValue, setInputValue] = useState(data.dailyCompensation?.toString() || '1000');
+  const [amount, setAmount] = useState(data.hospitalDaily || 1000);
+  const [inputValue, setInputValue] = useState(data.hospitalDaily?.toString() || '1000');
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
@@ -27,7 +27,7 @@ export default function DailyCompensationStep({ data, onUpdate, onNext, onBack }
   };
 
   const handleNext = () => {
-    onUpdate({ dailyCompensation: amount });
+    onUpdate({ hospitalDaily: amount });
     onNext();
   };
 

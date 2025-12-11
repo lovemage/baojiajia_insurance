@@ -101,13 +101,13 @@ export default function MemberManager() {
         .from('user_download_limits')
         .select('download_limit')
         .eq('email', member.email)
-        .single();
+        .limit(1);
 
       let currentLimit = -1;
-      if (data) {
-        currentLimit = data.download_limit;
-      } else if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching limit:', error);
+      } else if (data && data.length > 0) {
+        currentLimit = data[0].download_limit;
       }
 
       setEditingLimit({
@@ -578,13 +578,7 @@ export default function MemberManager() {
                         onClick={() => handleEditLimitClick(submission)}
                         className="text-indigo-600 hover:text-indigo-900 font-medium"
                       >
-                        設定限制
-                      </button>
-                      <button
-                        onClick={() => handleEditLimitClick(submission)}
-                        className="text-indigo-600 hover:text-indigo-900 font-medium"
-                      >
-                        設定限制
+                        限制
                       </button>
                       <button
                         onClick={() => setSelectedMember(submission)}
