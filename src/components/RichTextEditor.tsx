@@ -1,6 +1,154 @@
 import { useRef, useMemo, useCallback } from 'react';
 import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+const isBrowser = typeof window !== 'undefined';
+
+class ImageResizeModule {
+  private quill: any;
+  private overlay: HTMLDivElement | null = null;
+  private image: HTMLImageElement | null = null;
+  private dragData: { startX: number; startWidth: number; direction: 'left' | 'right' } | null = null;
+  private container: HTMLElement;
+
+  constructor(quill: any) {
+    this.quill = quill;
+    this.container = quill.root.parentElement || quill.root;
+
+    this.handleImageClick = this.handleImageClick.bind(this);
+    this.handleDocumentClick = this.handleDocumentClick.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.stopDragging = this.stopDragging.bind(this);
+
+    this.quill.root.addEventListener('click', this.handleImageClick, false);
+    document.addEventListener('click', this.handleDocumentClick, false);
+  }
+
+  handleImageClick(evt: MouseEvent) {
+    const target = evt.target as HTMLElement;
+    if (!target) return;
+
+    const image = target.closest('img');
+    if (image && this.quill.root.contains(image)) {
+      evt.preventDefault();
+      evt.stopPropagation();
+      this.selectImage(image as HTMLImageElement);
+    }
+  }
+
+  handleDocumentClick(evt: MouseEvent) {
+    if (!this.overlay || !this.image) return;
+    if (evt.target instanceof Node && this.overlay.contains(evt.target)) return;
+    this.deselect();
+  }
+
+  selectImage(image: HTMLImageElement) {
+    this.image = image;
+    this.createOverlay();
+    this.updateOverlay();
+  }
+
+  deselect() {
+    this.image = null;
+    this.removeOverlay();
+    this.stopDragging();
+  }
+
+  createOverlay() {
+    if (!this.overlay) {
+      this.overlay = document.createElement('div');
+      this.overlay.className = 'ql-image-resize-overlay';
+      this.container.appendChild(this.overlay);
+
+      ['left', 'right'].forEach((direction) => {
+        const handle = document.createElement('span');
+        handle.className = 'ql-image-resize-handle';
+        handle.dataset.side = direction;
+        handle.addEventListener('mousedown', (evt) => this.startDragging(evt, direction as 'left' | 'right'));
+        this.overlay?.appendChild(handle);
+      });
+    }
+  }
+
+  removeOverlay() {
+    if (this.overlay) {
+      this.overlay.remove();
+      this.overlay = null;
+    }
+  }
+
+  updateOverlay() {
+    if (!this.overlay || !this.image) return;
+    const imageRect = this.image.getBoundingClientRect();
+    const containerRect = this.container.getBoundingClientRect();
+
+    const top = imageRect.top - containerRect.top + this.container.scrollTop;
+    const left = imageRect.left - containerRect.left + this.container.scrollLeft;
+
+    Object.assign(this.overlay.style, {
+      top: `${top - 2}px`,
+      left: `${left - 2}px`,
+      width: `${imageRect.width + 4}px`,
+      height: `${imageRect.height + 4}px`
+    });
+
+    const handles = this.overlay.querySelectorAll<HTMLSpanElement>('.ql-image-resize-handle');
+    handles.forEach((handle) => {
+      const side = handle.dataset.side;
+      if (side === 'left') {
+        Object.assign(handle.style, { left: '-6px', top: '50%', transform: 'translate(-50%, -50%)' });
+      } else {
+        Object.assign(handle.style, { right: '-6px', top: '50%', transform: 'translate(50%, -50%)' });
+      }
+    });
+  }
+
+  startDragging(evt: MouseEvent, direction: 'left' | 'right') {
+    evt.preventDefault();
+    evt.stopPropagation();
+    if (!this.image) return;
+
+    this.dragData = {
+      startX: evt.clientX,
+      startWidth: this.image.getBoundingClientRect().width,
+      direction
+    };
+
+    document.addEventListener('mousemove', this.handleMouseMove);
+    document.addEventListener('mouseup', this.stopDragging);
+  }
+
+  handleMouseMove(evt: MouseEvent) {
+    if (!this.dragData || !this.image) return;
+    const { startX, startWidth, direction } = this.dragData;
+    const delta = evt.clientX - startX;
+    const factor = direction === 'left' ? -1 : 1;
+    const newWidth = Math.max(60, startWidth + factor * delta);
+    this.image.style.width = `${newWidth}px`;
+    this.image.style.height = 'auto';
+    this.updateOverlay();
+  }
+
+  stopDragging() {
+    if (!this.dragData) return;
+    document.removeEventListener('mousemove', this.handleMouseMove);
+    document.removeEventListener('mouseup', this.stopDragging);
+    this.dragData = null;
+  }
+
+  destroy() {
+    this.deselect();
+    this.quill.root.removeEventListener('click', this.handleImageClick);
+    document.removeEventListener('click', this.handleDocumentClick);
+  }
+}
+
+if (isBrowser && typeof Quill !== 'undefined') {
+  const QuillWithImports = Quill as typeof Quill & { imports?: Record<string, any> };
+  const registered = QuillWithImports.imports?.['modules/imageResizeSimple'];
+  if (!registered) {
+    QuillWithImports.register('modules/imageResizeSimple', ImageResizeModule);
+  }
+}
 import { uploadToCloudinary } from '../lib/cloudinary';
 
 interface Props {
@@ -9,170 +157,6 @@ interface Props {
   placeholder?: string;
 }
 
-const isBrowser = typeof window !== 'undefined';
-
-type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se';
-
-class SimpleImageResize {
-  private quill: any;
-  private options: { minWidth: number };
-  private overlay: HTMLDivElement | null = null;
-  private image: HTMLImageElement | null = null;
-  private dragState: { handle: ResizeHandle; startX: number; startWidth: number } | null = null;
-  private container: HTMLElement;
-
-  constructor(quill: any, options: { minWidth?: number } = {}) {
-    this.quill = quill;
-    this.container = quill.root.parentElement || quill.root;
-    if (getComputedStyle(this.container).position === 'static') {
-      this.container.style.position = 'relative';
-    }
-
-    this.options = { minWidth: 60, ...options };
-
-    this.handleClick = this.handleClick.bind(this);
-    this.handleScroll = this.handleScroll.bind(this);
-    this.handleSelectionChange = this.handleSelectionChange.bind(this);
-    this.onKeyUp = this.onKeyUp.bind(this);
-    this.onMove = this.onMove.bind(this);
-    this.stopDrag = this.stopDrag.bind(this);
-
-    this.quill.root.addEventListener('click', this.handleClick, false);
-    this.quill.root.addEventListener('keyup', this.onKeyUp, false);
-    this.quill.on('selection-change', this.handleSelectionChange);
-    window.addEventListener('scroll', this.handleScroll, true);
-  }
-
-  handleClick(evt: MouseEvent) {
-    const target = evt.target as HTMLElement | null;
-    if (!target) return;
-    const img = target.closest('img');
-    if (img && this.quill.root.contains(img)) {
-      if (this.image === img) {
-        return;
-      }
-      this.show(img as HTMLImageElement);
-    } else if (this.image) {
-      this.hide();
-    }
-  }
-
-  handleSelectionChange() {
-    if (this.image && !this.quill.root.contains(this.image)) {
-      this.hide();
-    }
-  }
-
-  handleScroll() {
-    if (this.image) {
-      this.reposition();
-    }
-  }
-
-  onKeyUp(evt: KeyboardEvent) {
-    if (!this.image) return;
-    if (evt.key === 'Delete' || evt.key === 'Backspace') {
-      setTimeout(() => {
-        if (this.image && !this.quill.root.contains(this.image)) {
-          this.hide();
-        } else {
-          this.reposition();
-        }
-      }, 0);
-    }
-  }
-
-  show(image: HTMLImageElement) {
-    this.image = image;
-    this.createOverlay();
-    this.reposition();
-  }
-
-  hide() {
-    if (this.overlay) {
-      this.overlay.remove();
-    }
-    this.overlay = null;
-    this.image = null;
-    this.stopDrag();
-  }
-
-  createOverlay() {
-    if (this.overlay) {
-      this.overlay.innerHTML = '';
-    } else {
-      this.overlay = document.createElement('div');
-      this.overlay.className = 'ql-image-resize-overlay';
-      this.container.appendChild(this.overlay);
-    }
-
-    ['nw', 'ne', 'sw', 'se'].forEach((dir) => {
-      const handle = document.createElement('span');
-      handle.className = 'ql-image-resize-handle';
-      handle.dataset.dir = dir;
-      handle.addEventListener('mousedown', (evt) => this.startDrag(evt, dir as ResizeHandle));
-      this.overlay?.appendChild(handle);
-    });
-  }
-
-  startDrag(evt: MouseEvent, handle: ResizeHandle) {
-    evt.preventDefault();
-    if (!this.image) return;
-    this.dragState = {
-      handle,
-      startX: evt.clientX,
-      startWidth: this.image.getBoundingClientRect().width
-    };
-    document.addEventListener('mousemove', this.onMove);
-    document.addEventListener('mouseup', this.stopDrag);
-  }
-
-  onMove(evt: MouseEvent) {
-    if (!this.dragState || !this.image) return;
-    const { handle, startX, startWidth } = this.dragState;
-    const direction = handle.includes('w') ? -1 : 1;
-    const deltaX = evt.clientX - startX;
-    const newWidth = Math.max(this.options.minWidth, startWidth + direction * deltaX);
-    this.image.style.width = `${newWidth}px`;
-    this.image.style.height = 'auto';
-    this.reposition();
-  }
-
-  stopDrag() {
-    if (!this.dragState) return;
-    document.removeEventListener('mousemove', this.onMove);
-    document.removeEventListener('mouseup', this.stopDrag);
-    this.dragState = null;
-  }
-
-  reposition() {
-    if (!this.overlay || !this.image) return;
-    const imageRect = this.image.getBoundingClientRect();
-    const containerRect = this.container.getBoundingClientRect();
-    const top = imageRect.top - containerRect.top + this.container.scrollTop;
-    const left = imageRect.left - containerRect.left + this.container.scrollLeft;
-    this.overlay.style.top = `${top}px`;
-    this.overlay.style.left = `${left}px`;
-    this.overlay.style.width = `${imageRect.width}px`;
-    this.overlay.style.height = `${imageRect.height}px`;
-  }
-
-  destroy() {
-    this.hide();
-    this.quill.root.removeEventListener('click', this.handleClick);
-    this.quill.root.removeEventListener('keyup', this.onKeyUp);
-    this.quill.off('selection-change', this.handleSelectionChange);
-    window.removeEventListener('scroll', this.handleScroll, true);
-  }
-}
-
-if (isBrowser && typeof Quill !== 'undefined') {
-  const QuillWithImports = Quill as typeof Quill & { imports?: Record<string, any> };
-  const hasRegisteredResize = QuillWithImports.imports?.['modules/imageResize'];
-  if (!hasRegisteredResize) {
-    QuillWithImports.register('modules/imageResize', SimpleImageResize);
-  }
-}
 
 export default function RichTextEditor({ value, onChange, placeholder }: Props) {
   const quillRef = useRef<ReactQuill>(null);
@@ -222,7 +206,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
     };
 
     if (isBrowser) {
-      base.imageResize = {};
+      base.imageResizeSimple = {};
     }
 
     return base;
@@ -274,6 +258,12 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
           pointer-events: none;
           z-index: 10;
         }
+        .ql-image-resize-overlay::before {
+          content: "";
+          position: absolute;
+          inset: -4px;
+          border: 1px dashed rgba(15, 118, 110, 0.3);
+        }
         .ql-image-resize-handle {
           position: absolute;
           width: 12px;
@@ -283,25 +273,11 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
           border-radius: 9999px;
           pointer-events: all;
         }
-        .ql-image-resize-handle[data-dir="nw"] {
-          top: -6px;
-          left: -6px;
-          cursor: nwse-resize;
+        .ql-image-resize-handle[data-side="left"] {
+          cursor: ew-resize;
         }
-        .ql-image-resize-handle[data-dir="ne"] {
-          top: -6px;
-          right: -6px;
-          cursor: nesw-resize;
-        }
-        .ql-image-resize-handle[data-dir="sw"] {
-          bottom: -6px;
-          left: -6px;
-          cursor: nesw-resize;
-        }
-        .ql-image-resize-handle[data-dir="se"] {
-          bottom: -6px;
-          right: -6px;
-          cursor: nwse-resize;
+        .ql-image-resize-handle[data-side="right"] {
+          cursor: ew-resize;
         }
       `}</style>
     </div>
