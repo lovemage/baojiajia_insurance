@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase';
 interface Category {
   id: string;
   name: string;
+  slug: string;
   display_order: number;
   is_active: boolean;
 }
@@ -13,12 +14,22 @@ interface Props {
   onBack: () => void;
 }
 
+const generateSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s\-\u4e00-\u9fa5]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
 export default function CategoryManager({ onBack }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isNewCategory, setIsNewCategory] = useState(false);
-  const [formData, setFormData] = useState({ name: '' });
+  const [formData, setFormData] = useState({ name: '', slug: '' });
+  const [slugEditedManually, setSlugEditedManually] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -33,7 +44,7 @@ export default function CategoryManager({ onBack }: Props) {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setCategories(data || []);
+      setCategories((data || []) as Category[]);
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -42,25 +53,49 @@ export default function CategoryManager({ onBack }: Props) {
   };
 
   const handleCreateNew = () => {
-    setFormData({ name: '' });
+    setFormData({ name: '', slug: '' });
+    setSlugEditedManually(false);
     setIsNewCategory(true);
     setEditingCategory({
       id: '',
       name: '',
+      slug: '',
       display_order: categories.length + 1,
       is_active: true
     });
   };
 
   const handleEdit = (category: Category) => {
-    setFormData({ name: category.name });
+    setFormData({ name: category.name, slug: category.slug });
+    setSlugEditedManually(true);
     setEditingCategory(category);
     setIsNewCategory(false);
+  };
+
+  const handleNameChange = (value: string) => {
+    setFormData((prev) => ({
+      name: value,
+      slug: slugEditedManually ? prev.slug : generateSlug(value)
+    }));
+  };
+
+  const handleSlugChange = (value: string) => {
+    setSlugEditedManually(true);
+    setFormData((prev) => ({
+      ...prev,
+      slug: generateSlug(value)
+    }));
   };
 
   const handleSave = async () => {
     if (!editingCategory || !formData.name.trim()) {
       alert('請輸入分類名稱');
+      return;
+    }
+
+    const normalizedSlug = formData.slug ? generateSlug(formData.slug) : generateSlug(formData.name);
+    if (!normalizedSlug) {
+      alert('請輸入有效的網址代稱（slug）');
       return;
     }
 
@@ -71,6 +106,7 @@ export default function CategoryManager({ onBack }: Props) {
           .from('blog_categories')
           .insert({
             name: formData.name,
+            slug: normalizedSlug,
             display_order: categories.length + 1,
             is_active: true
           });
@@ -79,7 +115,7 @@ export default function CategoryManager({ onBack }: Props) {
       } else {
         const { error } = await supabase
           .from('blog_categories')
-          .update({ name: formData.name })
+          .update({ name: formData.name, slug: normalizedSlug })
           .eq('id', editingCategory.id);
 
         if (error) throw error;
@@ -87,6 +123,7 @@ export default function CategoryManager({ onBack }: Props) {
 
       setEditingCategory(null);
       setIsNewCategory(false);
+      setSlugEditedManually(false);
       fetchCategories();
       alert('儲存成功！');
     } catch (error) {
@@ -156,12 +193,28 @@ export default function CategoryManager({ onBack }: Props) {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 分類名稱
               </label>
-              <input
+                  <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ name: e.target.value })}
+                onChange={(e) => handleNameChange(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 placeholder="輸入分類名稱"
+              />
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  URL 代稱 (Slug)
+                </label>
+                <span className="text-xs text-gray-500">僅限英數、中文與連字號</span>
+              </div>
+              <input
+                type="text"
+                value={formData.slug}
+                onChange={(e) => handleSlugChange(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                placeholder="例如：insurance-basics"
               />
             </div>
 
@@ -225,6 +278,7 @@ export default function CategoryManager({ onBack }: Props) {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">分類名稱</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Slug</th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">排序</th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">狀態</th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">操作</th>
@@ -235,6 +289,9 @@ export default function CategoryManager({ onBack }: Props) {
                   <tr key={category.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900">{category.name}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      <code className="px-2 py-1 bg-gray-100 rounded-md">{category.slug}</code>
                     </td>
                     <td className="px-6 py-4 text-center text-sm text-gray-600">
                       {category.display_order}

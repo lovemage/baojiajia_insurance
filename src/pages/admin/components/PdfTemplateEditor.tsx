@@ -28,6 +28,12 @@ interface Props {
   onBack?: () => void;
 }
 
+const ADULT_SVG_BASE = '/pdf_svg_html_模板製作/adult/';
+const CHILD_SVG_BASE = '/pdf_svg_html_模板製作/child/';
+const convertHtmlAdultAssetsToChild = (html: string) => html
+  .replace(/\/pdf_svg_html_模板製作\/adult\//g, CHILD_SVG_BASE)
+  .replace(/\/pdf-templates\/adult\//g, CHILD_SVG_BASE);
+
 const DEFAULT_VARIABLES = [
   // 基本資料
   { var: '{{name}}', desc: '客戶姓名' },
@@ -119,7 +125,7 @@ export default function PdfTemplateEditor({ onBack }: Props) {
     
     setSaving(true);
     try {
-      const childHtml = currentTemplate.html_content.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/');
+      const childHtml = convertHtmlAdultAssetsToChild(currentTemplate.html_content || '');
       
       const { data, error } = await supabase
         .from('pdf_templates')

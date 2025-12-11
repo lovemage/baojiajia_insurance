@@ -47,24 +47,32 @@ const DEFAULT_STYLES = `
 @media print { .pdf-page { box-shadow: none; margin: 0; } .field { background: transparent; } }
 `;
 
+const ADULT_SVG_BASE = '/pdf_svg_html_模板製作/adult/';
+const CHILD_SVG_BASE = '/pdf_svg_html_模板製作/child/';
+const escapeForRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const convertAdultHtmlToChild = (html: string) => html.replace(new RegExp(escapeForRegex(ADULT_SVG_BASE), 'g'), CHILD_SVG_BASE);
+const normalizeTemplateAssets = (html: string) => html
+  .replace(/\/pdf-templates\/adult\//g, ADULT_SVG_BASE)
+  .replace(/\/pdf-templates\/child\//g, CHILD_SVG_BASE);
+
 // 預設模板內容
 const DEFAULT_HTML_CONTENT = `
-<div class="pdf-page page-1"><div class="svg-bg"><img src="/pdf-templates/adult/1.svg" alt="封面" /></div><div class="overlay"><span class="field name-field">{{name}}</span><span class="field date-field">{{generatedDate}}</span></div></div>
-<div class="pdf-page page-2"><div class="svg-bg"><img src="/pdf-templates/adult/2.svg" alt="基本資料" /></div><div class="overlay"><span class="field f-name">{{name}}</span><span class="field f-phone">{{phone}}</span><span class="field f-line">{{lineId}}</span><span class="field f-city">{{city}}</span></div></div>
-<div class="pdf-page page-3"><div class="svg-bg"><img src="/pdf-templates/adult/3.svg" alt="醫療保障" /></div><div class="overlay"><span class="field f-roomType">{{roomType}}</span><span class="field f-roomCost">{{roomCost}}</span><span class="field f-hospitalDaily">{{hospitalDaily}}</span><span class="field f-surgeryRange">{{surgeryRange}}</span><span class="field f-outpatient">{{outpatientSurgeryRange}}</span></div></div>
-<div class="pdf-page page-4"><div class="svg-bg"><img src="/pdf-templates/adult/4.svg" alt="壽險-債務" /></div><div class="overlay"><span class="field f-personalDebt">{{personalDebt}}</span></div></div>
-<div class="pdf-page page-5"><div class="svg-bg"><img src="/pdf-templates/adult/5.svg" alt="壽險-家人&意外" /></div><div class="overlay"><span class="field f-familyCare">{{familyCare}}</span><span class="field f-accidentDaily">{{accidentDailyRange}}</span><span class="field f-accidentReimburse">{{accidentReimbursementRange}}</span><span class="field f-majorBurn">{{majorBurnRange}}</span><span class="field f-homeCare">{{homeCareInTenThousand}} 萬</span></div></div>
-<div class="pdf-page page-6"><div class="svg-bg"><img src="/pdf-templates/adult/6.svg" alt="重症保障" /></div><div class="overlay"><span class="field f-salaryLoss">{{salaryLossInTenThousand}} 萬/月</span><span class="field f-livingExpense">{{livingExpenseInTenThousand}} 萬/年</span><span class="field f-treatmentCost">{{treatmentCostInTenThousand}} 萬</span></div></div>
-<div class="pdf-page page-7"><div class="svg-bg"><img src="/pdf-templates/adult/7.svg" alt="重症-一次金" /></div><div class="overlay"><span class="field f-oneTime">{{fixedOneTimeBenefit}} 萬</span></div></div>
-<div class="pdf-page page-8"><div class="svg-bg"><img src="/pdf-templates/adult/8.svg" alt="長照保障" /></div><div class="overlay"><span class="field f-ltc-1to6-dis">{{longTermCare1to6Disease}} 萬</span><span class="field f-ltc-1to6-acc">{{longTermCare1to6Accident}} 萬</span><span class="field f-ltc-1to11-dis">{{longTermCare1to11Disease}}</span><span class="field f-ltc-1to11-acc">{{longTermCare1to11Accident}}</span></div></div>
-<div class="pdf-page page-9"><div class="svg-bg"><img src="/pdf-templates/adult/9.svg" alt="page9" /></div></div>
-<div class="pdf-page page-10"><div class="svg-bg"><img src="/pdf-templates/adult/10.svg" alt="page10" /></div></div>
-<div class="pdf-page page-11"><div class="svg-bg"><img src="/pdf-templates/adult/11.svg" alt="page11" /></div></div>
-<div class="pdf-page page-12"><div class="svg-bg"><img src="/pdf-templates/adult/12.svg" alt="page12" /></div></div>
-<div class="pdf-page page-13"><div class="svg-bg"><img src="/pdf-templates/adult/13.svg" alt="page13" /></div></div>
-<div class="pdf-page page-14"><div class="svg-bg"><img src="/pdf-templates/adult/14.svg" alt="page14" /></div></div>
-<div class="pdf-page page-15"><div class="svg-bg"><img src="/pdf-templates/adult/15.svg" alt="page15" /></div></div>
-<div class="pdf-page page-16"><div class="svg-bg"><img src="/pdf-templates/adult/16.svg" alt="page16" /></div></div>
+<div class="pdf-page page-1"><div class="svg-bg"><img src="${ADULT_SVG_BASE}1.svg" alt="封面" /></div><div class="overlay"><span class="field name-field">{{name}}</span><span class="field date-field">{{generatedDate}}</span></div></div>
+<div class="pdf-page page-2"><div class="svg-bg"><img src="${ADULT_SVG_BASE}2.svg" alt="基本資料" /></div><div class="overlay"><span class="field f-name">{{name}}</span><span class="field f-phone">{{phone}}</span><span class="field f-line">{{lineId}}</span><span class="field f-city">{{city}}</span></div></div>
+<div class="pdf-page page-3"><div class="svg-bg"><img src="${ADULT_SVG_BASE}3.svg" alt="醫療保障" /></div><div class="overlay"><span class="field f-roomType">{{roomType}}</span><span class="field f-roomCost">{{roomCost}}</span><span class="field f-hospitalDaily">{{hospitalDaily}}</span><span class="field f-surgeryRange">{{surgeryRange}}</span><span class="field f-outpatient">{{outpatientSurgeryRange}}</span></div></div>
+<div class="pdf-page page-4"><div class="svg-bg"><img src="${ADULT_SVG_BASE}4.svg" alt="壽險-債務" /></div><div class="overlay"><span class="field f-personalDebt">{{personalDebt}}</span></div></div>
+<div class="pdf-page page-5"><div class="svg-bg"><img src="${ADULT_SVG_BASE}5.svg" alt="壽險-家人&意外" /></div><div class="overlay"><span class="field f-familyCare">{{familyCare}}</span><span class="field f-accidentDaily">{{accidentDailyRange}}</span><span class="field f-accidentReimburse">{{accidentReimbursementRange}}</span><span class="field f-majorBurn">{{majorBurnRange}}</span><span class="field f-homeCare">{{homeCareInTenThousand}} 萬</span></div></div>
+<div class="pdf-page page-6"><div class="svg-bg"><img src="${ADULT_SVG_BASE}6.svg" alt="重症保障" /></div><div class="overlay"><span class="field f-salaryLoss">{{salaryLossInTenThousand}} 萬/月</span><span class="field f-livingExpense">{{livingExpenseInTenThousand}} 萬/年</span><span class="field f-treatmentCost">{{treatmentCostInTenThousand}} 萬</span></div></div>
+<div class="pdf-page page-7"><div class="svg-bg"><img src="${ADULT_SVG_BASE}7.svg" alt="重症-一次金" /></div><div class="overlay"><span class="field f-oneTime">{{fixedOneTimeBenefit}} 萬</span></div></div>
+<div class="pdf-page page-8"><div class="svg-bg"><img src="${ADULT_SVG_BASE}8.svg" alt="長照保障" /></div><div class="overlay"><span class="field f-ltc-1to6-dis">{{longTermCare1to6Disease}} 萬</span><span class="field f-ltc-1to6-acc">{{longTermCare1to6Accident}} 萬</span><span class="field f-ltc-1to11-dis">{{longTermCare1to11Disease}}</span><span class="field f-ltc-1to11-acc">{{longTermCare1to11Accident}}</span></div></div>
+<div class="pdf-page page-9"><div class="svg-bg"><img src="${ADULT_SVG_BASE}9.svg" alt="page9" /></div></div>
+<div class="pdf-page page-10"><div class="svg-bg"><img src="${ADULT_SVG_BASE}10.svg" alt="page10" /></div></div>
+<div class="pdf-page page-11"><div class="svg-bg"><img src="${ADULT_SVG_BASE}11.svg" alt="page11" /></div></div>
+<div class="pdf-page page-12"><div class="svg-bg"><img src="${ADULT_SVG_BASE}12.svg" alt="page12" /></div></div>
+<div class="pdf-page page-13"><div class="svg-bg"><img src="${ADULT_SVG_BASE}13.svg" alt="page13" /></div></div>
+<div class="pdf-page page-14"><div class="svg-bg"><img src="${ADULT_SVG_BASE}14.svg" alt="page14" /></div></div>
+<div class="pdf-page page-15"><div class="svg-bg"><img src="${ADULT_SVG_BASE}15.svg" alt="page15" /></div></div>
+<div class="pdf-page page-16"><div class="svg-bg"><img src="${ADULT_SVG_BASE}16.svg" alt="page16" /></div></div>
 `;
 
 // Helper: 將圖片轉為 Base64 並等待載入
@@ -347,7 +355,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
           console.warn('Child template not found in DB, generating from default');
           templateData = {
             styles: DEFAULT_STYLES,
-            html_content: DEFAULT_HTML_CONTENT.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
+            html_content: convertAdultHtmlToChild(DEFAULT_HTML_CONTENT)
           };
         } else if (!data) {
           // 3. 如果是 adult 且找不到，或者其他情況，嘗試獲取任意 active 模板
@@ -370,9 +378,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
           // 4. 最後的 Fallback - 使用預設模板
           console.warn('No template found, using default template');
           const baseHtml = DEFAULT_HTML_CONTENT;
-          const finalHtml = isChildPlan
-            ? baseHtml.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
-            : baseHtml;
+          const finalHtml = isChildPlan ? convertAdultHtmlToChild(baseHtml) : baseHtml;
 
           templateData = {
             styles: DEFAULT_STYLES,
@@ -384,9 +390,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         console.warn('Using default template due to exception', e);
         // 根據類型選擇預設模板內容
         const baseHtml = DEFAULT_HTML_CONTENT;
-        const finalHtml = isChildPlan
-          ? baseHtml.replace(/\/pdf-templates\/adult\//g, '/pdf-templates/child/')
-          : baseHtml;
+        const finalHtml = isChildPlan ? convertAdultHtmlToChild(baseHtml) : baseHtml;
 
         templateData = {
           styles: DEFAULT_STYLES,
@@ -398,6 +402,14 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
       const formatNumber = (num: number) => num.toLocaleString('zh-TW');
       const roomTypeText = data.roomType === 'double' ? '雙人房' :
         data.roomType === 'single' ? '單人房' : '健保房';
+      const surgeryRangeMap: Record<string, string> = {
+        complete: '30~40萬',
+        full: '30~40萬',
+        recommended: '20~30萬',
+        partial: '10~20萬',
+        basic: '10~20萬'
+      };
+      const surgeryRangeText = surgeryRangeMap[data.surgerySubsidy] || '10~20萬';
 
       // 計算 1~11 級一次金範圍 (長照費用需求 * 50 * 5% ~ 長照費用需求 * 50) 單位：萬
       // 修正：統一使用長照費用需求 (data.longTermCare) 作為計算基準，取代原有的月薪 (monthlyIncome)
@@ -449,8 +461,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
         '{{roomType}}': roomTypeText,
         '{{roomCost}}': formatNumber(data.roomType === 'double' ? 3000 : data.roomType === 'single' ? 5000 : 0),
         '{{hospitalDaily}}': formatNumber(data.hospitalDaily || 0),
-        '{{surgeryRange}}': data.surgerySubsidy === 'full' ? '30~40萬' :
-          data.surgerySubsidy === 'recommended' ? '20~30萬' : '10~20萬',
+        '{{surgeryRange}}': surgeryRangeText,
         '{{outpatientSurgeryRange}}': '5~10萬',
         '{{salaryLossInTenThousand}}': String(Math.round((data.salaryLoss || 0) / 10000)),
         '{{livingExpenseInTenThousand}}': String(Math.round((data.livingExpense || 0) * 12 / 10000)),
@@ -482,6 +493,7 @@ export default function ResultStep({ data, onBack }: ResultStepProps) {
 
       // 處理 HTML 內容
       let htmlContent = templateData.html_content || DEFAULT_HTML_CONTENT;
+      htmlContent = normalizeTemplateAssets(htmlContent);
 
       // 清理 HTML 內容中的雜質 (例如用戶誤貼的文字或調試信息)
       // 1. 移除主要內容之前的所有文字

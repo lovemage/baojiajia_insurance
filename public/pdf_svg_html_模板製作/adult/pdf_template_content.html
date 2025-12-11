@@ -1,0 +1,128 @@
+<!-- 
+  Adult PDF 模板 HTML 內容
+  此內容可以直接複製到 Admin PDF 模板編輯器的 HTML 內容區域
+  或存入 pdf_templates 表的 html_content 欄位
+  
+  可用變數：
+  {{name}} - 客戶姓名
+  {{phone}} - 電話
+  {{lineId}} - Line ID
+  {{city}} - 居住城市
+  {{roomType}} - 病房類型
+  {{roomCost}} - 病房費用
+  {{hospitalDaily}} - 住院日額
+  {{surgeryRange}} - 手術補貼範圍
+  {{outpatientSurgeryRange}} - 門診雜費開銷
+  {{salaryLossInTenThousand}} - 薪資損失(萬)
+  {{livingExpenseInTenThousand}} - 生活開銷(萬/年)
+  {{treatmentCostInTenThousand}} - 治療費用(萬)
+  {{fixedOneTimeBenefit}} - 一次性理賠金(固定100)
+  {{longTermCareInTenThousand}} - 長照費用(萬)
+  {{disabilityOneTimeRange}} - 1~11級一次金範圍
+  {{personalDebt}} - 個人債務
+  {{familyCare}} - 家人照顧金
+  {{accidentDailyRange}} - 意外住院日額(固定)
+  {{accidentReimbursementRange}} - 意外實支實付(固定)
+  {{majorBurnRange}} - 重大燒燙傷(固定)
+  {{homeCareInTenThousand}} - 居家休養費用(萬)
+  {{monthlyIncomeInTenThousand}} - 月收入(萬)
+  {{generatedDate}} - 報告生成日期
+-->
+
+<!-- 第1頁 - 封面 -->
+<div class="pdf-page page-1">
+  <div class="svg-bg">
+    <img src="/pdf-templates/adult/1.svg" alt="封面" />
+  </div>
+  <div class="overlay">
+    <span class="field name-field">{{name}}</span>
+    <span class="field date-field">{{generatedDate}}</span>
+  </div>
+</div>
+
+<!-- 第2頁 - 基本資料 -->
+<div class="pdf-page page-2">
+  <div class="svg-bg">
+    <img src="/pdf-templates/adult/2.svg" alt="基本資料" />
+  </div>
+  <div class="overlay">
+    <span class="field f-name">{{name}}</span>
+    <span class="field f-phone">{{phone}}</span>
+    <span class="field f-line">{{lineId}}</span>
+    <span class="field f-city">{{city}}</span>
+  </div>
+</div>
+
+<!-- 第3頁 - 醫療保障 -->
+<div class="pdf-page page-3">
+  <div class="svg-bg">
+    <img src="/pdf-templates/adult/3.svg" alt="醫療保障" />
+  </div>
+  <div class="overlay">
+    <span class="field f-roomType">{{roomType}}</span>
+    <span class="field f-roomCost">{{roomCost}}</span>
+    <span class="field f-hospitalDaily">{{hospitalDaily}}</span>
+    <span class="field f-surgeryRange">{{surgeryRange}}</span>
+    <span class="field f-outpatient">{{outpatientSurgeryRange}}</span>
+  </div>
+</div>
+
+<!-- 第4頁 - 重症保障 -->
+<div class="pdf-page page-4">
+  <div class="svg-bg">
+    <img src="/pdf-templates/adult/4.svg" alt="重症保障" />
+  </div>
+  <div class="overlay">
+    <span class="field f-salaryLoss">{{salaryLossInTenThousand}} 萬/月</span>
+    <span class="field f-livingExpense">{{livingExpenseInTenThousand}} 萬/年</span>
+    <span class="field f-treatmentCost">{{treatmentCostInTenThousand}} 萬</span>
+    <span class="field f-oneTime">{{fixedOneTimeBenefit}} 萬</span>
+  </div>
+</div>
+
+<!-- 第5頁 - 長照保障 -->
+<div class="pdf-page page-5">
+  <div class="svg-bg">
+    <img src="/pdf-templates/adult/5.svg" alt="長照保障" />
+  </div>
+  <div class="overlay">
+    <span class="field f-longTermCare">{{longTermCareInTenThousand}} 萬/月</span>
+  </div>
+</div>
+
+<!-- 第6頁 - 壽險保障 -->
+<div class="pdf-page page-6">
+  <div class="svg-bg">
+    <img src="/pdf-templates/adult/6.svg" alt="壽險保障" />
+  </div>
+  <div class="overlay">
+    <span class="field f-personalDebt">{{personalDebt}}</span>
+    <span class="field f-familyCare">{{familyCare}}</span>
+    <span class="field f-disability">{{disabilityOneTimeRange}}</span>
+  </div>
+</div>
+
+<!-- 第7頁 - 意外保障 -->
+<div class="pdf-page page-7">
+  <div class="svg-bg">
+    <img src="/pdf-templates/adult/7.svg" alt="意外保障" />
+  </div>
+  <div class="overlay">
+    <span class="field f-accidentDaily">{{accidentDailyRange}}</span>
+    <span class="field f-accidentReimburse">{{accidentReimbursementRange}}</span>
+    <span class="field f-majorBurn">{{majorBurnRange}}</span>
+    <span class="field f-homeCare">{{homeCareInTenThousand}} 萬</span>
+  </div>
+</div>
+
+<!-- 第8-16頁 - 說明頁面（無變數）-->
+<div class="pdf-page page-8"><div class="svg-bg"><img src="/pdf-templates/adult/8.svg" alt="page8" /></div></div>
+<div class="pdf-page page-9"><div class="svg-bg"><img src="/pdf-templates/adult/9.svg" alt="page9" /></div></div>
+<div class="pdf-page page-10"><div class="svg-bg"><img src="/pdf-templates/adult/10.svg" alt="page10" /></div></div>
+<div class="pdf-page page-11"><div class="svg-bg"><img src="/pdf-templates/adult/11.svg" alt="page11" /></div></div>
+<div class="pdf-page page-12"><div class="svg-bg"><img src="/pdf-templates/adult/12.svg" alt="page12" /></div></div>
+<div class="pdf-page page-13"><div class="svg-bg"><img src="/pdf-templates/adult/13.svg" alt="page13" /></div></div>
+<div class="pdf-page page-14"><div class="svg-bg"><img src="/pdf-templates/adult/14.svg" alt="page14" /></div></div>
+<div class="pdf-page page-15"><div class="svg-bg"><img src="/pdf-templates/adult/15.svg" alt="page15" /></div></div>
+<div class="pdf-page page-16"><div class="svg-bg"><img src="/pdf-templates/adult/16.svg" alt="page16" /></div></div>
+

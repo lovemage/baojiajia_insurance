@@ -249,7 +249,11 @@ export default function MemberManager() {
         qData.planType === 'self' ? '本人' : qData.planType === 'child' ? '子女' : '-',
         qData.roomType === 'single' ? '單人房' : qData.roomType === 'double' ? '雙人房' : qData.roomType === 'health-insurance' ? '健保房' : '-',
         qData.hospitalDaily || 0,
-        qData.surgerySubsidy === 'full' ? '全額負擔' : qData.surgerySubsidy === 'recommended' ? '建議額度' : '基本額度',
+        qData.surgerySubsidy === 'full' || qData.surgerySubsidy === 'complete'
+          ? '全額負擔'
+          : qData.surgerySubsidy === 'recommended'
+            ? '建議額度'
+            : '基本額度',
         Math.round((qData.salaryLoss || 0) / 10000),
         Math.round((qData.livingExpense || 0) * 12 / 10000),
         Math.round((qData.treatmentCost || 0) / 10000),
@@ -370,8 +374,11 @@ export default function MemberManager() {
         '{{roomType}}': roomTypeText,
         '{{roomCost}}': formatNumber(data.roomType === 'double' ? 3000 : data.roomType === 'single' ? 5000 : 0),
         '{{hospitalDaily}}': formatNumber(data.hospitalDaily || 0),
-        '{{surgeryRange}}': data.surgerySubsidy === 'full' ? '30~40萬' :
-                           data.surgerySubsidy === 'recommended' ? '20~30萬' : '10~20萬',
+        '{{surgeryRange}}': data.surgerySubsidy === 'full' || data.surgerySubsidy === 'complete'
+                           ? '30~40萬'
+                           : data.surgerySubsidy === 'recommended'
+                             ? '20~30萬'
+                             : '10~20萬',
         '{{salaryLossInTenThousand}}': String(Math.round((data.salaryLoss || 0) / 10000)),
         '{{livingExpenseInTenThousand}}': String(Math.round((data.livingExpense || 0) * 12 / 10000)),
         '{{treatmentCostInTenThousand}}': String(Math.round((data.treatmentCost || 0) / 10000)),
@@ -780,9 +787,13 @@ export default function MemberManager() {
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-500 mb-1">手術醫療補貼</div>
                     <div className="font-medium text-lg">
-                      {safeGet(selectedMember.questionnaire_data, 'surgerySubsidy') === 'full' ? '全額負擔 (30-40萬)' :
-                       safeGet(selectedMember.questionnaire_data, 'surgerySubsidy') === 'recommended' ? '建議額度 (20-30萬)' :
-                       safeGet(selectedMember.questionnaire_data, 'surgerySubsidy') === 'basic' ? '基本額度 (10-20萬)' : '-'}
+                      {(() => {
+                        const value = safeGet(selectedMember.questionnaire_data, 'surgerySubsidy');
+                        if (value === 'full' || value === 'complete') return '全額負擔 (30-40萬)';
+                        if (value === 'recommended') return '建議額度 (20-30萬)';
+                        if (value === 'basic' || value === 'partial') return '基本額度 (10-20萬)';
+                        return '-';
+                      })()}
                     </div>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-4">

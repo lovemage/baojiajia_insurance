@@ -1,0 +1,108 @@
+<!-- 
+  Child PDF 模板 HTML 內容
+  
+  可用變數 (11個邏輯變數 + 基本資料):
+  {{name}} - 姓名
+  {{phone}} - 電話
+  {{lineId}} - Line ID
+  {{city}} - 居住城市
+  {{generatedDate}} - 報告生成日期
+  
+  {{roomCost}} - 病房費用
+  {{hospitalDaily}} - 住院日額
+  {{surgeryRange}} - 手術補貼範圍
+  {{outpatientSurgeryRange}} - 門診雜費開銷 (固定)
+  
+  {{salaryLossInTenThousand}} - 薪資損失(萬)
+  {{livingExpenseInTenThousand}} - 生活開銷(萬/年)
+  {{treatmentCostInTenThousand}} - 治療費用(萬)
+  
+  {{fixedOneTimeBenefit}} - 一次性理賠金(固定100)
+  
+  {{longTermCare1to6Disease}} - 1~6級扶助金(疾病)
+  {{longTermCare1to6Accident}} - 1~6級扶助金(意外)
+  {{longTermCare1to11Disease}} - 1~11級一次金(疾病)
+  {{longTermCare1to11Accident}} - 1~11級一次金(意外)
+-->
+
+<!-- 第1頁 - 封面 -->
+<div class="pdf-page page-1">
+  <div class="svg-bg"><img src="/pdf-templates/child/1.svg" alt="封面" /></div>
+  <div class="overlay">
+    <span class="field name-field">{{name}}</span>
+    <span class="field date-field">{{generatedDate}}</span>
+  </div>
+</div>
+
+<!-- 第2頁 - 基本資料 -->
+<div class="pdf-page page-2">
+  <div class="svg-bg"><img src="/pdf-templates/child/2.svg" alt="基本資料" /></div>
+  <div class="overlay">
+    <span class="field f-name">{{name}}</span>
+    <span class="field f-phone">{{phone}}</span>
+    <span class="field f-line">{{lineId}}</span>
+    <span class="field f-city">{{city}}</span>
+  </div>
+</div>
+
+<!-- 第3頁 - 醫療保障 -->
+<div class="pdf-page page-3">
+  <div class="svg-bg"><img src="/pdf-templates/child/3.svg" alt="醫療保障" /></div>
+  <div class="overlay">
+    <span class="field f-roomType">{{roomType}}</span>
+    <span class="field f-roomCost">{{roomCost}}</span>
+    <span class="field f-hospitalDaily">{{hospitalDaily}}</span>
+    <span class="field f-surgeryRange">{{surgeryRange}}</span>
+    <span class="field f-outpatient">{{outpatientSurgeryRange}}</span>
+  </div>
+</div>
+
+<!-- 第4頁 - 空白/說明 (幼兒無壽險債務) -->
+<div class="pdf-page page-4">
+  <div class="svg-bg"><img src="/pdf-templates/child/4.svg" alt="page4" /></div>
+</div>
+
+<!-- 第5頁 - 空白/說明 (幼兒無家庭責任/意外邏輯未定義) -->
+<div class="pdf-page page-5">
+  <div class="svg-bg"><img src="/pdf-templates/child/5.svg" alt="page5" /></div>
+</div>
+
+<!-- 第6頁 - 重症保障 (薪資/生活/治療) -->
+<div class="pdf-page page-6">
+  <div class="svg-bg"><img src="/pdf-templates/child/6.svg" alt="重症保障" /></div>
+  <div class="overlay">
+    <span class="field f-salaryLoss">{{salaryLossInTenThousand}} 萬/月</span>
+    <span class="field f-livingExpense">{{livingExpenseInTenThousand}} 萬/年</span>
+    <span class="field f-treatmentCost">{{treatmentCostInTenThousand}} 萬</span>
+  </div>
+</div>
+
+<!-- 第7頁 - 重症保障 (一次金) -->
+<div class="pdf-page page-7">
+  <div class="svg-bg"><img src="/pdf-templates/child/7.svg" alt="重症一次金" /></div>
+  <div class="overlay">
+    <span class="field f-oneTime">{{fixedOneTimeBenefit}} 萬</span>
+  </div>
+</div>
+
+<!-- 第8頁 - 長照保障 -->
+<div class="pdf-page page-8">
+  <div class="svg-bg"><img src="/pdf-templates/child/8.svg" alt="長照保障" /></div>
+  <div class="overlay">
+    <span class="field f-ltc-1to6-dis">{{longTermCare1to6Disease}} 萬</span>
+    <span class="field f-ltc-1to6-acc">{{longTermCare1to6Accident}} 萬</span>
+    <span class="field f-ltc-1to11-dis">{{longTermCare1to11Disease}}</span>
+    <span class="field f-ltc-1to11-acc">{{longTermCare1to11Accident}}</span>
+  </div>
+</div>
+
+<!-- 第9-17頁 - 說明頁面 -->
+<div class="pdf-page page-9"><div class="svg-bg"><img src="/pdf-templates/child/9.svg" alt="page9" /></div></div>
+<div class="pdf-page page-10"><div class="svg-bg"><img src="/pdf-templates/child/10.svg" alt="page10" /></div></div>
+<div class="pdf-page page-11"><div class="svg-bg"><img src="/pdf-templates/child/11.svg" alt="page11" /></div></div>
+<div class="pdf-page page-12"><div class="svg-bg"><img src="/pdf-templates/child/12.svg" alt="page12" /></div></div>
+<div class="pdf-page page-13"><div class="svg-bg"><img src="/pdf-templates/child/13.svg" alt="page13" /></div></div>
+<div class="pdf-page page-14"><div class="svg-bg"><img src="/pdf-templates/child/14.svg" alt="page14" /></div></div>
+<div class="pdf-page page-15"><div class="svg-bg"><img src="/pdf-templates/child/15.svg" alt="page15" /></div></div>
+<div class="pdf-page page-16"><div class="svg-bg"><img src="/pdf-templates/child/16.svg" alt="page16" /></div></div>
+<div class="pdf-page page-17"><div class="svg-bg"><img src="/pdf-templates/child/17.svg" alt="page17" /></div></div>

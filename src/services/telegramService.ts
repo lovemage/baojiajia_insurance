@@ -59,8 +59,10 @@ const OPTIONS_MAP: any = {
     'health-insurance': '健保房'
   },
   surgerySubsidy: {
+    'complete': '全額負擔 (30-40萬)',
     'full': '全額負擔 (30-40萬)',
     'recommended': '建議額度 (20-30萬)',
+    'partial': '基本額度 (10-20萬)',
     'basic': '基本額度 (10-20萬)'
   }
 };
