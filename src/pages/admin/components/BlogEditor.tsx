@@ -148,7 +148,7 @@ export default function BlogEditor({ onBack }: Props) {
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
-        .order('published_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
       if (error) throw error;
       setPosts(data || []);
@@ -260,6 +260,28 @@ export default function BlogEditor({ onBack }: Props) {
       setFocusKeyword(first);
     } else {
       setFocusKeyword('');
+    }
+  };
+
+  const handleDelete = async (post: BlogPost) => {
+    const confirmDelete = window.confirm(
+      `確定要永久刪除文章「${post.title}」嗎？\n\n此操作無法復原，文章將被永久刪除。`
+    );
+    
+    if (!confirmDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('blog_posts')
+        .delete()
+        .eq('id', post.id);
+
+      if (error) throw error;
+      fetchPosts();
+      alert('文章已成功刪除');
+    } catch (error) {
+      console.error('Error deleting blog post:', error);
+      alert('刪除失敗，請稍後再試');
     }
   };
 
@@ -808,6 +830,7 @@ export default function BlogEditor({ onBack }: Props) {
                   <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">精選</th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">狀態</th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">操作</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">刪除</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -853,6 +876,15 @@ export default function BlogEditor({ onBack }: Props) {
                       >
                         <i className="ri-edit-line mr-1"></i>
                         編輯
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleDelete(post)}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer whitespace-nowrap"
+                      >
+                        <i className="ri-delete-bin-line mr-1"></i>
+                        刪除
                       </button>
                     </td>
                   </tr>
