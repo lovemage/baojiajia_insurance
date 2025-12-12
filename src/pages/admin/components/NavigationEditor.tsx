@@ -158,18 +158,11 @@ export default function NavigationEditor({ onBack }: Props) {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">導航選單管理</h1>
               <p className="text-gray-600">管理網站頂部導航選單的項目和順序</p>
             </div>
-            <button
-              onClick={onBack}
-              className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <i className="ri-arrow-left-line mr-2"></i>
-              返回
-            </button>
           </div>
 
           <button
@@ -252,7 +245,8 @@ export default function NavigationEditor({ onBack }: Props) {
                     }}
                     className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors cursor-pointer whitespace-nowrap"
                   >
-                    取消
+                    <i className="ri-arrow-left-line mr-2"></i>
+                    返回導航選單列表
                   </button>
                 </div>
               </div>

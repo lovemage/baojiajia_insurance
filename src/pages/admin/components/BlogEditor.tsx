@@ -774,7 +774,8 @@ export default function BlogEditor({ onBack }: Props) {
                 onClick={handleCancel}
                 className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors cursor-pointer whitespace-nowrap"
               >
-                取消
+                <i className="ri-arrow-left-line mr-2"></i>
+                返回文章列表
               </button>
               <button
                 type="button"
@@ -800,22 +801,13 @@ export default function BlogEditor({ onBack }: Props) {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">知識專區管理</h1>
               <p className="text-gray-600">管理部落格文章內容</p>
             </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleCreateNew}
-                className="px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer whitespace-nowrap"
-              >
-                <i className="ri-add-line mr-2"></i>
-                新增文章
-              </button>
-              <button
-                onClick={onBack}
-                className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors cursor-pointer whitespace-nowrap"
-              >
-                <i className="ri-arrow-left-line mr-2"></i>
-                返回
-              </button>
-            </div>
+            <button
+              onClick={handleCreateNew}
+              className="px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <i className="ri-add-line mr-2"></i>
+              新增文章
+            </button>
           </div>
         </div>
 
