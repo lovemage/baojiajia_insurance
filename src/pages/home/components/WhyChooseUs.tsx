@@ -46,11 +46,11 @@ export default function WhyChooseUs() {
               key={index}
               className="bg-gradient-to-br from-teal-50 to-white p-6 sm:p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-teal-100 hover:border-teal-300 text-center group"
             >
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 p-3 sm:p-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-full object-contain brightness-0 invert"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
