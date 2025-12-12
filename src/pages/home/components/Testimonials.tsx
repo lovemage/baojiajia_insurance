@@ -1,4 +1,18 @@
-const testimonials = [
+import { useState, useEffect } from 'react';
+import { supabase } from '../../../lib/supabase';
+
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  content: string;
+  rating: number;
+  avatar_url: string;
+  display_order: number;
+  is_active: boolean;
+}
+
+const staticTestimonials = [
   {
     name: '小美',
     role: '30歲上班族',
@@ -44,6 +58,60 @@ const testimonials = [
 ];
 
 export default function Testimonials() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTestimonials();
+  }, []);
+
+  const fetchTestimonials = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('testimonials')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching testimonials:', error);
+        setTestimonials(staticTestimonials as any);
+      } else {
+        const formattedTestimonials = data?.map(testimonial => ({
+          name: testimonial.name,
+          role: testimonial.role,
+          content: testimonial.content,
+          rating: testimonial.rating,
+          avatar: testimonial.avatar_url
+        })) || staticTestimonials;
+        setTestimonials(formattedTestimonials as any);
+      }
+    } catch (error) {
+      console.error('Error fetching testimonials:', error);
+      setTestimonials(staticTestimonials as any);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="py-12 sm:py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">客戶真實分享</h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
+              聽聽他們與保家佳的故事
+            </p>
+          </div>
+          <div className="flex justify-center items-center py-12">
+            <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-12 sm:py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,7 +125,7 @@ export default function Testimonials() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {testimonials.map((testimonial, index) => (
             <div 
-              key={index}
+              key={testimonial.id || index}
               className="bg-white p-5 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-shadow"
             >
               <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
