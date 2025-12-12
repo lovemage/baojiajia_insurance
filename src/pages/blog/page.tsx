@@ -30,6 +30,18 @@ export default function Blog() {
     fetchPosts();
   }, []);
 
+  // Refresh data when component becomes visible (tab switching)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchPosts();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const fetchCategories = async () => {
     try {
       const { data, error } = await supabase
@@ -58,7 +70,7 @@ export default function Blog() {
         .from('blog_posts')
         .select('*')
         .eq('is_active', true)
-        .order('published_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
       if (error) throw error;
       setBlogPosts(data || []);
@@ -70,6 +82,11 @@ export default function Blog() {
     }
   };
 
+  const handleRefresh = () => {
+    setLoading(true);
+    fetchPosts();
+  };
+
   const filteredPosts = blogPosts.filter(post => {
     const matchCategory = selectedCategory === '全部' || post.category === selectedCategory;
     const matchSearch = searchKeyword === '' || 
@@ -79,7 +96,7 @@ export default function Blog() {
     return matchCategory && matchSearch;
   });
 
-  const featuredPosts = blogPosts.filter(post => post.is_featured);
+  const featuredPosts = blogPosts.filter(post => post.is_featured).slice(0, 5);
   const recentPosts = blogPosts.slice(0, 5);
 
   // Format date
@@ -130,19 +147,29 @@ export default function Blog() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
             {/* 左側主要內容區 */}
             <div className="lg:col-span-2">
-              {/* 搜尋欄位 */}
+              {/* 搜尋欄位和刷新按鈕 */}
               <div className="mb-6 sm:mb-8">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="搜尋文章標題、內容或分類..."
-                    value={searchKeyword}
-                    onChange={(e) => setSearchKeyword(e.target.value)}
-                    className="w-full px-4 sm:px-5 py-3 sm:py-4 pr-12 border-2 border-gray-200 rounded-xl text-sm sm:text-base focus:outline-none focus:border-teal-600 transition-colors"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center">
-                    <i className="ri-search-line text-gray-400 text-lg sm:text-xl"></i>
+                <div className="flex gap-3 mb-4">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="搜尋文章標題、內容或分類..."
+                      value={searchKeyword}
+                      onChange={(e) => setSearchKeyword(e.target.value)}
+                      className="w-full px-4 sm:px-5 py-3 sm:py-4 pr-12 border-2 border-gray-200 rounded-xl text-sm sm:text-base focus:outline-none focus:border-teal-600 transition-colors"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center">
+                      <i className="ri-search-line text-gray-400 text-lg sm:text-xl"></i>
+                    </div>
                   </div>
+                  <button
+                    onClick={handleRefresh}
+                    disabled={loading}
+                    className="px-4 sm:px-5 py-3 sm:py-4 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <i className={`ri-refresh-line text-lg sm:text-xl ${loading ? 'animate-spin' : ''}`}></i>
+                    <span className="text-sm sm:text-base font-semibold">刷新</span>
+                  </button>
                 </div>
               </div>
 
@@ -192,7 +219,18 @@ export default function Blog() {
                           {post.excerpt}
                         </p>
                         <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>{formatDate(post.published_at)}</span>
+                          <div className="flex items-center gap-2">
+                            {new Date(post.published_at) > new Date() ? (
+                              <>
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                  <i className="ri-time-line mr-1"></i>
+                                  預約發布：{formatDate(post.published_at)}
+                                </span>
+                              </>
+                            ) : (
+                              <span>{formatDate(post.published_at)}</span>
+                            )}
+                          </div>
                           <span className="flex items-center">
                             <i className="ri-time-line mr-1"></i>
                             {post.read_time}
@@ -287,11 +325,20 @@ export default function Blog() {
                               <h4 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-teal-600 transition-colors">
                                 {post.title}
                               </h4>
-                              <div className="flex items-center justify-between text-xs text-gray-500">
-                                <span className="bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">
-                                  {post.category}
-                                </span>
-                                <span className="flex items-center">
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2 text-xs">
+                                  {new Date(post.published_at) > new Date() ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                      <i className="ri-time-line mr-1"></i>
+                                      預約：{formatDate(post.published_at)}
+                                    </span>
+                                  ) : (
+                                    <span className="bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">
+                                      {post.category}
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="flex items-center text-xs text-gray-500">
                                   <i className="ri-time-line mr-1"></i>
                                   {post.read_time}
                                 </span>
