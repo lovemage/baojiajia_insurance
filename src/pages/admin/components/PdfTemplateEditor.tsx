@@ -299,11 +299,6 @@ export default function PdfTemplateEditor({ onBack }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm">
         <div className="flex items-center gap-4">
-          {onBack && (
-            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg">
-              <i className="ri-arrow-left-line text-xl"></i>
-            </button>
-          )}
           <div>
             <h1 className="text-2xl font-bold text-gray-800">PDF 報告模板</h1>
             <p className="text-gray-500 text-sm">編輯保障需求分析報告的 PDF 模板</p>

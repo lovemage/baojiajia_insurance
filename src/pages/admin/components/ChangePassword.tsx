@@ -48,13 +48,7 @@ export default function ChangePassword({ onBack }: ChangePasswordProps) {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={onBack}
-            className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-sm hover:bg-gray-50 text-gray-600 transition-colors cursor-pointer"
-          >
-            <i className="ri-arrow-left-line text-xl"></i>
-          </button>
+        <div className="flex items-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">修改密碼</h1>
         </div>
 

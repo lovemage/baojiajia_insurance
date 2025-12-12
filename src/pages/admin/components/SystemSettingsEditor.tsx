@@ -190,14 +190,8 @@ export default function SystemSettingsEditor({ onBack }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">系統設定</h1>
-        <button
-          onClick={onBack}
-          className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-        >
-          ← 返回
-        </button>
       </div>
 
       {/* Analysis Icons Section */}
