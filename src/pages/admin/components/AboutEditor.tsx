@@ -630,18 +630,11 @@ export default function AboutEditor({ onBack }: Props) {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">關於我們管理</h1>
               <p className="text-gray-600">編輯公司介紹和團隊資訊</p>
             </div>
-            <button
-              onClick={onBack}
-              className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <i className="ri-arrow-left-line mr-2"></i>
-              返回
-            </button>
           </div>
         </div>
 

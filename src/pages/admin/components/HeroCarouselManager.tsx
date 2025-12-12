@@ -173,17 +173,11 @@ export default function HeroCarouselManager({ onBack }: Props) {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Hero 輪播管理</h1>
               <p className="text-gray-600">管理首頁 Hero 輪播項目</p>
             </div>
-            <button
-              onClick={onBack}
-              className="px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors cursor-pointer"
-            >
-              返回
-            </button>
           </div>
         </div>
 
