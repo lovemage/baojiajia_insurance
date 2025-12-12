@@ -11,6 +11,7 @@ interface BlogPost {
   category: string;
   author: string;
   published_at: string;
+  updated_at: string;
   read_time: string;
   image_url: string;
   content: string;
@@ -103,6 +104,12 @@ export default function Blog() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  };
+
+  // Format date with time for updated_at
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
   if (loading) {
@@ -218,23 +225,29 @@ export default function Blog() {
                         <p className="text-sm text-gray-600 leading-relaxed mb-3 line-clamp-2">
                           {post.excerpt}
                         </p>
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <div className="flex items-center gap-2">
-                            {new Date(post.published_at) > new Date() ? (
-                              <>
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                                  <i className="ri-time-line mr-1"></i>
-                                  預約發布：{formatDate(post.published_at)}
-                                </span>
-                              </>
-                            ) : (
-                              <span>{formatDate(post.published_at)}</span>
-                            )}
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div className="flex items-center gap-2">
+                              {new Date(post.published_at) > new Date() ? (
+                                <>
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                    <i className="ri-time-line mr-1"></i>
+                                    預約發布：{formatDate(post.published_at)}
+                                  </span>
+                                </>
+                              ) : (
+                                <span>{formatDate(post.published_at)}</span>
+                              )}
+                            </div>
+                            <span className="flex items-center">
+                              <i className="ri-time-line mr-1"></i>
+                              {post.read_time}
+                            </span>
                           </div>
-                          <span className="flex items-center">
-                            <i className="ri-time-line mr-1"></i>
-                            {post.read_time}
-                          </span>
+                          <div className="text-xs text-gray-400">
+                            <i className="ri-edit-line mr-1"></i>
+                            最後編輯：{formatDateTime(post.updated_at)}
+                          </div>
                         </div>
                       </div>
                     </Link>
@@ -290,8 +303,14 @@ export default function Blog() {
                               <h4 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-teal-600 transition-colors">
                                 {post.title}
                               </h4>
-                              <div className="flex items-center text-xs text-gray-500">
-                                <span>{formatDate(post.published_at)}</span>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <span>{formatDate(post.published_at)}</span>
+                                </div>
+                                <div className="flex items-center text-xs text-gray-400">
+                                  <i className="ri-edit-line mr-1"></i>
+                                  {formatDateTime(post.updated_at)}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -338,10 +357,16 @@ export default function Blog() {
                                     </span>
                                   )}
                                 </div>
-                                <span className="flex items-center text-xs text-gray-500">
-                                  <i className="ri-time-line mr-1"></i>
-                                  {post.read_time}
-                                </span>
+                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                  <span className="flex items-center">
+                                    <i className="ri-time-line mr-1"></i>
+                                    {post.read_time}
+                                  </span>
+                                  <span className="text-gray-400">
+                                    <i className="ri-edit-line mr-1"></i>
+                                    {formatDateTime(post.updated_at)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
