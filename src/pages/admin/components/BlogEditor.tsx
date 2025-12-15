@@ -35,6 +35,7 @@ export default function BlogEditor({ onBack }: Props) {
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'editor' | 'html' | 'preview'>('editor');
+  const [showSeoHelp, setShowSeoHelp] = useState(false);
   
   // SEO State (Analysis Only)
   const [focusKeyword, setFocusKeyword] = useState('');
@@ -577,6 +578,14 @@ export default function BlogEditor({ onBack }: Props) {
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
+                      onClick={() => setShowSeoHelp((v) => !v)}
+                      className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+                    >
+                      <i className="ri-question-line mr-1"></i>
+                      說明
+                    </button>
+                    <button
+                      type="button"
                       onClick={autoFillSeo}
                       className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
                     >
@@ -608,6 +617,30 @@ export default function BlogEditor({ onBack }: Props) {
                         className="bg-teal-600 h-2.5 rounded-full transition-all duration-300 ease-out"
                         style={{ width: `${analysisProgress}%` }}
                       ></div>
+                    </div>
+                  </div>
+                )}
+
+                {showSeoHelp && (
+                  <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
+                    <h4 className="font-bold text-gray-900 mb-2">常見檢測失敗原因與解法</h4>
+                    <div className="text-sm text-gray-700 space-y-2">
+                      <div>
+                        <div className="font-semibold">1) 逗號格式</div>
+                        <div className="text-gray-600">請用逗號分隔關鍵字，半形「,」或全形「，」都可。例如：保險, 新生兒保險, 新生兒保險規劃</div>
+                      </div>
+                      <div>
+                        <div className="font-semibold">2) 英文大小寫</div>
+                        <div className="text-gray-600">系統會以不分大小寫比對，但建議你輸入與文章一致的寫法（例如：Insurance / insurance）。</div>
+                      </div>
+                      <div>
+                        <div className="font-semibold">3) 內文含 HTML 空白或多餘空白</div>
+                        <div className="text-gray-600">若你從外部貼上內容，可能有 &nbsp; 或連續空白，導致字串不連續。建議在標題/摘要放入完整關鍵字，並在正文至少出現一次。</div>
+                      </div>
+                      <div>
+                        <div className="font-semibold">4) 如何讓檢測通過（最快）</div>
+                        <div className="text-gray-600">把其中一個關鍵字完整放進「Meta 標題」與「Meta 描述」，再確保正文有出現一次即可。</div>
+                      </div>
                     </div>
                   </div>
                 )}

@@ -11,12 +11,34 @@ export interface SeoCheck {
 }
 
 export class SeoAnalyzer {
+  private static decodeCommonHtmlEntities(input: string): string {
+    return (input ?? '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/g, "'");
+  }
+
+  private static normalizeText(input: string): string {
+    return SeoAnalyzer.decodeCommonHtmlEntities(input)
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  private static splitKeywords(input: string): string[] {
+    return (input ?? '')
+      .split(/[,，]/g)
+      .map((k) => k.trim())
+      .filter(Boolean);
+  }
+
   private static normalizeKeywords(keywordOrKeywords: string | string[]): string[] {
     const rawList = Array.isArray(keywordOrKeywords) ? keywordOrKeywords : [keywordOrKeywords];
     const splitList = rawList
-      .flatMap((k) => (k ?? '').split(','))
-      .map((k) => k.trim())
-      .filter(Boolean);
+      .flatMap((k) => SeoAnalyzer.splitKeywords(k ?? ''));
 
     // De-duplicate while preserving order
     const seen = new Set<string>();
@@ -100,11 +122,20 @@ export class SeoAnalyzer {
     );
 
     const rawKeywords = (Array.isArray(keywordOrKeywords) ? keywordOrKeywords : [keywordOrKeywords])
-      .flatMap((k) => (k ?? '').split(','))
-      .map((k) => k.trim())
-      .filter(Boolean);
+      .flatMap((k) => SeoAnalyzer.splitKeywords(k ?? ''));
 
     const keywords = SeoAnalyzer.normalizeKeywords(keywordOrKeywords);
+    const normalizedKeywords = keywords.map((k) => SeoAnalyzer.normalizeText(k)).filter(Boolean);
+    const normalizedTitle = SeoAnalyzer.normalizeText(title);
+    const normalizedDescription = SeoAnalyzer.normalizeText(description);
+    const normalizedContent = SeoAnalyzer.normalizeText(plainTextContent);
+
+    const keywordFailureHint =
+      '常見原因：\n'
+      + '1) 逗號用全形「，」或混用符號（建議用逗號分隔）\n'
+      + '2) 英文大小寫不同（例如 Insurance vs insurance）\n'
+      + '3) 內文有 HTML 空白（例如 &nbsp;）或多餘空白，導致字串不連續\n'
+      + '範例：關鍵字填「新生兒保險」時，標題建議包含完整詞組（或至少一個你設定的關鍵字）。';
     if (keywords.length > 0) {
       // 4. Keyword Count
       addCheck(
@@ -145,9 +176,9 @@ export class SeoAnalyzer {
       addCheck(
         'keyword-title',
         '標題包含關鍵字',
-        keywords.some((k) => title.includes(k)),
+        normalizedKeywords.some((k) => normalizedTitle.includes(k)),
         '標題包含至少一個關鍵字',
-        '建議標題中包含至少一個主要/長尾關鍵字',
+        `建議標題中包含至少一個主要/長尾關鍵字\n\n${keywordFailureHint}`,
         3
       );
 
@@ -155,9 +186,9 @@ export class SeoAnalyzer {
       addCheck(
         'keyword-desc',
         '摘要包含關鍵字',
-        keywords.some((k) => description.includes(k)),
+        normalizedKeywords.some((k) => normalizedDescription.includes(k)),
         '摘要包含至少一個關鍵字',
-        '建議摘要中包含至少一個主要/長尾關鍵字',
+        `建議摘要中包含至少一個主要/長尾關鍵字\n\n${keywordFailureHint}`,
         2
       );
 
@@ -165,9 +196,9 @@ export class SeoAnalyzer {
       addCheck(
         'keyword-content',
         '內容包含關鍵字',
-        keywords.some((k) => plainTextContent.includes(k)),
+        normalizedKeywords.some((k) => normalizedContent.includes(k)),
         '內容包含至少一個關鍵字',
-        '建議文章內容中包含你設定的關鍵字（短尾/長尾皆可）',
+        `建議文章內容中包含你設定的關鍵字（短尾/長尾皆可）\n\n${keywordFailureHint}`,
         3
       );
     } else {

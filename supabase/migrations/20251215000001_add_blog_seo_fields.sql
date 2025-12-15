@@ -11,5 +11,5 @@ ADD COLUMN IF NOT EXISTS meta_description text;
 ALTER TABLE IF EXISTS public.blog_posts
 ADD COLUMN IF NOT EXISTS meta_keywords text;
 
--- Optional: unique index on slug if you plan to use it as public URL (keep commented for safety)
--- CREATE UNIQUE INDEX IF NOT EXISTS blog_posts_slug_unique ON public.blog_posts (slug);
+-- Enforce slug uniqueness
+CREATE UNIQUE INDEX IF NOT EXISTS blog_posts_slug_unique ON public.blog_posts (slug);

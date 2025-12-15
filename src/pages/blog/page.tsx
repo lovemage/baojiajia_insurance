@@ -17,6 +17,7 @@ interface BlogPost {
   content: string;
   is_featured: boolean;
   is_active: boolean;
+  slug?: string;
 }
 
 export default function Blog() {
@@ -30,6 +31,11 @@ export default function Blog() {
     fetchCategories();
     fetchPosts();
   }, []);
+
+  useEffect(() => {
+    // Re-fetch when filters change
+    fetchPosts();
+  }, [selectedCategory, searchKeyword]);
 
   // Refresh data when component becomes visible (tab switching)
   useEffect(() => {
@@ -67,11 +73,23 @@ export default function Blog() {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      const keyword = searchKeyword.trim();
+      let query = supabase
         .from('blog_posts')
         .select('*')
-        .eq('is_active', true)
-        .order('updated_at', { ascending: false });
+        .eq('is_active', true);
+
+      if (selectedCategory !== '全部') {
+        query = query.eq('category', selectedCategory);
+      }
+
+      if (keyword) {
+        query = query.or(
+          `title.ilike.%${keyword}%,excerpt.ilike.%${keyword}%,category.ilike.%${keyword}%,content.ilike.%${keyword}%`
+        );
+      }
+
+      const { data, error } = await query.order('updated_at', { ascending: false });
 
       if (error) throw error;
       setBlogPosts(data || []);
@@ -88,14 +106,7 @@ export default function Blog() {
     fetchPosts();
   };
 
-  const filteredPosts = blogPosts.filter(post => {
-    const matchCategory = selectedCategory === '全部' || post.category === selectedCategory;
-    const matchSearch = searchKeyword === '' || 
-      post.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      post.excerpt.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      post.category.toLowerCase().includes(searchKeyword.toLowerCase());
-    return matchCategory && matchSearch;
-  });
+  const filteredPosts = blogPosts;
 
   const featuredPosts = blogPosts.filter(post => post.is_featured).slice(0, 5);
   const recentPosts = blogPosts.slice(0, 5);
@@ -203,7 +214,7 @@ export default function Blog() {
                   {filteredPosts.map((post) => (
                     <Link 
                       key={post.id}
-                      to={`/blog/${post.id}`}
+                      to={post.slug ? `/blog/${post.slug}` : `/blog/id/${post.id}`}
                       className="bg-white rounded-xl sm:rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group"
                     >
                       <div className="relative h-44 sm:h-48 overflow-hidden">
@@ -288,7 +299,7 @@ export default function Blog() {
                       {recentPosts.map((post) => (
                         <Link
                           key={post.id}
-                          to={`/blog/${post.id}`}
+                          to={post.slug ? `/blog/${post.slug}` : `/blog/id/${post.id}`}
                           className="block group cursor-pointer"
                         >
                           <div className="flex gap-3">
@@ -333,7 +344,7 @@ export default function Blog() {
                       {featuredPosts.map((post, index) => (
                         <Link
                           key={post.id}
-                          to={`/blog/${post.id}`}
+                          to={post.slug ? `/blog/${post.slug}` : `/blog/id/${post.id}`}
                           className="block bg-white rounded-lg sm:rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer group"
                         >
                           <div className="flex items-start gap-3">

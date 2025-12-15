@@ -27,7 +27,11 @@ const routes: RouteObject[] = [
     element: <Blog />,
   },
   {
-    path: '/blog/:id',
+    path: '/blog/id/:id',
+    element: <BlogDetail />,
+  },
+  {
+    path: '/blog/:slug',
     element: <BlogDetail />,
   },
   {

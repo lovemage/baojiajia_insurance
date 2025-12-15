@@ -23,23 +23,33 @@ interface BlogPost {
 }
 
 export default function BlogDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { slug, id } = useParams<{ slug?: string; id?: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 檢查 id 是否有效
-    if (!id || id === ':id' || id.includes(':')) {
-      console.error('Invalid blog post ID:', id);
+    // 檢查 slug/id 是否有效
+    if (
+      (!slug && !id)
+      || slug === ':slug'
+      || id === ':id'
+      || (slug && slug.includes(':'))
+      || (id && id.includes(':'))
+    ) {
+      console.error('Invalid blog post param:', { slug, id });
       navigate('/blog');
       return;
     }
 
     fetchPost();
+  }, [slug, id, navigate]);
+
+  useEffect(() => {
+    if (!post) return;
     fetchRelatedPosts();
-  }, [id, navigate]);
+  }, [post?.id]);
 
   useEffect(() => {
     if (!post) return;
@@ -69,18 +79,29 @@ export default function BlogDetail() {
   }, [post]);
 
   const fetchPost = async () => {
-    if (!id || id === ':id' || id.includes(':')) return;
+    if ((!slug && !id) || slug === ':slug' || id === ':id') return;
     
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('blog_posts')
         .select('*')
-        .eq('id', id)
-        .eq('is_active', true)
-        .single();
+        .eq('is_active', true);
+
+      if (slug) {
+        query = query.eq('slug', slug);
+      } else if (id) {
+        query = query.eq('id', id);
+      }
+
+      const { data, error } = await query.single();
 
       if (error) throw error;
       setPost(data);
+
+      // If accessed via legacy id route, redirect to slug URL when possible
+      if (!slug && id && data?.slug) {
+        navigate(`/blog/${data.slug}`, { replace: true });
+      }
     } catch (error) {
       console.error('Error fetching blog post:', error);
       setPost(null);
@@ -90,27 +111,19 @@ export default function BlogDetail() {
   };
 
   const fetchRelatedPosts = async () => {
-    if (!id || id === ':id' || id.includes(':')) return;
+    if (!post) return;
     
     try {
-      const { data: currentPost } = await supabase
+      const { data, error } = await supabase
         .from('blog_posts')
-        .select('category')
-        .eq('id', id)
-        .single();
+        .select('*')
+        .eq('category', post.category)
+        .eq('is_active', true)
+        .neq('id', post.id)
+        .limit(3);
 
-      if (currentPost) {
-        const { data, error } = await supabase
-          .from('blog_posts')
-          .select('*')
-          .eq('category', currentPost.category)
-          .eq('is_active', true)
-          .neq('id', id)
-          .limit(3);
-
-        if (error) throw error;
-        setRelatedPosts(data || []);
-      }
+      if (error) throw error;
+      setRelatedPosts(data || []);
     } catch (error) {
       console.error('Error fetching related posts:', error);
     }
@@ -309,7 +322,7 @@ export default function BlogDetail() {
               {relatedPosts.map((relatedPost) => (
                 <Link
                   key={relatedPost.id}
-                  to={`/blog/${relatedPost.id}`}
+                  to={relatedPost.slug ? `/blog/${relatedPost.slug}` : `/blog/id/${relatedPost.id}`}
                   className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group"
                 >
                   <div className="relative h-48 overflow-hidden">
