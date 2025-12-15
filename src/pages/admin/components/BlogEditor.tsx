@@ -187,6 +187,11 @@ export default function BlogEditor({ onBack }: Props) {
 
     setSaving(true);
     try {
+      const normalizedSlug = (editingPost.slug ?? '').trim() || null;
+      const normalizedMetaTitle = (editingPost.meta_title ?? '').trim() || null;
+      const normalizedMetaDescription = (editingPost.meta_description ?? '').trim() || null;
+      const normalizedMetaKeywords = (editingPost.meta_keywords ?? '').trim() || null;
+
       const postData = {
         title: editingPost.title,
         excerpt: editingPost.excerpt,
@@ -198,10 +203,10 @@ export default function BlogEditor({ onBack }: Props) {
         content: editingPost.content,
         is_featured: editingPost.is_featured,
         is_active: editingPost.is_active,
-        slug: editingPost.slug,
-        meta_title: editingPost.meta_title,
-        meta_description: editingPost.meta_description,
-        meta_keywords: editingPost.meta_keywords
+        slug: normalizedSlug,
+        meta_title: normalizedMetaTitle,
+        meta_description: normalizedMetaDescription,
+        meta_keywords: normalizedMetaKeywords
       };
 
       if (isNewPost) {
@@ -227,6 +232,8 @@ export default function BlogEditor({ onBack }: Props) {
       console.error('Error saving blog post:', error);
       if (error.message?.includes('column "slug" does not exist') || error.message?.includes('meta_')) {
         alert('儲存失敗：資料庫缺少 SEO 欄位。請聯絡管理員執行資料庫更新。');
+      } else if (error?.code === '23505' || error?.status === 409) {
+        alert('儲存失敗：資料有重複（可能是網址代稱 slug 已存在）。請更換 slug 後再試。');
       } else {
         alert('儲存失敗，請稍後再試');
       }
