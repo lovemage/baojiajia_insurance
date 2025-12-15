@@ -16,6 +16,10 @@ interface BlogPost {
   content: string;
   is_featured: boolean;
   is_active: boolean;
+  slug?: string;
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
 }
 
 export default function BlogDetail() {
@@ -36,6 +40,33 @@ export default function BlogDetail() {
     fetchPost();
     fetchRelatedPosts();
   }, [id, navigate]);
+
+  useEffect(() => {
+    if (!post) return;
+
+    const metaTitle = (post.meta_title || post.title || '').trim();
+    const metaDescription = (post.meta_description || post.excerpt || '').trim();
+    const metaKeywords = (post.meta_keywords || '').trim();
+
+    if (metaTitle) document.title = metaTitle;
+
+    const ensureMeta = (name: string) => {
+      let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute('name', name);
+        document.head.appendChild(el);
+      }
+      return el;
+    };
+
+    if (metaDescription) {
+      ensureMeta('description').setAttribute('content', metaDescription);
+    }
+    if (metaKeywords) {
+      ensureMeta('keywords').setAttribute('content', metaKeywords);
+    }
+  }, [post]);
 
   const fetchPost = async () => {
     if (!id || id === ':id' || id.includes(':')) return;
@@ -219,7 +250,6 @@ export default function BlogDetail() {
                 <button
                   onClick={() => {
                     const url = window.location.href;
-                    const text = post.title;
                     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
                   }}
                   className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors cursor-pointer"
@@ -230,8 +260,10 @@ export default function BlogDetail() {
                 <button
                   onClick={() => {
                     const url = window.location.href;
-                    const text = post.title;
-                    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+                    window.open(
+                      `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(post.title)}`,
+                      '_blank'
+                    );
                   }}
                   className="w-10 h-10 flex items-center justify-center bg-sky-500 text-white rounded-full hover:bg-sky-600 transition-colors cursor-pointer"
                   aria-label="分享到 Twitter"

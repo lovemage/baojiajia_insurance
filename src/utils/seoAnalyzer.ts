@@ -11,11 +11,31 @@ export interface SeoCheck {
 }
 
 export class SeoAnalyzer {
+  private static normalizeKeywords(keywordOrKeywords: string | string[]): string[] {
+    const rawList = Array.isArray(keywordOrKeywords) ? keywordOrKeywords : [keywordOrKeywords];
+    const splitList = rawList
+      .flatMap((k) => (k ?? '').split(','))
+      .map((k) => k.trim())
+      .filter(Boolean);
+
+    // De-duplicate while preserving order
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const k of splitList) {
+      const key = k.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(k);
+      }
+    }
+    return result;
+  }
+
   static analyze(
     title: string,
     description: string,
     content: string,
-    keyword: string
+    keywordOrKeywords: string | string[]
   ): SeoAnalysisResult {
     const checks: SeoCheck[] = [];
     let passedChecks = 0;
@@ -79,43 +99,84 @@ export class SeoAnalyzer {
       3
     );
 
-    // 4. Keyword in Title
-    if (keyword) {
+    const rawKeywords = (Array.isArray(keywordOrKeywords) ? keywordOrKeywords : [keywordOrKeywords])
+      .flatMap((k) => (k ?? '').split(','))
+      .map((k) => k.trim())
+      .filter(Boolean);
+
+    const keywords = SeoAnalyzer.normalizeKeywords(keywordOrKeywords);
+    if (keywords.length > 0) {
+      // 4. Keyword Count
+      addCheck(
+        'keywords-count',
+        '關鍵字數量',
+        keywords.length >= 1 && keywords.length <= 10,
+        `已設定 ${keywords.length} 個關鍵字`,
+        `目前設定 ${keywords.length} 個關鍵字，建議 1-10 個以利聚焦`,
+        1,
+        true
+      );
+
+      // 4.1 Duplicate keywords (warning)
+      addCheck(
+        'keywords-duplicates',
+        '關鍵字重複',
+        rawKeywords.length === keywords.length,
+        '關鍵字無重複',
+        '關鍵字有重複，建議移除重複項目以聚焦主題',
+        1,
+        true
+      );
+
+      // 5. Keyword Length Mix (short/long-tail)
+      const shortKeywords = keywords.filter((k) => k.length <= 4);
+      const longKeywords = keywords.filter((k) => k.length >= 5);
+      addCheck(
+        'keywords-length-mix',
+        '關鍵字長短配置',
+        shortKeywords.length > 0 && longKeywords.length > 0,
+        `已包含短尾 ${shortKeywords.length}、長尾 ${longKeywords.length}`,
+        '建議同時包含短尾（較短）與長尾（較長）關鍵字，以兼顧流量與精準度',
+        1,
+        true
+      );
+
+      // 6. Keyword in Title (any)
       addCheck(
         'keyword-title',
         '標題包含關鍵字',
-        title.includes(keyword),
-        '標題包含關鍵字',
-        '建議標題中包含焦點關鍵字',
+        keywords.some((k) => title.includes(k)),
+        '標題包含至少一個關鍵字',
+        '建議標題中包含至少一個主要/長尾關鍵字',
         3
       );
 
-      // 5. Keyword in Description
+      // 7. Keyword in Description (any)
       addCheck(
         'keyword-desc',
         '摘要包含關鍵字',
-        description.includes(keyword),
-        '摘要包含關鍵字',
-        '建議摘要中包含焦點關鍵字',
+        keywords.some((k) => description.includes(k)),
+        '摘要包含至少一個關鍵字',
+        '建議摘要中包含至少一個主要/長尾關鍵字',
         2
       );
 
-      // 6. Keyword in Content
+      // 8. Keyword in Content (any)
       addCheck(
         'keyword-content',
         '內容包含關鍵字',
-        plainTextContent.includes(keyword),
-        '內容包含關鍵字',
-        '建議文章內容中包含焦點關鍵字',
+        keywords.some((k) => plainTextContent.includes(k)),
+        '內容包含至少一個關鍵字',
+        '建議文章內容中包含你設定的關鍵字（短尾/長尾皆可）',
         3
       );
     } else {
-       checks.push({
-          id: 'keyword-missing',
-          label: '焦點關鍵字',
-          status: 'warning',
-          message: '未設定焦點關鍵字，無法進行關鍵字分析'
-        });
+      checks.push({
+        id: 'keywords-missing',
+        label: '分析用關鍵字',
+        status: 'warning',
+        message: '未設定分析用關鍵字（可長可短），無法進行關鍵字相關評分'
+      });
     }
 
     // 7. Subheadings (H2, H3)

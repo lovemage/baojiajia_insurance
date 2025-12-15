@@ -46,8 +46,8 @@ export default function BlogEditor({ onBack }: Props) {
   // Update focus keyword when meta keywords change (optional convenience)
   useEffect(() => {
     if (editingPost?.meta_keywords && !focusKeyword) {
-      const firstKeyword = editingPost.meta_keywords.split(',')[0].trim();
-      if (firstKeyword) setFocusKeyword(firstKeyword);
+      const keywords = editingPost.meta_keywords.trim();
+      if (keywords) setFocusKeyword(keywords);
     }
   }, [editingPost?.meta_keywords]);
 
@@ -111,7 +111,7 @@ export default function BlogEditor({ onBack }: Props) {
     
     // Also set focus keyword for analysis
     if (keywords) {
-      setFocusKeyword(keywords.split(',')[0].trim());
+      setFocusKeyword(keywords);
     }
     
     alert('已自動填入 SEO 標題、描述與關鍵字。請檢查並微調。');
@@ -263,8 +263,7 @@ export default function BlogEditor({ onBack }: Props) {
     setHasAnalyzed(false);
     // Initialize focus keyword from meta keywords if available
     if (post.meta_keywords) {
-      const first = post.meta_keywords.split(',')[0].trim();
-      setFocusKeyword(first);
+      setFocusKeyword(post.meta_keywords.trim());
     } else {
       setFocusKeyword('');
     }
@@ -703,9 +702,9 @@ export default function BlogEditor({ onBack }: Props) {
                   <div className="border-t border-gray-200 pt-6">
                     <div className="mb-4">
                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        分析用焦點關鍵字 (Focus Keyword)
+                        分析用關鍵字 (Keywords)
                         <span className="ml-2 text-xs text-gray-500 font-normal">
-                          (用於 SEO 分析，建議與 Meta 關鍵字一致)
+                          (用於 SEO 分析，可填多組並以逗號分隔，建議與 Meta 關鍵字一致)
                         </span>
                       </label>
                       <input
@@ -713,7 +712,7 @@ export default function BlogEditor({ onBack }: Props) {
                         value={focusKeyword}
                         onChange={(e) => setFocusKeyword(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                        placeholder="輸入主要關鍵字進行分析"
+                        placeholder="例如：保險, 新生兒保險, 新生兒保險規劃"
                       />
                     </div>
 
