@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import Navigation from '../../components/feature/Navigation';
 import Footer from '../../components/feature/Footer';
 import { supabase } from '../../lib/supabase';
+import { SEO } from '../../components/SEO';
 
 interface BlogPost {
   id: string;
@@ -51,36 +52,11 @@ export default function BlogDetail() {
     fetchRelatedPosts();
   }, [post?.id]);
 
-  useEffect(() => {
-    if (!post) return;
 
-    const metaTitle = (post.meta_title || post.title || '').trim();
-    const metaDescription = (post.meta_description || post.excerpt || '').trim();
-    const metaKeywords = (post.meta_keywords || '').trim();
-
-    if (metaTitle) document.title = metaTitle;
-
-    const ensureMeta = (name: string) => {
-      let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-      if (!el) {
-        el = document.createElement('meta');
-        el.setAttribute('name', name);
-        document.head.appendChild(el);
-      }
-      return el;
-    };
-
-    if (metaDescription) {
-      ensureMeta('description').setAttribute('content', metaDescription);
-    }
-    if (metaKeywords) {
-      ensureMeta('keywords').setAttribute('content', metaKeywords);
-    }
-  }, [post]);
 
   const fetchPost = async () => {
     if ((!slug && !id) || slug === ':slug' || id === ':id') return;
-    
+
     try {
       let query = supabase
         .from('blog_posts')
@@ -112,7 +88,7 @@ export default function BlogDetail() {
 
   const fetchRelatedPosts = async () => {
     if (!post) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('blog_posts')
@@ -174,6 +150,29 @@ export default function BlogDetail() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title={`${post.title} | 保家佳保險知識`}
+        description={post.meta_description || post.excerpt}
+        keywords={post.meta_keywords ? post.meta_keywords.split(',') : [post.category, "保險知識", "保家佳"]}
+        image={post.image_url}
+        url={post.slug ? `/blog/${post.slug}` : `/blog/id/${post.id}`}
+        type="article"
+        author={post.author}
+        publishedTime={post.published_at}
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          "headline": post.title,
+          "image": post.image_url ? [post.image_url] : [],
+          "datePublished": post.published_at,
+          "dateModified": new Date().toISOString(), // Fallback or add updated_at to interface if needed
+          "author": [{
+            "@type": "Person",
+            "name": post.author,
+            "url": "https://baojiajia.org/about"
+          }]
+        }}
+      />
       <Navigation />
 
       {/* 麵包屑導航 */}
@@ -245,7 +244,7 @@ export default function BlogDetail() {
           )}
 
           {/* 文章正文 */}
-          <div 
+          <div
             className="prose prose-lg max-w-none mb-12"
             dangerouslySetInnerHTML={{ __html: post.content }}
             style={{

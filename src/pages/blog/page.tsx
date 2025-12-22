@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Navigation from '../../components/feature/Navigation';
 import Footer from '../../components/feature/Footer';
 import { supabase } from '../../lib/supabase';
+import { SEO } from '../../components/SEO';
 
 interface BlogPost {
   id: string;
@@ -62,7 +63,7 @@ export default function Blog() {
         setCategories(['全部', '保險基礎', '醫療保障', '理財規劃', '理賠實務', '案例分享']);
         return;
       }
-      
+
       const categoryNames = (data && Array.isArray(data)) ? data.map((c: any) => c.name) : [];
       setCategories(['全部', ...categoryNames]);
     } catch (error) {
@@ -140,16 +141,22 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="保險知識專區 | 保家佳"
+        description="最專業的保險知識分享，包含醫療險、意外險、儲蓄險等各類保險理財觀念，讓您輕鬆搞懂保險。"
+        keywords={["保險知識", "保險觀念", "保險理財", "醫療險", "意外險", "保單健診"]}
+        url="/blog"
+      />
       <Navigation />
-      
+
       <section className="bg-gradient-to-r from-teal-600 to-teal-700 py-12 sm:py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">保險知識分享</h1>
           <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-3xl mx-auto mb-6 sm:mb-8 px-4">
             用淺顯易懂的方式，讓保險不再艱澀難懂
           </p>
-          <a 
-            href="https://www.instagram.com/baojia_jia/" 
+          <a
+            href="https://www.instagram.com/baojia_jia/"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center text-white hover:text-white/80 transition-colors cursor-pointer"
@@ -197,11 +204,10 @@ export default function Blog() {
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                      selectedCategory === category
+                    className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-semibold transition-colors cursor-pointer whitespace-nowrap ${selectedCategory === category
                         ? 'bg-teal-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     {category}
                   </button>
@@ -212,13 +218,13 @@ export default function Blog() {
               {filteredPosts.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   {filteredPosts.map((post) => (
-                    <Link 
+                    <Link
                       key={post.id}
                       to={post.slug ? `/blog/${post.slug}` : `/blog/id/${post.id}`}
                       className="bg-white rounded-xl sm:rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group"
                     >
                       <div className="relative h-44 sm:h-48 overflow-hidden">
-                        <img 
+                        <img
                           src={post.image_url || 'https://readdy.ai/api/search-image?query=Insurance%20education%20concept%20with%20friendly%20advisor%20explaining%20to%20young%20person%2C%20bright%20modern%20setting%2C%20clean%20background%2C%20professional%20photography%20showing%20learning%20and%20understanding&width=800&height=500&seq=blog-default&orientation=landscape'}
                           alt={post.title}
                           className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"

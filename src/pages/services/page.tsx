@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { SEO } from '../../components/SEO';
 
 interface ServiceItem {
   id: string;
@@ -52,6 +53,12 @@ export default function ServicesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO
+        title="專業保險服務項目 | 保家佳"
+        description="提供全方位的專業保險服務，包括保單健診、醫療保障規劃、退休理財方案等，為您的未來提供最完善的保障。"
+        keywords={["保險服務", "保單健診", "醫療保障", "退休規劃", "保險諮詢"]}
+        url="/services"
+      />
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-teal-600 to-blue-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -87,7 +94,7 @@ export default function ServicesPage() {
               <div className="p-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">{service.title}</h3>
                 <p className="text-gray-600 mb-6 leading-relaxed line-clamp-3">{service.description}</p>
-                
+
                 <Link
                   to={`/services/${service.slug}`}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"

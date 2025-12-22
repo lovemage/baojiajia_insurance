@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import Navigation from '../../components/feature/Navigation';
+import { SEO } from '../../components/SEO';
 
 interface ServiceDetail {
   id: string;
@@ -88,6 +89,25 @@ export default function ServiceDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+
+      <SEO
+        title={`${service.title} | 保家佳專業服務`}
+        description={service.description}
+        image={service.hero_image_url || service.image_url}
+        url={`/services/${slug}`}
+        type="article"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "Service",
+          "name": service.title,
+          "description": service.description,
+          "provider": {
+            "@type": "Organization",
+            "name": "保家佳"
+          },
+          "serviceType": service.title
+        }}
+      />
       {/* 頂部導航 */}
       <Navigation />
 
