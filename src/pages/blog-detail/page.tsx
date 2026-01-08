@@ -169,7 +169,7 @@ export default function BlogDetail() {
           "author": [{
             "@type": "Person",
             "name": post.author,
-            "url": "https://baojiajia.org/about"
+            "url": "https://baojiajia.tw/about"
           }]
         }}
       />

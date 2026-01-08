@@ -15,12 +15,12 @@ export default function Home() {
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://baojiajia.org/#organization",
+        "@id": "https://baojiajia.tw/#organization",
         "name": "保家佳",
-        "url": "https://baojiajia.org/",
+        "url": "https://baojiajia.tw/",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://baojiajia.org/hero.png",
+          "url": "https://baojiajia.tw/hero.png",
           "width": 512,
           "height": 512
         },
@@ -34,25 +34,25 @@ export default function Home() {
       },
       {
         "@type": "WebSite",
-        "@id": "https://baojiajia.org/#website",
-        "url": "https://baojiajia.org/",
+        "@id": "https://baojiajia.tw/#website",
+        "url": "https://baojiajia.tw/",
         "name": "保家佳",
         "description": "保險理財知識分享",
         "publisher": {
-          "@id": "https://baojiajia.org/#organization"
+          "@id": "https://baojiajia.tw/#organization"
         },
         "inLanguage": "zh-TW"
       },
       {
         "@type": "WebPage",
-        "@id": "https://baojiajia.org/#webpage",
-        "url": "https://baojiajia.org/",
+        "@id": "https://baojiajia.tw/#webpage",
+        "url": "https://baojiajia.tw/",
         "name": "保家佳 | 保險理財知識分享",
         "isPartOf": {
-          "@id": "https://baojiajia.org/#website"
+          "@id": "https://baojiajia.tw/#website"
         },
         "about": {
-          "@id": "https://baojiajia.org/#organization"
+          "@id": "https://baojiajia.tw/#organization"
         },
         "description": "致力於保險知識分享及提供專業的保險諮詢服務。透過淺顯易懂的方式，讓您真正了解保險、善用保險，為家人建立完整的保護網。",
         "inLanguage": "zh-TW"

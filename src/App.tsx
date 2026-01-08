@@ -16,8 +16,8 @@ function App() {
           "@context": "https://schema.org",
           "@type": "Organization",
           "name": "保家佳",
-          "url": "https://baojiajia.org",
-          "logo": "https://baojiajia.org/hero.png",
+          "url": "https://baojiajia.tw",
+          "logo": "https://baojiajia.tw/hero.png",
           "sameAs": []
         }}
       />

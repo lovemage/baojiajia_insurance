@@ -6,7 +6,7 @@
   
   <!-- 首頁 - 最高優先級 -->
   <url>
-    <loc>https://baojiajia.org/</loc>
+    <loc>https://baojiajia.tw/</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -14,7 +14,7 @@
 
   <!-- 關於我們 - 排名 1 -->
   <url>
-    <loc>https://baojiajia.org/about</loc>
+    <loc>https://baojiajia.tw/about</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.95</priority>
@@ -22,7 +22,7 @@
 
   <!-- 部落格 - 排名 2 -->
   <url>
-    <loc>https://baojiajia.org/blog</loc>
+    <loc>https://baojiajia.tw/blog</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
@@ -30,7 +30,7 @@
 
   <!-- 保障需求分析 - 排名 3 -->
   <url>
-    <loc>https://baojiajia.org/analysis</loc>
+    <loc>https://baojiajia.tw/analysis</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
@@ -38,7 +38,7 @@
 
   <!-- 新手入門 - 排名 4 -->
   <url>
-    <loc>https://baojiajia.org/beginner</loc>
+    <loc>https://baojiajia.tw/beginner</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
@@ -46,7 +46,7 @@
 
   <!-- 服務項目 -->
   <url>
-    <loc>https://baojiajia.org/services</loc>
+    <loc>https://baojiajia.tw/services</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
@@ -54,7 +54,7 @@
 
   <!-- 服務詳情頁 - 醫療保障 -->
   <url>
-    <loc>https://baojiajia.org/services/medical</loc>
+    <loc>https://baojiajia.tw/services/medical</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
@@ -62,7 +62,7 @@
 
   <!-- 服務詳情頁 - 重大疾病保障 -->
   <url>
-    <loc>https://baojiajia.org/services/critical-illness</loc>
+    <loc>https://baojiajia.tw/services/critical-illness</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
@@ -70,7 +70,7 @@
 
   <!-- 服務詳情頁 - 長期照護 -->
   <url>
-    <loc>https://baojiajia.org/services/long-term-care</loc>
+    <loc>https://baojiajia.tw/services/long-term-care</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
@@ -78,7 +78,7 @@
 
   <!-- 服務詳情頁 - 意外保障 -->
   <url>
-    <loc>https://baojiajia.org/services/accident</loc>
+    <loc>https://baojiajia.tw/services/accident</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
@@ -86,7 +86,7 @@
 
   <!-- 服務詳情頁 - 壽險保障 -->
   <url>
-    <loc>https://baojiajia.org/services/life</loc>
+    <loc>https://baojiajia.tw/services/life</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
@@ -94,7 +94,7 @@
 
   <!-- 服務詳情頁 - 兒童保障 -->
   <url>
-    <loc>https://baojiajia.org/services/child</loc>
+    <loc>https://baojiajia.tw/services/child</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
@@ -102,7 +102,7 @@
 
   <!-- 聯繫我們 -->
   <url>
-    <loc>https://baojiajia.org/contact</loc>
+    <loc>https://baojiajia.tw/contact</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.60</priority>
@@ -110,7 +110,7 @@
 
   <!-- 服務條款 -->
   <url>
-    <loc>https://baojiajia.org/terms</loc>
+    <loc>https://baojiajia.tw/terms</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.30</priority>
@@ -118,7 +118,7 @@
 
   <!-- 隱私政策 -->
   <url>
-    <loc>https://baojiajia.org/privacy</loc>
+    <loc>https://baojiajia.tw/privacy</loc>
     <lastmod>2026-01-08</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.30</priority>
