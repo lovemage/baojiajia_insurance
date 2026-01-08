@@ -26,7 +26,7 @@ export const SEO: React.FC<SEOProps> = ({
     modifiedTime,
     schema
 }) => {
-    const siteUrl = 'https://baojiajia.org';
+    const siteUrl = 'https://www.baojiajia.org';
     const defaultImage = `${siteUrl}/hero.png`;
 
     const fullUrl = url ? (url.startsWith('http') ? url : `${siteUrl}${url}`) : siteUrl;
