@@ -52,6 +52,7 @@ const CHILD_SVG_BASE = '/pdf_svg_html_模板製作/child/';
 const escapeForRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const convertAdultHtmlToChild = (html: string) => html.replace(new RegExp(escapeForRegex(ADULT_SVG_BASE), 'g'), CHILD_SVG_BASE);
 const normalizeTemplateAssets = (html: string) => html
+  .replace(/https?:\/\/baojiajia\.org/g, 'https://baojiajia.tw')
   .replace(/\/pdf-templates\/adult\//g, ADULT_SVG_BASE)
   .replace(/\/pdf-templates\/child\//g, CHILD_SVG_BASE);
 
