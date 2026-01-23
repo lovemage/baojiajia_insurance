@@ -1,14 +1,20 @@
 import Navigation from '../../components/feature/Navigation';
 import Footer from '../../components/feature/Footer';
+import { SEO } from '../../components/SEO';
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="隱私權政策 | 保家佳"
+        description="保家佳隱私權保護政策說明，我們重視您的隱私權，並致力於保護您的個人資料安全。"
+        url="/privacy"
+      />
       <Navigation />
       <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">隱私權政策</h1>
-          
+
           <div className="prose prose-lg text-gray-600 space-y-8">
             <section>
               <p>
@@ -66,7 +72,7 @@ export default function PrivacyPage() {
                 為了提供您最佳的服務，本平台會在您的電腦中放置並取用我們的 Cookie，若您不願接受 Cookie 的寫入，您可在您使用的瀏覽器功能項中設定隱私權等級為高，即可拒絕 Cookie 的寫入，但可能會導致網站某些功能無法正常執行。
               </p>
             </section>
-            
+
             <section>
               <h2 className="text-xl font-bold text-gray-800 mb-4">7. 隱私權保護政策之修正</h2>
               <p>

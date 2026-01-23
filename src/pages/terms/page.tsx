@@ -1,14 +1,20 @@
 import Navigation from '../../components/feature/Navigation';
 import Footer from '../../components/feature/Footer';
+import { SEO } from '../../components/SEO';
 
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="服務條款 | 保家佳"
+        description="保家佳服務條款說明，包含服務內容、使用者義務、免責聲明等重要資訊。"
+        url="/terms"
+      />
       <Navigation />
       <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">服務條款</h1>
-          
+
           <div className="prose prose-lg text-gray-600 space-y-8">
             <section>
               <h2 className="text-xl font-bold text-gray-800 mb-4">1. 條款接受</h2>
@@ -57,7 +63,7 @@ export default function TermsPage() {
                 本平台保留隨時修改本服務條款之權利，修改後的條款將公佈於網站上，不另行個別通知。您於任何修改或變更後繼續使用本服務，視為您已閱讀、瞭解並同意接受該等修改或變更。
               </p>
             </section>
-            
+
             <section>
               <h2 className="text-xl font-bold text-gray-800 mb-4">7. 聯絡我們</h2>
               <p>

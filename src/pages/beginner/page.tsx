@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '../../components/feature/Navigation';
 import Footer from '../../components/feature/Footer';
+import { SEO } from '../../components/SEO';
 
 interface InsuranceType {
   id: string;
@@ -205,8 +206,26 @@ export default function BeginnerPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="保險新手村 - 從零開始了解保險 | 保家佳"
+        description="專為保險新手設計的入門指南，介紹壽險、醫療險、意外險等六大保障，教您如何規劃最適合自己的保險方案。"
+        keywords={["保險新手", "保險入門", "保險知識", "六大保障", "保險規劃"]}
+        url="/beginner"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": faqs.map(faq => ({
+            "@type": "Question",
+            "name": faq.question,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": faq.answer
+            }
+          }))
+        }}
+      />
       <Navigation />
-      
+
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-teal-600 to-teal-700 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -232,11 +251,10 @@ export default function BeginnerPage() {
               <button
                 key={type.id}
                 onClick={() => setSelectedType(type.id)}
-                className={`px-8 py-3 rounded-lg font-medium transition-all duration-300 whitespace-nowrap ${
-                  selectedType === type.id
-                    ? 'bg-teal-500 text-white shadow-lg'
-                    : 'bg-white text-gray-600 hover:bg-gray-50 shadow border border-gray-200'
-                }`}
+                className={`px-8 py-3 rounded-lg font-medium transition-all duration-300 whitespace-nowrap ${selectedType === type.id
+                  ? 'bg-teal-500 text-white shadow-lg'
+                  : 'bg-white text-gray-600 hover:bg-gray-50 shadow border border-gray-200'
+                  }`}
               >
                 {type.name}
               </button>

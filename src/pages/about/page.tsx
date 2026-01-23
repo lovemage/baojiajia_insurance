@@ -3,6 +3,7 @@ import Navigation from '../../components/feature/Navigation';
 import Footer from '../../components/feature/Footer';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { SEO } from '../../components/SEO';
 
 interface AboutContent {
   mission_title: string;
@@ -38,6 +39,21 @@ export default function About() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navigation />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">載入中...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   const fetchData = async () => {
     try {
@@ -83,8 +99,26 @@ export default function About() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="關於我們 - 保家佳 | 您的家庭保險顧問"
+        description="保家佳致力於創造沒有推銷壓力的保險知識環境。我們提供專業、客觀的保險諮詢，協助您破解保險話術，找到最適合自己的保障。"
+        keywords={["關於保家佳", "保險顧問", "保險團隊", "保險諮詢", "核心價值"]}
+        url="/about"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          "name": "關於保家佳",
+          "description": "保家佳致力於創造沒有推銷壓力的保險知識環境",
+          "mainEntity": {
+            "@type": "Organization",
+            "name": "保家佳",
+            "logo": "https://baojiajia.tw/hero.png",
+            "url": "https://baojiajia.tw"
+          }
+        }}
+      />
       <Navigation />
-      
+
       <section className="bg-gradient-to-r from-teal-600 to-teal-700 py-12 sm:py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">保家佳的命名由來</h1>
@@ -143,10 +177,10 @@ export default function About() {
               {teamMembers.map((member) => (
                 <div key={member.id} className="bg-white rounded-xl shadow-md overflow-hidden group hover:shadow-xl transition-all">
                   <div className="aspect-w-3 aspect-h-4 relative overflow-hidden">
-                    <img 
-                      src={member.image_url} 
-                      alt={member.name} 
-                      className="w-full h-80 object-cover object-top transform group-hover:scale-105 transition-transform duration-300" 
+                    <img
+                      src={member.image_url}
+                      alt={member.name}
+                      className="w-full h-80 object-cover object-top transform group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div className="p-6">
@@ -196,7 +230,7 @@ export default function About() {
                 description: '透過 Instagram 與客戶互動,建立保險知識社群,一起學習成長'
               }
             ]).map((value, index) => (
-              <div 
+              <div
                 key={index}
                 className="bg-white p-6 sm:p-8 rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-shadow text-center border border-gray-100"
               >
@@ -222,13 +256,13 @@ export default function About() {
             先了解保險知識，再做出最適合的決策
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-            <Link 
+            <Link
               to="/analysis"
               className="inline-block bg-white text-teal-600 px-8 sm:px-10 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap"
             >
               需求分析 DIY
             </Link>
-            <Link 
+            <Link
               to="/blog"
               className="inline-block bg-white/10 backdrop-blur-sm text-white px-8 sm:px-10 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-white/20 transition-colors border-2 border-white/30 cursor-pointer whitespace-nowrap"
             >

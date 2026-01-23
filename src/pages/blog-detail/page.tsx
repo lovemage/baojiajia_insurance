@@ -165,12 +165,16 @@ export default function BlogDetail() {
           "headline": post.title,
           "image": post.image_url ? [post.image_url] : [],
           "datePublished": post.published_at,
-          "dateModified": new Date().toISOString(), // Fallback or add updated_at to interface if needed
+          "dateModified": new Date().toISOString(),
           "author": [{
             "@type": "Person",
             "name": post.author,
             "url": "https://baojiajia.tw/about"
-          }]
+          }],
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": `https://baojiajia.tw/blog/${post.slug || post.id}`
+          }
         }}
       />
       <Navigation />

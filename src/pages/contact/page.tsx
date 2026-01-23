@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Navigation from '../../components/feature/Navigation';
 import Footer from '../../components/feature/Footer';
+import { SEO } from '../../components/SEO';
 import { sendTelegramNotification } from '../../services/telegramService';
 import { supabase } from '../../lib/supabase';
 
@@ -140,8 +141,14 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="聯絡我們 - 免費保險諮詢 | 保家佳"
+        description="有任何保險問題？歡迎預約免費諮詢。我們的專業團隊將為您提供客觀、專業的保險建議。"
+        keywords={["聯絡保家佳", "保險諮詢", "免費諮詢", "預約服務"]}
+        url="/contact"
+      />
       <Navigation />
-      
+
       <section className="bg-gradient-to-r from-teal-600 to-teal-700 py-12 sm:py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">聯絡我們</h1>

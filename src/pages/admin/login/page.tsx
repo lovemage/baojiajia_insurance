@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
+import { SEO } from '../../../components/SEO';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -51,6 +52,12 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 flex items-center justify-center px-4">
+      <SEO
+        title="後台登入 | 保家佳"
+        description="保家佳後台管理系統登入頁面"
+        keywords={[]}
+        url="/admin/login"
+      />
       <div className="max-w-md w-full">
         {/* Logo 區域 */}
         <div className="text-center mb-8">
