@@ -6,15 +6,7 @@ interface Props {
   onBack: () => void;
 }
 
-interface SystemSetting {
-  id: string;
-  setting_key: string;
-  setting_value: string;
-  description: string;
-}
-
 export default function SystemSettingsEditor({ onBack }: Props) {
-  const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testingBot, setTestingBot] = useState(false);
@@ -28,6 +20,9 @@ export default function SystemSettingsEditor({ onBack }: Props) {
   // Analysis Icon 表單狀態
   const [adultIcon, setAdultIcon] = useState('');
   const [childIcon, setChildIcon] = useState('');
+
+  // Customer Reviews
+  const [reviewsSubmissionEnabled, setReviewsSubmissionEnabled] = useState(true);
 
   useEffect(() => {
     fetchSettings();
@@ -43,12 +38,11 @@ export default function SystemSettingsEditor({ onBack }: Props) {
           'telegram_chat_id', 
           'telegram_notifications_enabled',
           'analysis_adult_icon',
-          'analysis_child_icon'
+          'analysis_child_icon',
+          'reviews_submission_enabled'
         ]);
 
       if (error) throw error;
-
-      setSettings(data || []);
       
       // 設定表單初始值
       data?.forEach(setting => {
@@ -67,6 +61,9 @@ export default function SystemSettingsEditor({ onBack }: Props) {
             break;
           case 'analysis_child_icon':
             setChildIcon(setting.setting_value || '');
+            break;
+          case 'reviews_submission_enabled':
+            setReviewsSubmissionEnabled(setting.setting_value !== 'false');
             break;
         }
       });
@@ -108,7 +105,8 @@ export default function SystemSettingsEditor({ onBack }: Props) {
         { setting_key: 'telegram_chat_id', setting_value: telegramChatId, description: 'Telegram Chat ID' },
         { setting_key: 'telegram_notifications_enabled', setting_value: notificationsEnabled.toString(), description: 'Enable Telegram notifications' },
         { setting_key: 'analysis_adult_icon', setting_value: adultIcon, description: '成人保險規劃圖示 URL' },
-        { setting_key: 'analysis_child_icon', setting_value: childIcon, description: '幼兒保險規劃圖示 URL' }
+        { setting_key: 'analysis_child_icon', setting_value: childIcon, description: '幼兒保險規劃圖示 URL' },
+        { setting_key: 'reviews_submission_enabled', setting_value: reviewsSubmissionEnabled.toString(), description: 'Enable/disable customer review submissions (login required)' }
       ];
 
       for (const update of updates) {
@@ -190,8 +188,48 @@ export default function SystemSettingsEditor({ onBack }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex items-center mb-6">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-gray-900">系統設定</h1>
+        <button
+          onClick={onBack}
+          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors whitespace-nowrap"
+        >
+          返回
+        </button>
+      </div>
+
+      {/* Customer Reviews Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <span className="mr-2">⭐</span>
+          客戶真實評價設定
+        </h2>
+
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <h3 className="font-medium text-gray-900">開放送出評價</h3>
+            <p className="text-sm text-gray-600">啟用後，前台會顯示「留下評價」，且使用者必須登入後才能送出（避免垃圾評價）</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={reviewsSubmissionEnabled}
+              onChange={(e) => setReviewsSubmissionEnabled(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+          </label>
+        </div>
+
+        <div className="pt-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            {saving ? '儲存中...' : '💾 儲存設定'}
+          </button>
+        </div>
       </div>
 
       {/* Analysis Icons Section */}

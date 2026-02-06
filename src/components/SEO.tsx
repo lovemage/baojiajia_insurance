@@ -29,7 +29,7 @@ export const SEO: React.FC<SEOProps> = ({
     const siteUrl = 'https://baojiajia.tw';
     const defaultImage = `${siteUrl}/hero.png`;
 
-    const fullUrl = url ? (url.startsWith('http') ? url : `${siteUrl}${url}`) : siteUrl;
+    const fullUrl = url ? (url.startsWith('http') ? url : `${siteUrl}${url}`) : `${siteUrl}/`;
     const metaImage = image ? (image.startsWith('http') ? image : `${siteUrl}${image}`) : defaultImage;
     const metaKeywords = keywords?.join(', ');
 

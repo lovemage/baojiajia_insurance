@@ -8,10 +8,10 @@ import HomepageEditor from './components/HomepageEditor';
 import HeroCarouselManager from './components/HeroCarouselManager';
 import FeaturesEditor from './components/FeaturesEditor';
 import TestimonialsEditor from './components/TestimonialsEditor';
+import CustomerReviewsEditor from './components/CustomerReviewsEditor';
 import BlogEditor from './components/BlogEditor';
 import AboutEditor from './components/AboutEditor';
 import MemberManager from './components/MemberManager';
-import ContactEditor from './components/ContactEditor';
 import NavigationEditor from './components/NavigationEditor';
 import SystemSettingsEditor from './components/SystemSettingsEditor';
 import SiteSettingsEditor from './components/SiteSettingsEditor';
@@ -32,7 +32,7 @@ interface ServiceItem {
   is_active: boolean;
 }
 
-type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'hero-carousel' | 'features' | 'testimonials' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'system-settings' | 'statistics' | 'blog-categories' | 'change-password' | 'pdf-template';
+type EditMode = 'list' | 'service-item' | 'service-detail' | 'homepage' | 'hero-carousel' | 'features' | 'testimonials' | 'customer-reviews' | 'blog' | 'about' | 'member-manager' | 'navigation' | 'site-settings' | 'system-settings' | 'statistics' | 'blog-categories' | 'change-password' | 'pdf-template';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -71,6 +71,7 @@ export default function AdminPage() {
     { id: 'list', label: '服務項目', icon: 'ri-list-check' },
     { id: 'features', label: '特色優勢', icon: 'ri-star-line' },
     { id: 'testimonials', label: '客戶見證', icon: 'ri-chat-quote-line' },
+    { id: 'customer-reviews', label: '真實評價', icon: 'ri-star-smile-line' },
     { id: 'blog', label: '知識專區', icon: 'ri-article-line' },
     { id: 'blog-categories', label: '文章分類', icon: 'ri-folder-settings-line' },
     { id: 'about', label: '關於我們', icon: 'ri-team-line' },
@@ -95,6 +96,8 @@ export default function AdminPage() {
         return <FeaturesEditor onBack={handleBack} />;
       case 'testimonials':
         return <TestimonialsEditor onBack={handleBack} />;
+      case 'customer-reviews':
+        return <CustomerReviewsEditor onBack={handleBack} />;
       case 'blog':
         return <BlogEditor onBack={handleBack} />;
       case 'about':

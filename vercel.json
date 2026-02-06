@@ -2,6 +2,19 @@
   "buildCommand": "npm run build",
   "outputDirectory": "out",
   "framework": "vite",
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.baojiajia.tw"
+        }
+      ],
+      "destination": "https://baojiajia.tw/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!api/|sitemap.xml|robots.txt).*)",
