@@ -36,25 +36,6 @@ export default function About() {
   const [coreValues, setCoreValues] = useState<CoreValue[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Navigation />
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">載入中...</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   const fetchData = async () => {
     try {
       const [contentRes, teamRes, valuesRes] = await Promise.all([
@@ -81,6 +62,25 @@ export default function About() {
       .replace(/<[^>]+>/g, '')
       .trim();
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navigation />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">載入中...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   const missionText = formatMissionContent(aboutContent?.mission_content);
   const missionParagraphs = (missionText || `在保險市場上，因為有成千上萬的商品、密密麻麻的條款、艱澀難懂的專業術語，又甚至是一些不公開的銷售話術...等。導致一般人想要看懂保險真的是困難重重！也因此保險業總是被說是個「水很深」的行業。
