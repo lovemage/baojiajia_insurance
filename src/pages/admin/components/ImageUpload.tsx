@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { uploadToCloudinary } from '../../../lib/cloudinary';
+import { uploadImageToCloudinaryWebp, uploadToCloudinary } from '../../../lib/cloudinary';
 
 interface ImageUploadProps {
   value: string;
@@ -8,6 +8,8 @@ interface ImageUploadProps {
   label?: string;
   className?: string;
   accept?: string;
+  forceWebp?: boolean;
+  required?: boolean;
 }
 
 export default function ImageUpload({ 
@@ -15,7 +17,9 @@ export default function ImageUpload({
   onChange, 
   label = '圖片網址', 
   className = '',
-  accept = "image/*,video/*"
+  accept = "image/*,video/*",
+  forceWebp = false,
+  required = true
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
 
@@ -25,7 +29,9 @@ export default function ImageUpload({
 
     setUploading(true);
     try {
-      const url = await uploadToCloudinary(file);
+      const url = forceWebp && file.type.startsWith('image/')
+        ? await uploadImageToCloudinaryWebp(file)
+        : await uploadToCloudinary(file);
       onChange(url);
     } catch (error) {
       console.error('Upload failed:', error);
@@ -55,7 +61,7 @@ export default function ImageUpload({
                 onChange={(e) => onChange(e.target.value)}
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                 placeholder="輸入圖片網址或上傳檔案"
-                required
+                required={required}
             />
             <div className="relative">
                 <input

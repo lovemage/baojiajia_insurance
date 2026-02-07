@@ -163,13 +163,17 @@ export default function Testimonials() {
     setSubmitting(true);
     try {
       const user = session?.user;
+      const googleAvatar =
+        (user as any)?.user_metadata?.picture ||
+        (user as any)?.user_metadata?.avatar_url ||
+        null;
       const { error } = await supabase
         .from('customer_reviews')
         .insert({
           user_id: user?.id ?? null,
           user_email: user?.email ?? null,
           user_name: name || user?.user_metadata?.full_name || user?.user_metadata?.name || '匿名',
-          avatar_url: user?.user_metadata?.avatar_url || null,
+          avatar_url: googleAvatar,
           role: role || null,
           rating: formRating,
           content,

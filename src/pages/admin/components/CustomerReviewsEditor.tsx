@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
+import ImageUpload from './ImageUpload';
 
 interface CustomerReview {
   id: string;
@@ -336,8 +337,14 @@ export default function CustomerReviewsEditor({ onBack }: Props) {
                     <textarea value={editForm.content ?? ''} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">頭像網址（可選）</label>
-                    <input type="text" value={editForm.avatar_url ?? ''} onChange={(e) => setEditForm({ ...editForm, avatar_url: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="https://..." />
+                    <ImageUpload
+                      value={(editForm.avatar_url as any) ?? ''}
+                      onChange={(url) => setEditForm({ ...editForm, avatar_url: url })}
+                      label="頭像圖片"
+                      accept="image/*"
+                      forceWebp
+                      required={false}
+                    />
                   </div>
                   <div className="flex gap-3">
                     <button type="button" onClick={() => saveEdit(r.id)} disabled={saving} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 whitespace-nowrap">儲存</button>
