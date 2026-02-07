@@ -88,7 +88,33 @@ const main = async () => {
     })
     .filter(Boolean);
 
-  const allUrls = [...staticUrls, ...blogUrls];
+  const { data: services, error: servicesError } = await supabase
+    .from('service_items')
+    .select('slug, updated_at, is_active')
+    .eq('is_active', true)
+    .not('slug', 'is', null);
+
+  if (servicesError) {
+    console.error('Failed to fetch service_items for sitemap:', servicesError);
+    process.exit(1);
+  }
+
+  const serviceUrls = (services ?? [])
+    .map((s) => {
+      const slug = (s.slug ?? '').trim();
+      if (!slug) return null;
+
+      const lastmod = toIsoDate(s.updated_at) || today;
+      return {
+        loc: buildUrl(`/services/${slug}`),
+        lastmod,
+        changefreq: 'monthly',
+        priority: '0.70',
+      };
+    })
+    .filter(Boolean);
+
+  const allUrls = [...staticUrls, ...serviceUrls, ...blogUrls];
 
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -104,7 +130,9 @@ const main = async () => {
   ].join('\n');
 
   await writeFile(new URL('../public/sitemap.xml', import.meta.url), xml, 'utf8');
-  console.log(`Generated sitemap.xml with ${allUrls.length} URLs (${blogUrls.length} blog posts).`);
+  console.log(
+    `Generated sitemap.xml with ${allUrls.length} URLs (${serviceUrls.length} services, ${blogUrls.length} blog posts).`
+  );
 };
 
 main().catch((err) => {

@@ -25,6 +25,9 @@ export default function CustomerReviewsEditor({ onBack }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<CustomerReview>>({});
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     fetchReviews();
@@ -71,6 +74,86 @@ export default function CustomerReviewsEditor({ onBack }: Props) {
       alert('更新失敗，請稍後再試');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const startEdit = (r: CustomerReview) => {
+    setEditingId(r.id);
+    setEditForm({ user_name: r.user_name, role: r.role, content: r.content, rating: r.rating, avatar_url: r.avatar_url });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const saveEdit = async (id: string) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('customer_reviews').update({
+        user_name: editForm.user_name,
+        role: editForm.role,
+        content: editForm.content,
+        rating: editForm.rating,
+        avatar_url: editForm.avatar_url
+      }).eq('id', id);
+      if (error) throw error;
+      setEditingId(null);
+      setEditForm({});
+      await fetchReviews();
+    } catch (e) {
+      console.error('Error saving review edit:', e);
+      alert('儲存失敗');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addNewReview = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('customer_reviews').insert({
+        user_name: '新評價',
+        role: '',
+        content: '請編輯此評價內容',
+        rating: 5,
+        source: 'admin',
+        is_approved: true,
+        is_active: false,
+        display_order: reviews.length + 1
+      });
+      if (error) throw error;
+      await fetchReviews();
+    } catch (e) {
+      console.error('Error adding review:', e);
+      alert('新增失敗');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteReview = async (id: string) => {
+    if (!confirm('確定要刪除此評價？此操作無法復原。')) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('customer_reviews').delete().eq('id', id);
+      if (error) throw error;
+      await fetchReviews();
+    } catch (e) {
+      console.error('Error deleting review:', e);
+      alert('刪除失敗');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyInviteLink = async () => {
+    try {
+      await navigator.clipboard.writeText('https://baojiajia.tw/?review=open');
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      alert('複製失敗，請手動複製：https://baojiajia.tw/?review=open');
     }
   };
 
@@ -124,17 +207,32 @@ export default function CustomerReviewsEditor({ onBack }: Props) {
 
             <div className="flex flex-wrap gap-3">
               <button
+                onClick={addNewReview}
+                disabled={saving}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+              >
+                <i className="ri-add-line mr-2"></i>
+                新增評價
+              </button>
+              <button
+                onClick={copyInviteLink}
+                className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+              >
+                <i className={`${copiedLink ? 'ri-check-line' : 'ri-link'} mr-2`}></i>
+                {copiedLink ? '已複製！' : '複製邀請連結'}
+              </button>
+              <button
                 onClick={bulkReorder}
                 disabled={saving}
                 className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 whitespace-nowrap"
               >
                 <i className="ri-sort-asc mr-2"></i>
-                重新排序（已公開）
+                重新排序
               </button>
               <button
                 onClick={fetchReviews}
                 disabled={saving}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 whitespace-nowrap"
               >
                 <i className="ri-refresh-line mr-2"></i>
                 刷新
@@ -176,8 +274,19 @@ export default function CustomerReviewsEditor({ onBack }: Props) {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 whitespace-nowrap">{r.source}</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {r.source === 'seed' && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700 whitespace-nowrap">種子資料</span>
+                  )}
+                  {r.source === 'admin' && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">管理員建立</span>
+                  )}
+                  {r.source === 'site' && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 whitespace-nowrap">用戶提交</span>
+                  )}
+                  {r.source !== 'seed' && r.source !== 'admin' && r.source !== 'site' && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 whitespace-nowrap">{r.source}</span>
+                  )}
                   {r.is_approved ? (
                     <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 whitespace-nowrap">已審核</span>
                   ) : (
@@ -200,46 +309,101 @@ export default function CustomerReviewsEditor({ onBack }: Props) {
                 <div className="text-xs text-gray-500">{new Date(r.created_at).toLocaleString()}</div>
               </div>
 
-              <div className="mt-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{r.content}</div>
-
-              <div className="mt-5 pt-5 border-t border-gray-100 flex flex-col gap-3">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">排序（公開用）</label>
-                    <input
-                      type="number"
-                      value={r.display_order}
-                      onChange={(e) => updateReview(r.id, { display_order: Number(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                      disabled={saving}
-                    />
+              {editingId === r.id ? (
+                <div className="mt-4 space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">姓名</label>
+                      <input type="text" value={editForm.user_name ?? ''} onChange={(e) => setEditForm({ ...editForm, user_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">身份/職業</label>
+                      <input type="text" value={editForm.role ?? ''} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                    </div>
                   </div>
-                  <div className="md:col-span-2 flex items-end gap-3">
-                    <button
-                      type="button"
-                      onClick={() => updateReview(r.id, { is_approved: !r.is_approved, is_active: r.is_approved ? r.is_active : false })}
-                      disabled={saving}
-                      className="flex-1 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {r.is_approved ? '取消審核' : '通過審核'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateReview(r.id, { is_active: !r.is_active })}
-                      disabled={saving || !r.is_approved}
-                      className="flex-1 px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {r.is_active ? '下架' : '上架'}
-                    </button>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">評分</label>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button key={star} type="button" onClick={() => setEditForm({ ...editForm, rating: star })} className="cursor-pointer">
+                          <i className={`${star <= (editForm.rating ?? 5) ? 'ri-star-fill text-yellow-400' : 'ri-star-line text-gray-300'} text-xl`}></i>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">評價內容</label>
+                    <textarea value={editForm.content ?? ''} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">頭像網址（可選）</label>
+                    <input type="text" value={editForm.avatar_url ?? ''} onChange={(e) => setEditForm({ ...editForm, avatar_url: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="https://..." />
+                  </div>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => saveEdit(r.id)} disabled={saving} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 whitespace-nowrap">儲存</button>
+                    <button type="button" onClick={cancelEdit} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 whitespace-nowrap">取消</button>
                   </div>
                 </div>
+              ) : (
+                <>
+                  <div className="mt-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{r.content}</div>
 
-                {!r.is_approved && (
-                  <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                    尚未審核：需要先「通過審核」後才能上架公開。
+                  <div className="mt-5 pt-5 border-t border-gray-100 flex flex-col gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">排序（公開用）</label>
+                        <input
+                          type="number"
+                          value={r.display_order}
+                          onChange={(e) => updateReview(r.id, { display_order: Number(e.target.value) || 0 })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          disabled={saving}
+                        />
+                      </div>
+                      <div className="md:col-span-2 flex items-end gap-3 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(r)}
+                          disabled={saving}
+                          className="flex-1 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        >
+                          <i className="ri-edit-line mr-1"></i>編輯
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateReview(r.id, { is_approved: !r.is_approved, is_active: r.is_approved ? r.is_active : false })}
+                          disabled={saving}
+                          className="flex-1 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {r.is_approved ? '取消審核' : '通過審核'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateReview(r.id, { is_active: !r.is_active })}
+                          disabled={saving || !r.is_approved}
+                          className="flex-1 px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {r.is_active ? '下架' : '上架'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteReview(r.id)}
+                          disabled={saving}
+                          className="px-4 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        >
+                          <i className="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    {!r.is_approved && (
+                      <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        尚未審核：需要先「通過審核」後才能上架公開。
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
           ))}
         </div>

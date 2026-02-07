@@ -7,7 +7,7 @@ interface TelegramSettings {
 }
 
 interface NotificationData {
-  type: 'questionnaire_submitted' | 'pdf_downloaded' | 'admin_pdf_downloaded' | 'contact_form_submitted';
+  type: 'questionnaire_submitted' | 'pdf_downloaded' | 'admin_pdf_downloaded' | 'contact_form_submitted' | 'review_submitted';
   memberName: string;
   memberEmail?: string;
   memberPhone?: string;
@@ -25,6 +25,11 @@ interface NotificationData {
     monthlyBudget: string;
     consultationType: string;
     additionalMessage: string;
+  };
+  reviewData?: {
+    rating: number;
+    content: string;
+    role?: string;
   };
 }
 
@@ -218,6 +223,23 @@ ${details}
 
 📝 <b>留言內容：</b>
 ${contact?.additionalMessage || '無'}`;
+
+    case 'review_submitted':
+      const review = data.reviewData;
+      const stars = '⭐'.repeat(review?.rating || 5);
+      const contentPreview = (review?.content || '').slice(0, 80) + ((review?.content || '').length > 80 ? '…' : '');
+      return `⭐ <b>新評價待審核</b>
+
+👤 <b>姓名：</b>${data.memberName}
+📧 <b>Email：</b>${data.memberEmail || '未提供'}
+💼 <b>身份：</b>${review?.role || '未填寫'}
+${stars} (${review?.rating || 5} 星)
+⏰ <b>時間：</b>${timestamp}
+
+📝 <b>評價內容：</b>
+${contentPreview}
+
+💡 請至後台「真實評價」審核此評價。`;
 
     default:
       return `📢 <b>系統通知</b>

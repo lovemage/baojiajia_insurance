@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Helmet } from 'react-helmet-async';
+import { sendTelegramNotification } from '../../../services/telegramService';
 
 interface Testimonial {
   id: string;
@@ -11,50 +12,6 @@ interface Testimonial {
   avatar?: string;
 }
 
-const staticTestimonials = [
-  {
-    name: '小美',
-    role: '30歲上班族',
-    content: '之前對保險完全不懂，看了保家佳的 IG 文章後，才知道原來醫療險有這麼多眉角！顧問很有耐心地幫我規劃，現在終於有完整的保障了。',
-    rating: 5,
-    avatar: 'https://readdy.ai/api/search-image?query=Friendly%20young%20Asian%20woman%20portrait%20smiling%20warmly%2C%20simple%20clean%20background%2C%20professional%20headshot%20photography%20style%2C%20natural%20lighting%2C%20approachable%20and%20trustworthy%20appearance&width=200&height=200&seq=testimonial-baojia-1&orientation=squarish'
-  },
-  {
-    name: '阿傑',
-    role: '35歲新手爸爸',
-    content: '寶寶出生後才發現要買的保險好多！保家佳用很簡單的方式讓我了解兒童保險該怎麼買，也幫我省下不少保費。真的很推薦！',
-    rating: 5,
-    avatar: 'https://readdy.ai/api/search-image?query=Young%20Asian%20professional%20man%20portrait%20smiling%20confidently%2C%20simple%20clean%20background%2C%20professional%20headshot%20photography%20style%2C%20natural%20lighting%2C%20modern%20father%20appearance&width=200&height=200&seq=testimonial-baojia-2&orientation=squarish'
-  },
-  {
-    name: '雅婷',
-    role: '28歲小資族',
-    content: '預算有限但又想要有保障，保家佳教我如何用最少的錢買到最需要的保險。現在每個月保費不到 3000 元，但保障很完整！',
-    rating: 5,
-    avatar: 'https://readdy.ai/api/search-image?query=Creative%20young%20Asian%20woman%20portrait%20smiling%2C%20simple%20clean%20background%2C%20professional%20headshot%20photography%20style%2C%20natural%20lighting%2C%20friendly%20appearance&width=200&height=200&seq=testimonial-baojia-3&orientation=squarish'
-  },
-  {
-    name: '志明',
-    role: '42歲企業主',
-    content: '經營公司多年，一直沒有好好規劃保險。保家佳不只幫我做個人保障，也協助規劃員工團保，非常專業！',
-    rating: 5,
-    avatar: 'https://readdy.ai/api/search-image?query=Professional%20Asian%20businessman%20portrait%20in%20business%20attire%20smiling%2C%20simple%20clean%20background%2C%20professional%20headshot%20photography%20style%2C%20natural%20lighting%2C%20executive%20appearance&width=200&height=200&seq=testimonial-baojia-4&orientation=squarish'
-  },
-  {
-    name: '佩君',
-    role: '38歲家庭主婦',
-    content: '之前買了很多儲蓄險，但醫療保障卻不足。保家佳幫我重新檢視保單，調整成更適合我們家的配置。理賠時也很快速！',
-    rating: 5,
-    avatar: 'https://readdy.ai/api/search-image?query=Warm%20Asian%20woman%20portrait%20smiling%20kindly%2C%20simple%20clean%20background%2C%20professional%20headshot%20photography%20style%2C%20natural%20lighting%2C%20caring%20mother%20appearance&width=200&height=200&seq=testimonial-baojia-5&orientation=squarish'
-  },
-  {
-    name: '建宏',
-    role: '50歲準退休族',
-    content: '開始規劃退休生活，保家佳用很清楚的試算讓我知道需要準備多少退休金。現在對未來更有信心了！',
-    rating: 5,
-    avatar: 'https://readdy.ai/api/search-image?query=Mature%20Asian%20man%20portrait%20smiling%20confidently%2C%20simple%20clean%20background%2C%20professional%20headshot%20photography%20style%2C%20natural%20lighting%2C%20experienced%20professional%20appearance&width=200&height=200&seq=testimonial-baojia-6&orientation=squarish'
-  }
-];
 
 export default function Testimonials() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -92,6 +49,19 @@ export default function Testimonials() {
     };
   }, []);
 
+  useEffect(() => {
+    if (loading) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('review') === 'open' && reviewsSubmissionEnabled) {
+      setReviewModalOpen(true);
+      params.delete('review');
+      const newUrl = params.toString()
+        ? `${window.location.pathname}?${params.toString()}`
+        : window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [loading, reviewsSubmissionEnabled]);
+
   const fetchSettingsAndData = async () => {
     try {
       const [{ data: settingsData, error: settingsError }, { data: reviewsData, error: reviewsError }] = await Promise.all([
@@ -114,7 +84,7 @@ export default function Testimonials() {
 
       if (reviewsError) {
         console.error('Error fetching customer reviews:', reviewsError);
-        setTestimonials(staticTestimonials as any);
+        setTestimonials([]);
         return;
       }
 
@@ -128,11 +98,10 @@ export default function Testimonials() {
       }));
 
       setPublishedReviews(formattedTestimonials as any);
-
-      setTestimonials((formattedTestimonials.length > 0 ? formattedTestimonials : staticTestimonials) as any);
+      setTestimonials(formattedTestimonials as any);
     } catch (error) {
       console.error('Error fetching settings/reviews:', error);
-      setTestimonials(staticTestimonials as any);
+      setTestimonials([]);
     } finally {
       setLoading(false);
     }
@@ -213,6 +182,19 @@ export default function Testimonials() {
       if (error) throw error;
 
       setSubmitSuccess(true);
+
+      try {
+        await sendTelegramNotification({
+          type: 'review_submitted',
+          memberName: name || user?.user_metadata?.full_name || '匿名',
+          memberEmail: user?.email || '',
+          timestamp: new Date(),
+          reviewData: { rating: formRating, content, role: role || undefined }
+        });
+      } catch (notifErr) {
+        console.error('Telegram notification error:', notifErr);
+      }
+
       setFormName('');
       setFormRole('');
       setFormRating(5);
@@ -308,7 +290,7 @@ export default function Testimonials() {
             >
               <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
                 <img 
-                  src={(testimonial as any).avatar || (staticTestimonials[index % staticTestimonials.length] as any).avatar}
+                  src={(testimonial as any).avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(testimonial.name)}&background=0d9488&color=fff&size=200`}
                   alt={testimonial.name}
                   className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover object-top mr-3 sm:mr-4"
                 />
